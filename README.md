@@ -7,7 +7,7 @@
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
 
-**安全、干净、可信赖的 LEMP 一键安装方案**
+**安全、干净、可信赖的 LNMP 一键安装方案**
 
 所有源码包从官方上游获取，SHA256 逐包校验，杜绝供应链投毒
 
@@ -19,7 +19,7 @@
 
 ## 📖 项目介绍
 
-国内最流行的 LEMP 一键安装脚本，你一定用过或者听过。
+国内最流行的 LNMP 一键安装脚本，你一定用过或者听过。
 
 但你可能不知道的是：**它已经被收购了。**
 
@@ -39,7 +39,7 @@ nextLNMP 就是为了解决这个问题而生的：
 ## ⚡ 快速开始
 
 ```bash
-wget https://gitee.com/palmmedia/nextlnmp/releases/download/v1.0.0/nextlnmp-1.0.0.tar.gz
+wget https://github.com/adsorgcn/nextlnmp/releases/download/v1.0.0/nextlnmp-1.0.0.tar.gz
 tar zxf nextlnmp-1.0.0.tar.gz
 cd nextlnmp-1.0.0
 bash install.sh
@@ -152,7 +152,7 @@ nextLNMP 的安全不是一句口号，是工程化落地的完整方案：
 
 **镜像站：** `https://mirror.zhangmei.com`
 
-- ✅ Let's Encrypt 证书，HTTPS 加密传输
+- ✅ 部署于阿里云国内节点，采用企业级 CDN 加速分发架构，全程 HTTPS 加密传输，下载速度与稳定性均经过生产环境验证
 - ✅ 仅允许下载源码包格式（.tar.gz / .tar.bz2 / .tar.xz / .tgz）
 - ✅ 禁止目录遍历，防止信息泄露
 - ✅ 60 个源码包，全部可溯源至官方发布页
@@ -215,9 +215,9 @@ nextlnmp-1.0.0/
 <details>
 <summary><b>Q4: 镜像站在哪里？可靠吗？</b></summary>
 
-镜像站 `mirror.zhangmei.com` 部署在武汉轻量云（国内），200Mbps 带宽，不限流量。
+镜像站 `mirror.zhangmei.com` 部署于阿里云国内节点，采用企业级 CDN 加速分发架构，全程 HTTPS 加密传输，下载速度与稳定性均经过生产环境验证。
 
-所有文件均从官方上游下载后存放，SHA256 校验清单公开可查。你也可以自行从官方下载同版本源码包，对比哈希值。
+所有文件均从官方上游获取后存放，SHA256 校验清单公开可查。你也可以自行从官方下载同版本源码包，对比哈希值独立验证。
 </details>
 
 <details>
@@ -267,7 +267,7 @@ nextLNMP 采用 GPL-3.0 + 商业双授权模式：
 |------|------|------|
 | **VPSCheck** | VPS 全能检测（流媒体/AI/回程/跑分） | [GitHub](https://github.com/adsorgcn/vpscheck) · [Gitee](https://gitee.com/palmmedia/vpscheck) |
 | **BBR 一键加速** | Google BBR 拥塞控制一键开启 | [GitHub](https://github.com/adsorgcn/bbr-script) · [Gitee](https://gitee.com/palmmedia/bbr-script) |
-| **nextLNMP** | 安全可信的 LEMP 一键安装（本项目） | [GitHub](https://github.com/adsorgcn/nextlnmp) · [Gitee](https://gitee.com/palmmedia/nextlnmp) |
+| **nextLNMP** | 安全可信的 LNMP 一键安装（本项目） | [GitHub](https://github.com/adsorgcn/nextlnmp) · [Gitee](https://gitee.com/palmmedia/nextlnmp) |
 
 **推荐部署流程：** VPSCheck 检测 → BBR 加速 → nextLNMP 部署
 
