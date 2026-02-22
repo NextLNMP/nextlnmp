@@ -478,18 +478,18 @@ Check_Download()
     if [[ "${DBSelect}" =~ ^(1|2|3|4|5|11)$ ]]; then
         if [[ "${Bin}" = "y" && "${DBSelect}" =~ ^[2-4]$ ]]; then
             Mysql_Ver_Short=$(echo ${Mysql_Ver} | sed 's/mysql-//' | cut -d. -f1-2)
-            Download_Files https://cdn.mysql.com/Downloads/MySQL-${Mysql_Ver_Short}/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz
+            Download_Files ${Download_Mirror}/datebase/mysql/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz
             if [ $? -ne 0 ]; then
                 Download_Files https://cdn.mysql.com/archives/mysql-${Mysql_Ver_Short}/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz
             fi
         elif [[ "${Bin}" = "y" && "${DBSelect}" = "5" ]]; then
             [[ "${DB_ARCH}" = "aarch64" ]] && mysql8_glibc_ver="2.17" || mysql8_glibc_ver="2.12"
-            Download_Files https://cdn.mysql.com/Downloads/MySQL-8.0/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz
+            Download_Files ${Download_Mirror}/datebase/mysql/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz
             if [ $? -ne 0 ]; then
                 Download_Files https://cdn.mysql.com/archives/mysql-8.0/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz
             fi
         elif [[ "${Bin}" = "y" && "${DBSelect}" = "11" ]]; then
-            Download_Files https://cdn.mysql.com/Downloads/MySQL-8.4/${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz
+            Download_Files ${Download_Mirror}/datebase/mysql/${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz
             if [ $? -ne 0 ]; then
                 Download_Files https://cdn.mysql.com/archives/mysql-8.4/${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz
             fi
@@ -499,7 +499,7 @@ Check_Download()
     elif [[ "${DBSelect}" =~ ^(6|7|8|9|10)$ ]]; then
         Mariadb_Version=$(echo ${Mariadb_Ver} | cut -d- -f2)
         if [ "${Bin}" = "y" ]; then
-            Download_Files https://downloads.mariadb.org/rest-api/mariadb/${Mariadb_Version}/${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz
+            Download_Files ${Download_Mirror}/datebase/mariadb/${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz
         else
             Download_Files https://downloads.mariadb.org/rest-api/mariadb/${Mariadb_Version}/${Mariadb_Ver}.tar.gz ${Mariadb_Ver}.tar.gz
         fi
