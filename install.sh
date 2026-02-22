@@ -11,7 +11,7 @@ set -euo pipefail
 
 # ── 版本与配置（每次发版更新这两个值）─────────────────────────────────
 NEXTLNMP_VER="1.1.1"
-TARBALL_SHA256="TO_BE_FILLED"
+TARBALL_SHA256="82afa20a529e3a125b628e3f4998cc1df9d97ba4bc76471c05058c56c5ea23da"
 
 # ── 固定配置 ──────────────────────────────────────────────────────────
 INSTALL_DIR="/root/nextlnmp"
