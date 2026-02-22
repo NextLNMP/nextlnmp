@@ -259,6 +259,11 @@ nextLNMP 采用 GPL-3.0 + 商业双授权模式：
 
 ## 🔄 更新日志
 
+### v1.1.1 (2026-02-22)
+- ⚙️ 新增 GitHub Actions 自动化发版，推 tag 即出 Release，无需手动打包
+- 🛡️ 新增 .gitignore，杜绝 tarball 误入库
+- 🧹 清理仓库历史遗留问题（submodule 残留、误提交文件）
+- 🔒 install.sh 中 SHA256 改由 CI 自动回写，发版更安全可靠
 ### v1.1.0 (2026-02-22)
 - 🚀 新增一行 `curl` 安装命令，复制粘贴即装
 - 🔄 三源容灾下载（镜像站 → Gitee → GitHub），自动切换最快源
@@ -319,8 +324,3 @@ Made with ❤️ by 静水流深 | 掌媒科技有限公司
 
 </div>
 
-### v1.1.1 (2026-02-22)
-- 新增 GitHub Actions 自动化发版，推 tag 即出 Release，无需手动打包
-- 新增 .gitignore，杜绝 tarball 误入库
-- 清理仓库历史遗留问题（submodule 残留、误提交文件）
-- install.sh 中 SHA256 改由 CI 自动回写，发版更安全可靠
