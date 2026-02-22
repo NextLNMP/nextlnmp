@@ -377,6 +377,7 @@ Database_Selection()
     *)
         echo "未输入，使用推荐配置 MySQL 5.7"
         DBSelect="4"
+        Bin="y"
     esac
 
     if [ "${Bin}" != "y" ] && [[ "${DBSelect}" =~ ^5|[7-9]|1[0-1]$ ]] && [ $(awk '/MemTotal/ {printf( "%d\n", $2 / 1024 )}' /proc/meminfo) -le 1024 ]; then
