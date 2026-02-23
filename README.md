@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.3.3-blue.svg)
+![Version](https://img.shields.io/badge/version-1.3.4-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
@@ -258,6 +258,11 @@ nextLNMP 采用 GPL-3.0 + 商业双授权模式：
 </details>
 
 ## 🔄 更新日志
+
+### v1.3.4 (2026-02-23)
+- 🚀 PHP 8.2 急速安装模式：Ubuntu 22.04 / Debian 12 自动识别，Binary 包直接解压，安装时间从30分钟缩短至1分钟内
+- 🖥️ 推荐系统：Ubuntu 22.04 LTS / Debian 12，全程约5分钟完成 LNMP 环境部署
+- 其他系统自动回退源码编译模式
 
 ### v1.3.3 (2026-02-23)
 - 🎨 安装完成界面全面中文化重写，品牌信息统一
