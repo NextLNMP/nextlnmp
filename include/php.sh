@@ -1219,7 +1219,8 @@ Install_PHP_82()
         fi
         Ln_PHP_Bin
         mkdir -p /usr/local/php/{etc,conf.d}
-        cp /usr/local/php/lib/php.ini-production /usr/local/php/etc/php.ini 2>/dev/null || touch /usr/local/php/etc/php.ini
+        curl -sL https://raw.githubusercontent.com/php/php-src/PHP-8.2/php.ini-production -o /usr/local/php/etc/php.ini
+        cp /usr/local/php/etc/php-fpm.d/www.conf.default /usr/local/php/etc/php-fpm.d/www.conf
     else
         Install_Libzip
         Echo_Blue "[+] Installing ${Php_Ver}"
