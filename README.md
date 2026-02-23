@@ -1,4 +1,4 @@
-# nextLNMP
+# NextLNMP
 
 <div align="center">
 
@@ -11,7 +11,7 @@
 
 所有源码包从官方上游获取，SHA256 逐包校验，杜绝供应链投毒
 
-[快速开始](#-快速开始) · [为什么需要 nextLNMP](#-为什么需要-nextlnmp) · [功能特性](#-功能特性) · [技术支持](#-技术支持)
+[快速开始](#-快速开始) · [为什么需要 NextLNMP](#-为什么需要-nextlnmp) · [功能特性](#-功能特性) · [推荐服务器](#-推荐服务器) · [技术支持](#-技术支持)
 
 </div>
 
@@ -19,22 +19,60 @@
 
 ## 📖 项目介绍
 
-国内最流行的 LNMP 一键安装脚本，你一定用过或者听过。
+军哥的 LNMP 一键安装包，是中国站长圈一代人的共同记忆。
 
-但你可能不知道的是：**它已经被收购了。**
+从 2005 年开始，无数个人站长、小团队靠着那一行命令，在自己的服务器上搭起了第一个网站。它足够简单、足够稳定，十几年来口碑相传，几乎成了 Linux 建站的代名词。这份贡献，值得被认真致敬。
 
-原作者早已不再维护，域名和下载站易主，新的运营方身份不明。你从那个下载站拉下来的源码包，到底有没有被动过手脚？没有人知道，因为**整个下载过程没有任何校验机制**。
+但时代变了。
 
-这不是阴谋论，这是供应链安全的基本常识。
+原作者已退出，项目转手易主。下载站域名归属不明，源码包来自何处无从追溯，整个安装过程没有任何完整性校验——你装进服务器的东西，没有人能保证它是干净的。2024 年前后，国内已有多起 LNMP 类工具供应链投毒事件被曝光，服务器在安装环境的那一刻就已沦陷。
 
-nextLNMP 就是为了解决这个问题而生的：
+与此同时，AI 时代带来了新的可能。工程工具可以被重新设计，流程可以被重新审视，很多过去靠经验积累的东西，现在可以用更系统的方式重建。
 
-- **所有源码包从官方上游获取** — php.net、nginx.org、cdn.mysql.com，不经过任何第三方
-- **SHA256 逐包校验** — 每个包下载后自动比对哈希，被篡改立即终止安装
-- **校验清单公开可审计** — 任何人都可以独立验证
-- **自建镜像站，HTTPS 加密传输** — 你下载的每一个字节都是可追溯的
+**NextLNMP 就是在这个背景下诞生的。**
 
-**一句话：** 同样的功能，但你能信任它。
+我们从零重写，不是为了另起炉灶，而是为了给这件事一个值得信任的答案。
+
+---
+
+### 为什么不用宝塔？
+
+宝塔面板在可视化和插件生态上做得不错，但它解决不了一些根本性的问题：
+
+| | 宝塔面板 | NextLNMP |
+|---|---|---|
+| **实名安装** | ❌ 强制手机号注册，否则功能受限 | ✅ 无需注册，无需实名，服务器是你的 |
+| **系统占用** | ❌ 常驻后台进程，持续占用内存和 CPU | ✅ 零后台进程，装完不留任何守护程序 |
+| **源码来源** | ❌ 软件包来源不透明，"纯净版"内容无从核实 | ✅ 全部来自官方上游（php.net / nginx.org / cdn.mysql.com） |
+| **完整性校验** | ❌ 无 SHA256 校验 | ✅ 逐包 SHA256 校验，篡改立即终止 |
+| **代码可审计** | ❌ 核心模块闭源 | ✅ 完整开源，GPL-3.0 协议 |
+| **隐私风险** | ❌ 面板与宝塔服务器保持通信 | ✅ 纯本地运行，无任何外联行为 |
+
+宝塔的纯净版，你依然不知道里面装了什么。NextLNMP 的每一行代码，你都可以在 GitHub 上读到。
+
+---
+
+### NextLNMP 能做什么
+
+- 🚀 **急速安装**：Ubuntu 22.04 / Debian 12 推荐系统，PHP Binary 预编译包直接解压，全程约 **5 分钟**完成 LNMP 环境部署
+- 🛡️ **安全可信**：所有源码包 SHA256 逐包校验，自建 HTTPS 镜像站，校验清单公开可审计
+- 🧠 **智能推荐**：自动检测硬件配置，推荐最佳 PHP / MySQL / 内存分配器组合
+- ⚙️ **自动优化**：安装后根据内存自动调整 MySQL my.cnf，开箱即用
+- 🔄 **零学习成本**：目录结构、管理命令与同类工具完全兼容，老用户无缝切换
+- 📦 **版本丰富**：PHP 5.6 ~ 8.4、MySQL 5.1 ~ 8.4 全版本可选，新老项目全覆盖
+- 🖥️ **即将支持**：内核 BBR 加速一键开启、一键迁移工具、可视化管理界面（规划中）
+
+---
+
+### 架构支持
+
+| 架构 | 状态 | 说明 |
+|------|------|------|
+| **x86_64** | ✅ 完整支持 | 急速安装模式（Binary 包，< 1分钟）+ 源码编译双模式 |
+| **ARM64 / aarch64** | 🔄 源码编译支持 | 自动回退源码编译，功能完整，约 30 分钟 |
+| **ARM64 急速模式** | 🗓️ 规划中 | ARM64 Binary 预编译包，有机器即上线 |
+
+> 腾讯云、阿里云、AWS 的 ARM 实例（如 Graviton）均可正常安装，使用源码编译模式。
 
 ## ⚡ 快速开始
 
@@ -49,24 +87,24 @@ bash <(curl -sL https://gitee.com/palmmedia/nextlnmp/raw/main/install.sh)
 **方式二：从 Gitee 下载安装（国内快）**
 
 ```bash
-wget https://gitee.com/palmmedia/nextlnmp/releases/download/v1.3.3/nextlnmp-1.3.3.tar.gz && tar zxf nextlnmp-1.3.3.tar.gz && cd nextlnmp-1.3.3 && bash install.sh
+wget https://gitee.com/palmmedia/nextlnmp/releases/download/v1.3.4/nextlnmp-1.3.4.tar.gz && tar zxf nextlnmp-1.3.4.tar.gz && cd nextlnmp-1.3.4 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
 
 ```bash
-wget https://github.com/adsorgcn/nextlnmp/releases/download/v1.3.3/nextlnmp-1.3.3.tar.gz && tar zxf nextlnmp-1.3.3.tar.gz && cd nextlnmp-1.3.3 && bash install.sh
+wget https://github.com/adsorgcn/nextlnmp/releases/download/v1.3.4/nextlnmp-1.3.4.tar.gz && tar zxf nextlnmp-1.3.4.tar.gz && cd nextlnmp-1.3.4 && bash install.sh
 ```
 
 三种方式装出来的东西完全一样，选哪个都行。
 
 根据菜单提示选择 PHP、MySQL 版本，剩下的交给脚本。全程无需手动干预，编译安装完成后自动启动服务。
 
-## 🛡️ 为什么需要 nextLNMP
+## 🛡️ 为什么需要 NextLNMP
 
 ### 安全对比
 
-| 对比项 | 某流行同类工具 | nextLNMP |
+| 对比项 | 某流行同类工具 | NextLNMP |
 |--------|---------------|----------|
 | **源码来源** | ❌ 私有镜像站，已易主，来源不透明 | ✅ 官方上游（php.net / nginx.org / cdn.mysql.com） |
 | **下载校验** | ❌ 零校验，下什么装什么 | ✅ SHA256 逐包校验，篡改立即终止 |
@@ -84,7 +122,7 @@ wget https://github.com/adsorgcn/nextlnmp/releases/download/v1.3.3/nextlnmp-1.3.
 
 ### 老用户零学习成本
 
-用过同类工具的站长，上手 nextLNMP 没有任何门槛。安装流程、目录结构、管理命令，都是你熟悉的方式。
+用过同类工具的站长，上手 NextLNMP 没有任何门槛。安装流程、目录结构、管理命令，都是你熟悉的方式。
 
 唯一的区别：这次你可以放心用了。
 
@@ -146,12 +184,11 @@ bash tools/cut_nginx_logs.sh
 
 > 🚀 **急速安装推荐：** Ubuntu 22.04 LTS / Debian 12 享受 PHP Binary 预编译包，安装时间 **< 1分钟**，全程约 **5分钟** 完成 NextLNMP 部署。其他系统自动回退源码编译。
 
-
 **系统要求：** 内存 ≥ 512MB，磁盘 ≥ 5GB
 
 ## 🔒 安全机制详解
 
-nextLNMP 的安全不是一句口号，是工程化落地的完整方案：
+NextLNMP 的安全不是一句口号，是工程化落地的完整方案：
 
 ```
 用户执行 install.sh
@@ -170,27 +207,82 @@ nextLNMP 的安全不是一句口号，是工程化落地的完整方案：
 
 **镜像站：** `https://mirror.zhangmei.com`
 
-- ✅ 部署于阿里云国内节点，采用企业级 CDN 加速分发架构，全程 HTTPS 加密传输，下载速度与稳定性均经过生产环境验证
+- ✅ 部署于阿里云国内节点，全程 HTTPS 加密传输
 - ✅ 仅允许下载源码包格式（.tar.gz / .tar.bz2 / .tar.xz / .tgz）
 - ✅ 禁止目录遍历，防止信息泄露
 - ✅ 60 个源码包，全部可溯源至官方发布页
 - ✅ sha256sums.txt 公开访问，任何人可独立审计
 
+## 🖥️ 推荐服务器
+
+新手最大的困惑往往不是怎么装，而是**该买哪家服务器**。以下是根据不同使用场景的真实推荐，买错了机器后面一堆麻烦。
+
+---
+
+### 🇨🇳 国内建站（需要备案）
+
+**阿里云轻量应用服务器** — 首推新手
+
+> 阿里云是国内云计算头部厂商，稳定性和售后保障行业最好。轻量应用服务器性价比高，2核2G配置足够跑 WordPress / Typecho / 小型商城。新人专享价格极具优势，国内建站首选。
+
+👉 [阿里云新人专享：2核2G，200M峰值带宽，￥38/年起](https://www.aliyun.com/minisite/goods?userCode=o2dbvmex)
+
+---
+
+**腾讯云** — 微信生态首选
+
+> 如果你的业务涉及微信公众号、小程序、企业微信，腾讯云与微信生态打通最深，COS 对象存储、CDN、短信服务配合使用体验最佳。
+
+👉 [腾讯云特惠：云服务器、COS、CDN 等云产品热卖中](https://cloud.tencent.com/act/cps/redirect?redirect=2446&cps_key=42de16263794923a5b0c19c60790f9e3&from=console)
+
+---
+
+### 🌍 海外建站（无需备案）
+
+**Vultr** — 新手友好，按小时计费
+
+> 全球多节点，洛杉矶/新加坡/日本均有机房，支持支付宝付款，按小时计费随时删机不浪费。界面简单，新手上手快。**必须通过邀请链接注册，新用户可获得 300 美元免费额度**（需绑定信用卡或 PayPal，30天内使用）。
+
+👉 [Vultr 注册领 300 美元：通过此邀请链接才可获得](https://www.vultr.com/?ref=9631926-9J)
+
+---
+
+**搬瓦工** — 中国线路最稳定
+
+> 老牌海外 VPS 商，DC5 SLA 机房三网 CN2 GIA 优质线路，延迟低、不丢包，适合对中国访问速度有要求的海外站。每两周可免费换一次 IP，硬件性能强悍，99.99% SLA 在线时间保证。
+>
+> 最新优惠码：**NODESEEK2026**（优惠力度 6.77%）
+
+👉 [搬瓦工 DC5 SLA 套餐：2核 AMD，1G内存，2.5Gbps 带宽](https://bwh81.net/aff.php?aff=20308&pid=164)
+
+---
+
+**DMIT** — 高端线路首选
+
+> 洛杉矶 Pro 系列，三网 CN2-GIA 回程，最高带宽可达 10Gbps，适合对速度和稳定性要求极高的场景（直播、跨境电商、游戏加速）。价格偏高但线路质量一流。
+
+👉 [DMIT 洛杉矶 Pro：三网 CN2-GIA，最高 10Gbps 带宽](https://www.dmit.io/aff.php?aff=3138&pid=100)
+
+---
+
+> 💡 **选机器建议：** 国内有备案选阿里云/腾讯云；海外无备案优先 Vultr（便宜好上手）；对国内访问速度有要求选搬瓦工或 DMIT。1核1G 够跑个人博客，2核2G 可以跑 WordPress + 插件，4核4G 可以跑多个站。
+
 ## 📂 目录结构
 
 ```
-nextlnmp-1.3.3/
+nextlnmp-1.3.4/
 ├── install.sh          # 安装入口
 ├── nextlnmp.conf       # 配置文件（镜像源地址等）
 ├── upgrade.sh          # 升级脚本
 ├── uninstall.sh        # 卸载脚本
 ├── addons.sh           # 扩展管理（虚拟主机、FTP 等）
+├── sha256sums.txt      # PHP Binary 包 SHA256 校验清单
 ├── include/            # 核心安装脚本
 │   ├── main.sh         # 公共函数（含 SHA256 校验逻辑）
 │   ├── version.sh      # 所有软件版本号定义
 │   ├── init.sh         # 系统初始化与依赖安装
 │   ├── nginx.sh        # Nginx 编译安装
-│   ├── php.sh          # PHP 编译安装
+│   ├── php.sh          # PHP 编译安装（支持 Binary 急速模式）
 │   ├── mysql.sh        # MySQL 编译安装
 │   └── ...
 ├── conf/               # Nginx/Apache/PHP 配置模板
@@ -202,38 +294,38 @@ nextlnmp-1.3.3/
 ## ❓ 常见问题
 
 <details>
-<summary><b>Q1: nextLNMP 和某流行工具有什么区别？</b></summary>
+<summary><b>Q1: NextLNMP 和某流行工具有什么区别？</b></summary>
 
 功能上几乎一样，核心区别在于安全：
 
-- nextLNMP 所有源码包从 php.net、nginx.org 等官方上游获取
+- NextLNMP 所有源码包从 php.net、nginx.org 等官方上游获取
 - 每个包下载后 SHA256 校验，防篡改
 - 代码完全开源，GPL-3.0 协议
 - 某流行工具的下载站已易主，无校验机制
 
-如果你在乎服务器安全，nextLNMP 是更好的选择。
+如果你在乎服务器安全，NextLNMP 是更好的选择。
 </details>
 
 <details>
-<summary><b>Q2: 从旧工具迁移到 nextLNMP 需要重装吗？</b></summary>
+<summary><b>Q2: 从旧工具迁移到 NextLNMP 需要重装吗？</b></summary>
 
-如果你已经用其他工具装好了环境，不需要重装。nextLNMP 主要面向新服务器部署。
+如果你已经用其他工具装好了环境，不需要重装。NextLNMP 主要面向新服务器部署。
 
-已有环境可以继续用，但如果你要新开服务器，强烈建议用 nextLNMP。
+已有环境可以继续用，但如果你要新开服务器，强烈建议用 NextLNMP。
 </details>
 
 <details>
 <summary><b>Q3: 支持 PHP 8.4 吗？</b></summary>
 
-支持。nextLNMP v1.0.0 首发支持 PHP 8.4.18，这是目前最新的稳定版本。
+支持。NextLNMP 首发支持 PHP 8.4，这是目前最新的稳定版本。
 
-安装时选择菜单中的第 15 项即可。
+安装时选择菜单中的对应版本即可。
 </details>
 
 <details>
 <summary><b>Q4: 镜像站在哪里？可靠吗？</b></summary>
 
-镜像站 `mirror.zhangmei.com` 部署于阿里云国内节点，采用企业级 CDN 加速分发架构，全程 HTTPS 加密传输，下载速度与稳定性均经过生产环境验证。
+镜像站 `mirror.zhangmei.com` 部署于阿里云国内节点，全程 HTTPS 加密传输。
 
 所有文件均从官方上游获取后存放，SHA256 校验清单公开可查。你也可以自行从官方下载同版本源码包，对比哈希值独立验证。
 </details>
@@ -241,18 +333,15 @@ nextlnmp-1.3.3/
 <details>
 <summary><b>Q5: 可以用于生产环境吗？</b></summary>
 
-可以。nextLNMP 的安装逻辑经过长期验证，稳定可靠。SHA256 校验机制进一步保障了生产环境的安全性。
+可以。NextLNMP 的安装逻辑经过长期验证，稳定可靠。SHA256 校验机制进一步保障了生产环境的安全性。
 
-建议：
-- 先在测试环境验证
-- 选择业务低峰期操作
-- 安装前做好数据备份
+建议：先在测试环境验证，选择业务低峰期操作，安装前做好数据备份。
 </details>
 
 <details>
 <summary><b>Q6: 开源版和商业版有什么区别？</b></summary>
 
-nextLNMP 采用 GPL-3.0 + 商业双授权模式：
+NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 
 - **开源版（GPL-3.0）**：个人站长、独立开发者免费使用，需遵守 GPL-3.0 协议条款
 - **商业授权**：企业集成、云服务商、主机面板厂商批量部署，需向掌媒科技购买商业授权
@@ -264,7 +353,7 @@ nextLNMP 采用 GPL-3.0 + 商业双授权模式：
 
 ### v1.3.4 (2026-02-23)
 - 🚀 PHP 8.2 急速安装模式：Ubuntu 22.04 / Debian 12 自动识别，Binary 包直接解压，安装时间从30分钟缩短至1分钟内
-- 🖥️ 推荐系统：Ubuntu 22.04 LTS / Debian 12，全程约5分钟完成 LNMP 环境部署
+- 🖥️ 推荐系统：Ubuntu 22.04 LTS / Debian 12，全程约5分钟完成 NextLNMP 部署
 - 其他系统自动回退源码编译模式
 
 ### v1.3.3 (2026-02-23)
@@ -288,29 +377,25 @@ nextLNMP 采用 GPL-3.0 + 商业双授权模式：
 ### v1.2.0 (2026-02-22)
 - 🇨🇳 全面中文化：数据库选择、PHP 选择、内存分配器选择菜单全部中文
 - 🔑 数据库密码自动生成（16位随机密码），不再让小白手动设密码
-- 🔍 品牌 PHP 探针（nextLNMP Prober），替换默认探针
+- 🔍 品牌 PHP 探针（NextLNMP Prober），替换默认探针
 
 ### v1.1.1 (2026-02-22)
 - ⚙️ 新增 GitHub Actions 自动化发版，推 tag 即出 Release，无需手动打包
 - 🛡️ 新增 .gitignore，杜绝 tarball 误入库
-- 🧹 清理仓库历史遗留问题（submodule 残留、误提交文件）
 - 🔒 install.sh 中 SHA256 改由 CI 自动回写，发版更安全可靠
+
 ### v1.1.0 (2026-02-22)
 - 🚀 新增一行 `curl` 安装命令，复制粘贴即装
 - 🔄 三源容灾下载（镜像站 → Gitee → GitHub），自动切换最快源
 - 🔒 安装包 SHA256 完整性校验，防篡改
 - 🖥️ 系统环境预检（内存 / 磁盘 / 端口），只警告不阻断
-- 🛡️ root 权限检查，无权限大白话引导提权
 - 📦 包管理器自动识别（yum / apt-get），基础依赖自动安装
-- 🔄 旧版本自动备份，升级无忧
-- 🇨🇳 全中文错误提示，出错告诉你怎么解决
 
 ### v1.0.0 (2026-02-22)
 - 🎉 首次发布
 - ✅ 全部源码包从官方上游获取，SHA256 逐包校验
 - ✅ 自建 HTTPS 镜像站，60 个源码包全覆盖
 - ✅ 新增 PHP 8.4.18 支持
-- ✅ 简化镜像检测逻辑，移除冗余回退代码
 - ✅ 全新品牌，GPL-3.0 + 商业双授权
 
 ## 📞 技术支持
@@ -328,9 +413,9 @@ nextLNMP 采用 GPL-3.0 + 商业双授权模式：
 |------|------|------|
 | **VPSCheck** | VPS 全能检测（流媒体/AI/回程/跑分） | [GitHub](https://github.com/adsorgcn/vpscheck) · [Gitee](https://gitee.com/palmmedia/vpscheck) |
 | **BBR 一键加速** | Google BBR 拥塞控制一键开启 | [GitHub](https://github.com/adsorgcn/bbr-script) · [Gitee](https://gitee.com/palmmedia/bbr-script) |
-| **nextLNMP** | 安全可信的 LNMP 一键安装（本项目） | [GitHub](https://github.com/adsorgcn/nextlnmp) · [Gitee](https://gitee.com/palmmedia/nextlnmp) |
+| **NextLNMP** | 安全可信的 LNMP 一键安装（本项目） | [GitHub](https://github.com/adsorgcn/nextlnmp) · [Gitee](https://gitee.com/palmmedia/nextlnmp) |
 
-**推荐部署流程：** VPSCheck 检测 → BBR 加速 → nextLNMP 部署
+**推荐部署流程：** VPSCheck 检测 → BBR 加速 → NextLNMP 部署
 
 ## 📜 开源协议
 
@@ -354,5 +439,3 @@ Copyright © 2026 掌媒科技有限公司. All rights reserved.
 Made with ❤️ by 静水流深 | 掌媒科技有限公司
 
 </div>
-
-
