@@ -227,45 +227,71 @@ Print_Sucess_Info()
 {
     Clean_Web_Src_Dir
     local SERVER_IP=$(hostname -I | awk '{print $1}')
+    stop_time=$(date +%s)
+    local COST_MIN=$(((stop_time-start_time)/60))
+
     echo ""
     Echo_Green "╔══════════════════════════════════════════════════════════════╗"
     Echo_Green "║                                                              ║"
-    Echo_Green "║        nextLNMP V${NEXTLNMP_Ver} 安装成功！                  ║"
-    Echo_Green "║        系统：${DISTRO} Linux · 作者：静水流深                ║"
+    Echo_Green "║      ✅ NextLNMP v${NEXTLNMP_Ver} 安装成功！耗时 ${COST_MIN} 分钟       ║"
+    Echo_Green "║         系统：${DISTRO} Linux · 作者：静水流深               ║"
     Echo_Green "║                                                              ║"
     Echo_Green "╠══════════════════════════════════════════════════════════════╣"
     echo "║"
-    echo "║  📦 服务管理："
-    echo "║     nextlnmp {start|stop|restart|reload|status}"
-    echo "║"
-    echo "║  🌐 Web 访问："
+    echo "║  🌐 访问地址："
+    echo "║     网站首页：http://${SERVER_IP}/"
     echo "║     探针页面：http://${SERVER_IP}/p.php"
     echo "║     phpMyAdmin：http://${SERVER_IP}/phpmyadmin/"
-    echo "║     PHP 信息：http://${SERVER_IP}/phpinfo.php"
     echo "║"
     echo "║  📁 网站目录：${Default_Website_Dir}"
-    echo "║  🔧 添加站点：nextlnmp vhost add"
+    echo "║"
     if [ "${DBSelect}" != "0" ]; then
-        echo "║"
         echo "║  🔑 数据库 root 密码：${DB_Root_Password}"
-        echo "║     查看密码：nextlnmp password"
-        echo "║     记住后删除：nextlnmp password --delete"
+        echo "║"
+    fi
+    echo "║  📦 服务管理："
+    echo "║     nextlnmp {start|stop|restart|reload|status}"
+    echo "║     nextlnmp vhost add        # 添加新站点"
+    echo "║     nextlnmp info             # 再次查看本页信息"
+    if [ "${DBSelect}" != "0" ]; then
+        echo "║     nextlnmp password         # 查看数据库密码"
+        echo "║     nextlnmp password --delete  # 确认记录后删除密码文件"
     fi
     echo "║"
-    echo "║  📖 文档：https://nextlnmp.com"
-    echo "║  💬 QQ群：615298"
+    echo "║  📖 文档：https://nextlnmp.com  💬 QQ群：615298"
     Echo_Green "║                                                              ║"
     Echo_Green "╚══════════════════════════════════════════════════════════════╝"
     echo ""
-    nextlnmp status
-    if command -v ss >/dev/null 2>&1; then
-        ss -ntl
-    else
-        netstat -ntl
-    fi
-    stop_time=$(date +%s)
+
+    # 保存安装信息到文件，方便日后查看
+    INFO_FILE="/root/nextlnmp-info.txt"
+    cat > ${INFO_FILE} << INFOEOF
+NextLNMP v${NEXTLNMP_Ver} 安装信息
+安装时间：$(date '+%Y-%m-%d %H:%M:%S')
+系统：${DISTRO} Linux
+服务器IP：${SERVER_IP}
+
+访问地址：
+  网站首页：http://${SERVER_IP}/
+  探针页面：http://${SERVER_IP}/p.php
+  phpMyAdmin：http://${SERVER_IP}/phpmyadmin/
+
+网站目录：${Default_Website_Dir}
+数据库 root 密码：${DB_Root_Password}
+
+常用命令：
+  nextlnmp info             # 查看本文件
+  nextlnmp vhost add        # 添加新站点
+  nextlnmp password         # 查看数据库密码
+  nextlnmp {start|stop|restart|reload|status}
+
+文档：https://nextlnmp.com
+QQ群：615298
+INFOEOF
+    chmod 600 ${INFO_FILE}
+    Echo_Green "📄 安装信息已保存至：${INFO_FILE}（权限600，仅root可读）"
     echo ""
-    Echo_Green "✅ 安装完成！耗时 $(((stop_time-start_time)/60)) 分钟"
+    exit 0
 }
 
 Print_Failed_Info()

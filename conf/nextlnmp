@@ -12,7 +12,7 @@ else
 fi
 
 echo "+-------------------------------------------+"
-echo "|    nextLNMP 服务器管理工具 by 静水流深    |"
+echo "|    NextLNMP 服务器管理工具 by 静水流深    |"
 echo "+-------------------------------------------+"
 echo "|              https://nextlnmp.com             |"
 echo "+-------------------------------------------+"
@@ -1610,6 +1610,13 @@ case "${arg1}" in
         echo "Usage: lnmp ssl add"
         echo "Usage: lnmp {dnsssl|dns} {cx|ali|cf|dp|he|gd|aws}"
         echo "Usage: lnmp onlyssl {cx|ali|cf|dp|he|gd|aws}"
+        ;;
+    info)
+        if [ -f /root/nextlnmp-info.txt ]; then
+            cat /root/nextlnmp-info.txt
+        else
+            echo "安装信息文件不存在，请运行 nextlnmp 安装后查看"
+        fi
         ;;
     password)
         if [ "$2" = "--delete" ]; then
