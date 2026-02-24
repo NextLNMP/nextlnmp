@@ -92,9 +92,21 @@ jobs:
           
           # 读取 CHANGELOG_DRAFT.md 内容插入更新日志
           if [ -s CHANGELOG_DRAFT.md ]; then
-            CHANGELOG=$(cat CHANGELOG_DRAFT.md)
-            NEW_ENTRY="### v${VERSION} (${DATE})\n${CHANGELOG}\n"
-            sed -i "s|## 🔄 更新日志|## 🔄 更新日志\n\n${NEW_ENTRY}|" README.md
+            python3 - <<INNEREOF
+import re
+with open('CHANGELOG_DRAFT.md') as f:
+    changelog = f.read().strip()
+with open('README.md') as f:
+    readme = f.read()
+import os
+version = os.environ['VERSION']
+date = os.environ['DATE']
+new_entry = f"### v{version} ({date})\n{changelog}\n\n"
+readme = readme.replace("## 🔄 更新日志\n", f"## 🔄 更新日志\n\n{new_entry}", 1)
+with open('README.md', 'w') as f:
+    f.write(readme)
+print("README updated")
+INNEREOF
           fi
           
           # 清空 CHANGELOG_DRAFT.md
