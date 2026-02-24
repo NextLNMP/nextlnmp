@@ -76,42 +76,9 @@ jobs:
         run: |
           git checkout main
           git pull origin main
-          VERSION=${{ steps.version.outputs.VERSION }}
-          DATE=$(date '+%Y-%m-%d')
-          
-          # 更新 badge 版本号
-          sed -i "s/version-[0-9]\+\.[0-9]\+\.[0-9]\+-blue/version-${VERSION}-blue/" README.md
-          
-          # 更新下载链接版本号
-          sed -i "s|releases/download/v[0-9]\+\.[0-9]\+\.[0-9]\+/nextlnmp-[0-9]\+\.[0-9]\+\.[0-9]\+\.tar\.gz|releases/download/v${VERSION}/nextlnmp-${VERSION}.tar.gz|g" README.md
-          sed -i "s|cd nextlnmp-[0-9]\+\.[0-9]\+\.[0-9]\+|cd nextlnmp-${VERSION}|g" README.md
-          sed -i "s|tar zxf nextlnmp-[0-9]\+\.[0-9]\+\.[0-9]\+\.tar\.gz|tar zxf nextlnmp-${VERSION}.tar.gz|g" README.md
-          
-          # 更新目录结构版本号
-          sed -i "s|nextlnmp-[0-9]\+\.[0-9]\+\.[0-9]\+/|nextlnmp-${VERSION}/|g" README.md
-          
-          # 读取 CHANGELOG_DRAFT.md 内容插入更新日志
-          if [ -s CHANGELOG_DRAFT.md ]; then
-            python3 - <<INNEREOF
-import re
-with open('CHANGELOG_DRAFT.md') as f:
-    changelog = f.read().strip()
-with open('README.md') as f:
-    readme = f.read()
-import os
-version = os.environ['VERSION']
-date = os.environ['DATE']
-new_entry = f"### v{version} ({date})\n{changelog}\n\n"
-readme = readme.replace("## 🔄 更新日志\n", f"## 🔄 更新日志\n\n{new_entry}", 1)
-with open('README.md', 'w') as f:
-    f.write(readme)
-print("README updated")
-INNEREOF
-          fi
-          
-          # 清空 CHANGELOG_DRAFT.md
-          > CHANGELOG_DRAFT.md
-          
+          export VERSION=${{ steps.version.outputs.VERSION }}
+          export DATE=$(date '+%Y-%m-%d')
+          python3 tools/update_readme.py
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add README.md CHANGELOG_DRAFT.md
