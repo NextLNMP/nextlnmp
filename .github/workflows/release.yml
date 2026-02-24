@@ -31,10 +31,12 @@ jobs:
           echo "SHA256=${SHA}" >> $GITHUB_OUTPUT
           echo "📦 SHA256: ${SHA}"
 
-      - name: Update install.sh SHA256 on main branch
+      - name: Update install.sh SHA256 and version on main branch
         run: |
           git checkout main
           sed -i "s/TARBALL_SHA256=\".*\"/TARBALL_SHA256=\"${{ steps.sha256.outputs.SHA256 }}\"/" install.sh
+          sed -i 's/NEXTLNMP_VER=\".*\"/NEXTLNMP_VER=\"${{ steps.version.outputs.VERSION }}\"/' install.sh
+          sed -i 's/NEXTLNMP_Ver=\'.*\'/NEXTLNMP_Ver=\'${{ steps.version.outputs.VERSION }}\'/' nextlnmp.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add install.sh
@@ -70,6 +72,39 @@ jobs:
             cd /data/mirror
             wget -q -O nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz https://github.com/NextLNMP/nextlnmp/releases/download/v${{ steps.version.outputs.VERSION }}/nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz
             echo "Mirror synced: nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz"
+      - name: Update README and version
+        run: |
+          git checkout main
+          git pull origin main
+          VERSION=${{ steps.version.outputs.VERSION }}
+          DATE=$(date '+%Y-%m-%d')
+          
+          # 更新 badge 版本号
+          sed -i "s/version-[0-9]\+\.[0-9]\+\.[0-9]\+-blue/version-${VERSION}-blue/" README.md
+          
+          # 更新下载链接版本号
+          sed -i "s|releases/download/v[0-9]\+\.[0-9]\+\.[0-9]\+/nextlnmp-[0-9]\+\.[0-9]\+\.[0-9]\+\.tar\.gz|releases/download/v${VERSION}/nextlnmp-${VERSION}.tar.gz|g" README.md
+          sed -i "s|cd nextlnmp-[0-9]\+\.[0-9]\+\.[0-9]\+|cd nextlnmp-${VERSION}|g" README.md
+          sed -i "s|tar zxf nextlnmp-[0-9]\+\.[0-9]\+\.[0-9]\+\.tar\.gz|tar zxf nextlnmp-${VERSION}.tar.gz|g" README.md
+          
+          # 更新目录结构版本号
+          sed -i "s|nextlnmp-[0-9]\+\.[0-9]\+\.[0-9]\+/|nextlnmp-${VERSION}/|g" README.md
+          
+          # 读取 CHANGELOG_DRAFT.md 内容插入更新日志
+          if [ -s CHANGELOG_DRAFT.md ]; then
+            CHANGELOG=$(cat CHANGELOG_DRAFT.md)
+            NEW_ENTRY="### v${VERSION} (${DATE})\n${CHANGELOG}\n"
+            sed -i "s|## 🔄 更新日志|## 🔄 更新日志\n\n${NEW_ENTRY}|" README.md
+          fi
+          
+          # 清空 CHANGELOG_DRAFT.md
+          > CHANGELOG_DRAFT.md
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md CHANGELOG_DRAFT.md
+          git diff --cached --quiet || git commit -m "docs: 自动更新 README 至 v${VERSION}"
+          git push origin main
       - name: Create Gitee Release
         env:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
