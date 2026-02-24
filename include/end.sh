@@ -235,10 +235,11 @@ Print_Sucess_Info()
     Echo_Green "║                                                              ║"
     Echo_Green "║      ✅ NextLNMP v${NEXTLNMP_Ver} 安装成功！耗时 ${COST_MIN} 分钟       ║"
     Echo_Green "║         系统：${DISTRO} Linux · 作者：静水流深               ║"
+    Echo_Green "║         中国站长论坛：https://cnwebmasters.com               ║"
     Echo_Green "║                                                              ║"
     Echo_Green "╠══════════════════════════════════════════════════════════════╣"
     echo "║"
-    echo "║  🌐 访问地址："
+    echo "║  🌐 访问地址（复制链接到浏览器打开）："
     echo "║     网站首页：http://${SERVER_IP}/"
     echo "║     探针页面：http://${SERVER_IP}/p.php"
     echo "║     phpMyAdmin：http://${SERVER_IP}/phpmyadmin/"
@@ -249,16 +250,19 @@ Print_Sucess_Info()
         echo "║  🔑 数据库 root 密码：${DB_Root_Password}"
         echo "║"
     fi
-    echo "║  📦 服务管理："
-    echo "║     nextlnmp {start|stop|restart|reload|status}"
+    echo "║  📦 常用命令（复制后回车即可执行）："
+    echo "║     nextlnmp start            # 启动所有服务"
+    echo "║     nextlnmp stop             # 停止所有服务"
+    echo "║     nextlnmp restart          # 重启所有服务"
+    echo "║     nextlnmp status           # 查看运行状态"
     echo "║     nextlnmp vhost add        # 添加新站点"
     echo "║     nextlnmp info             # 再次查看本页信息"
     if [ "${DBSelect}" != "0" ]; then
         echo "║     nextlnmp password         # 查看数据库密码"
-        echo "║     nextlnmp password --delete  # 确认记录后删除密码文件"
+        echo "║     nextlnmp password --delete  # 记录密码后删除密码文件"
     fi
     echo "║"
-    echo "║  📖 文档：https://nextlnmp.com  💬 QQ群：615298"
+    echo "║  📖 文档：https://nextlnmp.cn  💬 QQ群：615298"
     Echo_Green "║                                                              ║"
     Echo_Green "╚══════════════════════════════════════════════════════════════╝"
     echo ""
@@ -285,7 +289,7 @@ NextLNMP v${NEXTLNMP_Ver} 安装信息
   nextlnmp password         # 查看数据库密码
   nextlnmp {start|stop|restart|reload|status}
 
-文档：https://nextlnmp.com
+文档：https://nextlnmp.cn
 QQ群：615298
 INFOEOF
     chmod 600 ${INFO_FILE}
