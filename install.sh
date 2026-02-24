@@ -18,7 +18,7 @@ PLAIN='\033[0m'
 
 # ── 版本与配置（每次发版更新这两个值）────────────────────────────────
 NEXTLNMP_VER="1.4.2"
-TARBALL_SHA256="b711f9b8f838e347fcb0aa2b97baeeabe1cd05e52a5b68a819631b0ce01b7e82"
+TARBALL_SHA256="b7b2b2a284d099b7ee8a03ee87b83050f3a83d85f44ad4ab970a2fca807464fb"
 
 # ── 固定配置 ──────────────────────────────────────────────────────────
 INSTALL_DIR="/root/nextlnmp"
