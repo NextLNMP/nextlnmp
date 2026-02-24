@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.4.6-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
@@ -58,9 +58,11 @@
 - 🛡️ **安全可信**：所有源码包 SHA256 逐包校验，自建 HTTPS 镜像站，校验清单公开可审计
 - 🧠 **智能推荐**：自动检测硬件配置，推荐最佳 PHP / MySQL / 内存分配器组合
 - ⚙️ **自动优化**：安装后根据内存自动调整 MySQL my.cnf，开箱即用
+- 🌐 **BBR 加速**：自动检测内核版本，一键启用 BBR 拥塞控制，提升网络吞吐
+- 📋 **信息持久化**：安装完成后关键信息自动保存，随时 `nextlnmp info` 查看密码和访问地址
 - 🔄 **零学习成本**：目录结构、管理命令与同类工具完全兼容，老用户无缝切换
 - 📦 **版本丰富**：PHP 5.6 ~ 8.4、MySQL 5.1 ~ 8.4 全版本可选，新老项目全覆盖
-- 🖥️ **即将支持**：内核 BBR 加速一键开启、一键迁移工具、可视化管理界面（规划中）
+- 🖥️ **即将支持**：一键迁移工具、可视化管理界面（规划中）
 
 ---
 
@@ -87,13 +89,13 @@ bash <(curl -sL https://gitee.com/palmmedia/nextlnmp/raw/main/install.sh)
 **方式二：从 Gitee 下载安装（国内快）**
 
 ```bash
-wget https://gitee.com/palmmedia/nextlnmp/releases/download/v1.3.4/nextlnmp-1.3.4.tar.gz && tar zxf nextlnmp-1.3.4.tar.gz && cd nextlnmp-1.3.4 && bash install.sh
+wget https://gitee.com/palmmedia/nextlnmp/releases/download/v1.4.6/nextlnmp-1.4.6.tar.gz && tar zxf nextlnmp-1.4.6.tar.gz && cd nextlnmp-1.4.6 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
 
 ```bash
-wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.3.4/nextlnmp-1.3.4.tar.gz && tar zxf nextlnmp-1.3.4.tar.gz && cd nextlnmp-1.3.4 && bash install.sh
+wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.4.6/nextlnmp-1.4.6.tar.gz && tar zxf nextlnmp-1.4.6.tar.gz && cd nextlnmp-1.4.6 && bash install.sh
 ```
 
 三种方式装出来的东西完全一样，选哪个都行。
@@ -157,11 +159,18 @@ wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.3.4/nextlnmp-1.3.
 # 服务管理
 nextlnmp start|stop|restart|status
 
-# 升级组件（Nginx/PHP/MySQL 独立升级）
-bash upgrade.sh
+# 查看安装信息（密码、访问地址、目录）
+nextlnmp info
+
+# 查看/删除数据库密码
+nextlnmp password
+nextlnmp password --delete
 
 # 虚拟主机管理
-bash addons.sh
+nextlnmp vhost add
+
+# 升级组件（Nginx/PHP/MySQL 独立升级）
+bash upgrade.sh
 
 # 数据库备份
 bash tools/backup.sh
@@ -270,7 +279,7 @@ NextLNMP 的安全不是一句口号，是工程化落地的完整方案：
 ## 📂 目录结构
 
 ```
-nextlnmp-1.3.4/
+nextlnmp-1.4.6/
 ├── install.sh          # 安装入口
 ├── nextlnmp.conf       # 配置文件（镜像源地址等）
 ├── upgrade.sh          # 升级脚本
@@ -350,6 +359,20 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 </details>
 
 ## 🔄 更新日志
+
+### v1.4.6 (2026-02-24)
+- ✅ CI 全自动化发版完成：打包 → SHA256 → GitHub Release → 镜像站同步 → Gitee Release + 附件上传，一个 tag 触发全流程
+- 🔧 修复 Gitee Release API 缺少 `target_commitish` 字段导致创建失败的问题
+
+### v1.4.2 (2026-02-24)
+- 🎨 安装完成界面全面重构：耗时前置，关键信息集中展示，移除无关技术输出
+- 💾 新增安装信息持久化：安装完成后自动保存至 `/root/nextlnmp-info.txt`（权限600），重新 SSH 登录后随时可查
+- 🔧 新增 `nextlnmp info` 命令：一行命令查看完整安装信息（访问地址、数据库密码、常用命令）
+- 🚪 安装完成后自动退出 screen 会话，无需手动操作
+
+### v1.4.1 (2026-02-24)
+- 🐛 修复 Binary 急速安装模式下 `php.ini` 被创建为空文件（0字节）的问题
+- 🐛 修复 Binary 急速安装模式下 `www.conf` PHP-FPM 配置文件缺失的问题
 
 ### v1.4.0 (2026-02-23)
 - 🚀 install.sh 整合 BBR 状态机：自动检测内核版本，支持 BBR 一键启用
