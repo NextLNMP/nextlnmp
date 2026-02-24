@@ -32,6 +32,10 @@ readme = re.sub(r'cd nextlnmp-[\d.]+\b',
 readme = re.sub(r'nextlnmp-[\d.]+/', 
                 f'nextlnmp-{version}/', readme)
 
+# 更新 install.sh 头部注释版本号
+import subprocess
+subprocess.run(['sed', '-i', f's/一键安装引导脚本 v[0-9.]*/一键安装引导脚本 v{version}/', 'install.sh'])
+
 with open('README.md', 'w') as f:
     f.write(readme)
 
