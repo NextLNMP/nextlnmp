@@ -14,7 +14,7 @@ fi
 echo "+-------------------------------------------+"
 echo "|    NextLNMP 服务器管理工具 by 静水流深    |"
 echo "+-------------------------------------------+"
-echo "|              https://nextlnmp.com             |"
+echo "|              https://nextlnmp.cn              |"
 echo "+-------------------------------------------+"
 
 PHPFPMPIDFILE=/usr/local/php/var/run/php-fpm.pid
@@ -457,84 +457,98 @@ Add_VHost()
 {
     domain=""
     while :;do
-        Echo_Yellow "Please enter domain(example: www.nextlnmp.com): "
-        read domain
+        Echo_Yellow "请输入主域名（例如：nextlnmp.cn）："
+        read -e domain
         if [ "${domain}" != "" ] && [[ "$domain" = "${domain%[[:space:]]*}" ]]; then
             if [ -f "/usr/local/nginx/conf/vhost/${domain}.conf" ]; then
-                Echo_Red " ${domain} is exist,please check!"
+                Echo_Red " ${domain} 已存在，请检查！"
                 exit 1
             else
-                echo " Your domain: ${domain}"
+                echo " 主域名：${domain}"
             fi
             break
         else
-            Echo_Red "Domain name can't be empty or contain spaces!"
+            Echo_Red "域名不能为空或包含空格，请重新输入！"
         fi
     done
 
-    Echo_Yellow "Enter more domain name(example: nextlnmp.com sub.nextlnmp.com): "
-    read moredomain
-    echo " domain list: ${domain} ${moredomain}"
+    echo ""
+    Echo_Yellow "请输入其他绑定域名，多个用空格分隔（例如：www.nextlnmp.cn，直接回车跳过）："
+    read -e moredomain
+    if [ "${moredomain}" != "" ]; then
+        echo " 绑定域名列表：${domain} ${moredomain}"
+    fi
 
     vhostdir="/home/wwwroot/${domain}"
-    Echo_Yellow "Please enter the directory for the domain: $domain"
-    echo
-    Echo_Yellow "Default directory: /home/wwwroot/${domain}: "
-    read vhostdir
-    if [ "${vhostdir}" == "" ]; then
-        vhostdir="/home/wwwroot/${domain}"
+    echo ""
+    Echo_Yellow "请输入网站根目录（直接回车使用默认）："
+    echo "默认目录：${vhostdir}"
+    read -e input_vhostdir
+    if [ "${input_vhostdir}" != "" ]; then
+        vhostdir="${input_vhostdir}"
     fi
-    echo "Virtual Host Directory: ${vhostdir}"
+    echo "网站目录：${vhostdir}"
 
-    Echo_Yellow "Allow Rewrite rule? (y/n) "
-    read allow_rewrite
-    if [[ "${allow_rewrite}" == "n" || "${allow_rewrite}" == "" ]]; then
-        rewrite="none"
-    elif [ "${allow_rewrite}" == "y" ]; then
-        rewrite="other"
-        echo "Please enter the rewrite of programme, "
-        echo "wordpress,discuzx,typecho,thinkphp,laravel,codeigniter,yii2,zblog rewrite was exist."
-        Echo_Yellow "(Default rewrite: other): "
-        read rewrite
-        if [ "${rewrite}" == "" ]; then
-            rewrite="other"
-        fi
-    fi
-    echo "You choose rewrite: ${rewrite}"
+    echo ""
+    echo "请选择伪静态规则（几乎所有建站程序都需要）："
+    echo "1. WordPress（推荐，博客/企业站）"
+    echo "2. Typecho（轻量博客）"
+    echo "3. Discuz X（论坛）"
+    echo "4. ThinkPHP"
+    echo "5. Laravel"
+    echo "6. CodeIgniter"
+    echo "7. Yii2"
+    echo "8. ZBlog"
+    echo "9. 不需要伪静态"
+    Echo_Yellow "请输入数字（直接回车默认选 1 WordPress）："
+    read -e rewrite_select
+    case "${rewrite_select}" in
+        2) rewrite="typecho" ;;
+        3) rewrite="discuzx" ;;
+        4) rewrite="thinkphp" ;;
+        5) rewrite="laravel" ;;
+        6) rewrite="codeigniter" ;;
+        7) rewrite="yii2" ;;
+        8) rewrite="zblog" ;;
+        9) rewrite="none" ;;
+        *) rewrite="wordpress" ;;
+    esac
+    echo "已选择伪静态规则：${rewrite}"
 
-    Echo_Yellow "Enable PHP Pathinfo? (y/n) "
-    read enable_pathinfo
-    if [[ "${enable_pathinfo}" == "n" || "${enable_pathinfo}" == "" ]]; then
-        echo "Disable pathinfo."
-        enable_pathinfo="n"
-    elif [ "${enable_pathinfo}" == "y" ]; then
-        echo "Enable pathinfo."
+    echo ""
+    Echo_Yellow "是否启用 PHP Pathinfo？（一般不需要，直接回车关闭）[y/N] "
+    read -e enable_pathinfo
+    if [[ "${enable_pathinfo}" == "y" || "${enable_pathinfo}" == "Y" ]]; then
+        echo "已启用 Pathinfo。"
         enable_pathinfo="y"
+    else
+        echo "Pathinfo 已关闭。"
+        enable_pathinfo="n"
     fi
 
-    Echo_Yellow "Allow access log? (y/n) "
-    read access_log
-    if [[ "${access_log}" == "n" || "${access_log}" == "" ]]; then
-        echo "Disable access log."
-        al="access_log off;"
-    else
-        Echo_Yellow "Enter access log filename(Default:${domain}.log): "
-        read al_name
-        if [ "${al_name}" == "" ]; then
-            al_name="${domain}"
-        fi
+    echo ""
+    Echo_Yellow "是否记录访问日志？（会占用磁盘空间，直接回车关闭）[y/N] "
+    read -e access_log
+    if [[ "${access_log}" == "y" || "${access_log}" == "Y" ]]; then
+        al_name="${domain}"
         al="access_log  /home/wwwlogs/${al_name}.log;"
-        echo "You access log filename: ${al_name}.log"
+        echo "访问日志：/home/wwwlogs/${al_name}.log"
+        access_log="y"
+    else
+        echo "访问日志已关闭。"
+        al="access_log off;"
+        access_log="n"
     fi
 
-    Echo_Yellow "Enable IPv6? (y/n) "
-    read enable_ipv6
-    if [[ "${enable_ipv6}" == "n" || "${enable_ipv6}" == "" ]]; then
-        echo "Disabled IPv6 Support in current Virtualhost."
-        enable_ipv6="n"
-    else
-        echo "Enabled IPv6 Support in current Virtualhost."
+    echo ""
+    Echo_Yellow "是否启用 IPv6？（不了解请直接回车关闭）[y/N] "
+    read -e enable_ipv6
+    if [[ "${enable_ipv6}" == "y" || "${enable_ipv6}" == "Y" ]]; then
+        echo "已启用 IPv6。"
         enable_ipv6="y"
+    else
+        echo "IPv6 已关闭。"
+        enable_ipv6="n"
     fi
 
     Multiple_PHP_Select
@@ -712,16 +726,27 @@ EOF
 Verify_DB_Password()
 {
     Check_DB
+    if [ -f /root/.nextlnmp_db_password ]; then
+        DB_Root_Password=$(cat /root/.nextlnmp_db_password)
+        Make_TempMycnf "${DB_Root_Password}"
+        Do_Query "" >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            echo "已自动读取数据库 root 密码。"
+            return
+        fi
+    fi
     status=1
     while [ $status -eq 1 ]; do
-        Echo_Yellow "Enter current root password of Database (Password will not shown): "
-        read -s DB_Root_Password
-        echo
+        Echo_Yellow "请输入数据库 root 密码："
+        read -e DB_Root_Password
         Make_TempMycnf "${DB_Root_Password}"
-        Do_Query ""
+        Do_Query "" >/dev/null 2>&1
         status=$?
+        if [ $status -ne 0 ]; then
+            Echo_Red "密码错误，请重新输入！"
+        fi
     done
-    echo "OK, MySQL root password correct."
+    echo "数据库 root 密码验证通过。"
 }
 
 Do_Query()
@@ -758,11 +783,26 @@ Enter_Database_Name()
 
 Add_Database_Menu()
 {
-    Enter_Database_Name
-    echo "Your will create a database and MySQL user with same name: ${database_name}"
-    Echo_Yellow "Please enter password for mysql user ${database_name}: "
-    read mysql_password
-    echo "Your password: ${mysql_password} "
+    auto_db_name=$(echo "${domain}" | sed 's/\./_/g' | sed 's/-/_/g' | cut -c1-16)
+    echo ""
+    Echo_Yellow "请输入数据库名（直接回车使用自动生成的：${auto_db_name}）："
+    read -e database_name
+    if [ "${database_name}" == "" ]; then
+        database_name="${auto_db_name}"
+    fi
+    while [ "${database_name}" == "" ]; do
+        Echo_Red "数据库名不能为空，请重新输入："
+        read -e database_name
+    done
+    echo "数据库名：${database_name}"
+    auto_password=$(< /dev/urandom tr -dc 'A-Za-z0-9' | head -c16)
+    echo ""
+    Echo_Yellow "请输入数据库密码（直接回车自动生成随机密码）："
+    read -e mysql_password
+    if [ "${mysql_password}" == "" ]; then
+        mysql_password="${auto_password}"
+    fi
+    Echo_Green "数据库密码：${mysql_password}"
 }
 
 Add_Database()
@@ -1065,14 +1105,21 @@ Add_SSL_Info_Menu()
 Check_Acme_EMail()
 {
     if [ ! -s /usr/local/acme.sh/account.conf ] || ! cat /usr/local/acme.sh/account.conf | grep -Eq "^ACCOUNT_EMAIL="; then
+        default_email="letsencrypt@nextlnmp.cn"
+        echo ""
+        Echo_Yellow "请输入接收 SSL 证书到期提醒的邮箱："
+        echo "（直接回车使用默认：${default_email}，证书到期通知将发至 NextLNMP 官方）"
+        read -e email_address
+        if [ "${email_address}" == "" ]; then
+            email_address="${default_email}"
+        fi
         while :;do
-            Echo_Yellow "Please enter your email address: "
-            read email_address
             if [[ "${email_address}" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$ ]]; then
-                echo "Email address ${email_address} is valid."
+                echo "使用邮箱：${email_address}"
                 break
             else
-                echo "Email address ${email_address} is invalid! Please re-enter."
+                Echo_Red "邮箱格式不正确，请重新输入："
+                read -e email_address
             fi
         done
     fi
@@ -1080,12 +1127,15 @@ Check_Acme_EMail()
 
 Return_301_Menu()
 {
-    Echo_Yellow "Using 301 to Redirect HTTP to HTTPS? (y/n) "
-    read using_301
-    if [[ "${using_301}" == "n" || "${using_301}" == "" ]]; then
-        echo "DO not setting 301 Redirect."
-    elif [ "${using_301}" == "y" ]; then
-        echo "Redirect http://${domain} to https://${domain} "
+    echo ""
+    Echo_Yellow "是否将 HTTP 自动跳转到 HTTPS？（推荐开启，直接回车默认开启）[Y/n] "
+    read -e using_301
+    if [[ "${using_301}" == "n" || "${using_301}" == "N" ]]; then
+        echo "不设置 301 跳转。"
+        using_301="n"
+    else
+        echo "已设置：http://${domain} 自动跳转至 https://${domain}"
+        using_301="y"
     fi
 }
 
@@ -1591,9 +1641,44 @@ case "${arg1}" in
         Function_Ftp ${arg2}
         ;;
     ssl)
-        info="n"
-        Add_SSL_Menu
-        Add_SSL
+        case "${arg2}" in
+            add)
+                echo ""
+                echo "当前已有站点列表："
+                echo "======================================="
+                vhost_list=($(ls /usr/local/nginx/conf/vhost/ | grep ".conf$" | sed 's/.conf//g'))
+                for i in "${!vhost_list[@]}"; do
+                    echo "$((i+1)). ${vhost_list[$i]}"
+                done
+                echo "======================================="
+                Echo_Yellow "请输入数字选择要申请证书的站点（直接回车选第 1 个）："
+                read -e ssl_vhost_select
+                if [ "${ssl_vhost_select}" == "" ]; then
+                    ssl_vhost_select=1
+                fi
+                domain="${vhost_list[$((ssl_vhost_select-1))]}"
+                if [ "${domain}" == "" ]; then
+                    Echo_Red "选择无效！"
+                    exit 1
+                fi
+                echo "已选择站点：${domain}"
+                moredomain=$(grep "server_name" /usr/local/nginx/conf/vhost/${domain}.conf | head -1 | sed "s/server_name//g" | sed "s/${domain}//g" | sed "s/;//g" | tr -s ' ')
+                vhostdir=$(grep "root " /usr/local/nginx/conf/vhost/${domain}.conf | head -1 | awk '{print $2}' | sed 's/;//g')
+                if [ "${vhostdir}" == "" ]; then
+                    vhostdir="/home/wwwroot/${domain}"
+                fi
+                echo "绑定域名：${domain} ${moredomain}"
+                echo "网站目录：${vhostdir}"
+                info="y"
+                Add_SSL_Menu
+                Add_SSL
+                ;;
+            *)
+                info="n"
+                Add_SSL_Menu
+                Add_SSL
+                ;;
+        esac
         ;;
     dnsssl|dns)
         Add_Dns_SSL ${arg2}
