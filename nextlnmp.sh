@@ -225,15 +225,15 @@ LAMP_Stack()
 
 case "${Stack}" in
     nextlnmp)
-        Dispaly_Selection
+        Display_Selection
         nextLNMP_Stack 2>&1 | tee /root/nextlnmp-install.log
         ;;
     nextlnmpa)
-        Dispaly_Selection
+        Display_Selection
         nextLNMPA_Stack 2>&1 | tee /root/nextlnmp-install.log
         ;;
     lamp)
-        Dispaly_Selection
+        Display_Selection
         LAMP_Stack 2>&1 | tee /root/nextlnmp-install.log
         ;;
     nginx)

@@ -566,7 +566,7 @@ malloc-lib=/usr/lib/libtcmalloc.so'
     fi
 }
 
-Dispaly_Selection()
+Display_Selection()
 {
     Smart_Recommend
     Database_Selection
