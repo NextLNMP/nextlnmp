@@ -795,7 +795,7 @@ Enter_Database_Name()
 
 Add_Database_Menu()
 {
-    auto_db_name=$(echo "${domain}" | sed 's/\./_/g' | sed 's/-/_/g' | cut -c1-16)
+    auto_db_name=$(echo "${domain}" | sed 's/\.//g' | sed 's/-//g' | cut -c1-16)
     echo ""
     Echo_Yellow "请输入数据库名（直接回车使用自动生成的：${auto_db_name}）："
     read -e database_name
