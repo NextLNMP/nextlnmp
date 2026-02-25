@@ -104,21 +104,24 @@ jobs:
           VERSION: ${{ steps.version.outputs.VERSION }}
           SHA256: ${{ steps.sha256.outputs.SHA256 }}
         run: |
-          RELEASE=$(curl -s -X POST "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"access_token\": \"${GITEE_TOKEN}\",
-              \"tag_name\": \"v${VERSION}\",
-              \"name\": \"NextLNMP v${VERSION}\",
-              \"body\": \"## ⚡ 一行安装\\n\`\`\`bash\\nbash <(curl -sL https://gitee.com/palmmedia/nextlnmp/raw/main/install.sh)\\n\`\`\`\\n## 📦 SHA256\\n\`${SHA256}  nextlnmp-${VERSION}.tar.gz\`\",
-              \"target_commitish\": \"main\",
-              \"prerelease\": false
-            }")
+          # 先删除已存在的同名 release（防止重发版冲突）
+          OLD_ID=$(curl -s "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases/tags/v${VERSION}?access_token=${GITEE_TOKEN}" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || echo "")
+          if [ -n "$OLD_ID" ] && [ "$OLD_ID" != "None" ] && [ "$OLD_ID" != "" ]; then
+            echo "Deleting old Gitee release: $OLD_ID"
+            curl -s -X DELETE "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases/${OLD_ID}?access_token=${GITEE_TOKEN}"
+          fi
+          # 创建新 release
+          BODY=$(cat CHANGELOG_DRAFT.md 2>/dev/null || echo "详见 README")
+          RELEASE=$(curl -s -X POST "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases"             -H "Content-Type: application/json"             -d "$(python3 -c "import json; print(json.dumps({
+              'access_token': '${GITEE_TOKEN}',
+              'tag_name': 'v${VERSION}',
+              'name': 'NextLNMP v${VERSION}',
+              'body': open('CHANGELOG_DRAFT.md').read() if __import__('os').path.exists('CHANGELOG_DRAFT.md') else 'See README',
+              'target_commitish': 'main',
+              'prerelease': False
+            }))")")
           echo "Gitee API response: $RELEASE"
           RELEASE_ID=$(echo $RELEASE | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
           echo "Gitee Release ID: $RELEASE_ID"
-          curl -s -X POST "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases/${RELEASE_ID}/attach_files" \
-            -H "Content-Type: multipart/form-data" \
-            -F "access_token=${GITEE_TOKEN}" \
-            -F "file=@nextlnmp-${VERSION}.tar.gz"
+          curl -s -X POST "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases/${RELEASE_ID}/attach_files"             -H "Content-Type: multipart/form-data"             -F "access_token=${GITEE_TOKEN}"             -F "file=@nextlnmp-${VERSION}.tar.gz"
           echo "Gitee Release attachment uploaded"
