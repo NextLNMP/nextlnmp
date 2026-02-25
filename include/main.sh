@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-DB_Info=('MySQL 5.1.73' 'MySQL 5.5.62' 'MySQL 5.6.51' 'MySQL 5.7.44' 'MySQL 8.0.37' 'MariaDB 5.5.68' 'MariaDB 10.4.33' 'MariaDB 10.5.24' 'MariaDB 10.6.17' 'MariaDB 10.11.7' 'MySQL 8.4.0')
-PHP_Info=('PHP 5.2.17' 'PHP 5.3.29' 'PHP 5.4.45' 'PHP 5.5.38' 'PHP 5.6.40' 'PHP 7.0.33' 'PHP 7.1.33' 'PHP 7.2.34' 'PHP 7.3.33' 'PHP 7.4.33' 'PHP 8.0.30' 'PHP 8.1.28' 'PHP 8.2.19' 'PHP 8.3.7' 'PHP 8.4.18')
+DB_Info=('MySQL 5.1.73' 'MySQL 5.5.62' 'MySQL 5.6.51' 'MySQL 5.7.44' 'MySQL 8.0.37' 'MariaDB 5.5.68' 'MariaDB 10.4.33' 'MariaDB 10.5.24' 'MariaDB 10.6.17' 'MariaDB 10.11.7' 'MySQL 8.4.4')
+PHP_Info=('PHP 5.2.17' 'PHP 5.3.29' 'PHP 5.4.45' 'PHP 5.5.38' 'PHP 5.6.40' 'PHP 7.0.33' 'PHP 7.1.33' 'PHP 7.2.34' 'PHP 7.3.33' 'PHP 7.4.33' 'PHP 8.0.30' 'PHP 8.1.28' 'PHP 8.2.28' 'PHP 8.3.7' 'PHP 8.4.18')
 Apache_Info=('Apache 2.2.34' 'Apache 2.4.57')
 
 # ── 智能推荐：根据硬件自动计算最优安装方案 ──
@@ -460,7 +460,8 @@ PHP_Selection()
         echo "12: 安装 ${PHP_Info[11]}"
         echo "13: 安装 ${PHP_Info[12]}"
         echo "14: 安装 ${PHP_Info[13]}"
-        read -p "请输入选项（回车默认 13=PHP 8.2 推荐）： " PHPSelect
+        echo "15: 安装 ${PHP_Info[14]}"
+        read -p "请输入选项（回车默认 13=PHP 8.2 推荐，15=PHP 8.4）： " PHPSelect
     fi
 
     case "${PHPSelect}" in
@@ -509,6 +510,9 @@ PHP_Selection()
         ;;
     14)
         echo "即将安装 ${PHP_Info[13]}"
+        ;;
+    15)
+        echo "即将安装 ${PHP_Info[14]}"
         ;;
     *)
         echo "未输入，使用推荐配置 PHP 8.2"
