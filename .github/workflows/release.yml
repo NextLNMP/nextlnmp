@@ -20,22 +20,17 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
 
-      - name: Update version numbers on main branch
+      - name: Update version in install.sh
         run: |
           git checkout main
-          sed -i 's/NEXTLNMP_VER=\".*\"/NEXTLNMP_VER=\"${{ steps.version.outputs.VERSION }}\"/' install.sh
+          sed -i 's/NEXTLNMP_VER=".*"/NEXTLNMP_VER="${{ steps.version.outputs.VERSION }}"/' install.sh
           sed -i "s/NEXTLNMP_Ver='[0-9.]*'/NEXTLNMP_Ver='${{ steps.version.outputs.VERSION }}'/" nextlnmp.sh
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add install.sh nextlnmp.sh
-          git diff --cached --quiet || git commit -m "chore: bump version to ${{ steps.version.outputs.VERSION }}"
-          git push origin main
 
       - name: Create tarball
         run: |
-          git checkout main
-          git pull origin main
+          git stash
           git archive --format=tar.gz --prefix=nextlnmp-${{ steps.version.outputs.VERSION }}/ -o nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz main
+          git stash pop || true
 
       - name: Calculate SHA256
         id: sha256
@@ -44,15 +39,22 @@ jobs:
           echo "SHA256=${SHA}" >> $GITHUB_OUTPUT
           echo "📦 SHA256: ${SHA}"
 
-      - name: Update install.sh SHA256 on main branch
+      - name: Update SHA256 in install.sh
         run: |
-          git checkout main
-          git pull origin main
           sed -i "s/TARBALL_SHA256=\".*\"/TARBALL_SHA256=\"${{ steps.sha256.outputs.SHA256 }}\"/" install.sh
+
+      - name: Update README
+        run: |
+          export VERSION=${{ steps.version.outputs.VERSION }}
+          export DATE=$(date '+%Y-%m-%d')
+          python3 tools/update_readme.py
+
+      - name: Push all changes in one commit
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add install.sh
-          git diff --cached --quiet || git commit -m "chore: fill TARBALL_SHA256 for ${{ github.ref_name }}"
+          git add install.sh nextlnmp.sh README.md CHANGELOG_DRAFT.md
+          git diff --cached --quiet || git commit -m "chore: release v${{ steps.version.outputs.VERSION }} (version, SHA256, README)"
           git push origin main
 
       - name: Create GitHub Release
@@ -61,10 +63,9 @@ jobs:
           name: "${{ github.ref_name }}"
           body: |
             ## ⚡ 一行安装
-
-            ```bash
+```bash
             bash <(curl -sL https://raw.githubusercontent.com/adsorgcn/nextlnmp/main/install.sh)
-            ```
+```
 
             ## 📦 SHA256
 
@@ -74,6 +75,7 @@ jobs:
 
             更新内容详见 [README 更新日志](https://github.com/adsorgcn/nextlnmp#-%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97)
           files: nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz
+
       - name: Sync to mirror server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -84,25 +86,13 @@ jobs:
             cd /data/mirror
             wget -q -O nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz https://github.com/NextLNMP/nextlnmp/releases/download/v${{ steps.version.outputs.VERSION }}/nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz
             echo "Mirror synced: nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz"
-      - name: Update README and version
-        run: |
-          git checkout main
-          git pull origin main
-          export VERSION=${{ steps.version.outputs.VERSION }}
-          export DATE=$(date '+%Y-%m-%d')
-          python3 tools/update_readme.py
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md CHANGELOG_DRAFT.md
-          git diff --cached --quiet || git commit -m "docs: 自动更新 README 至 v${VERSION}"
-          git push origin main
+
       - name: Create Gitee Release
         env:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
           VERSION: ${{ steps.version.outputs.VERSION }}
           SHA256: ${{ steps.sha256.outputs.SHA256 }}
         run: |
-          # 创建 Release
           RELEASE=$(curl -s -X POST "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases" \
             -H "Content-Type: application/json" \
             -d "{
@@ -116,7 +106,6 @@ jobs:
           echo "Gitee API response: $RELEASE"
           RELEASE_ID=$(echo $RELEASE | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
           echo "Gitee Release ID: $RELEASE_ID"
-          # 上传附件
           curl -s -X POST "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases/${RELEASE_ID}/attach_files" \
             -H "Content-Type: multipart/form-data" \
             -F "access_token=${GITEE_TOKEN}" \
