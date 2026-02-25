@@ -230,12 +230,25 @@ Print_Sucess_Info()
     stop_time=$(date +%s)
     local COST_MIN=$(((stop_time-start_time)/60))
 
+    # 中英文混排对齐函数（中文占2列，ASCII占1列，兼容任何locale）
+    _pad() {
+        local content="$1"
+        local total=62
+        local total_bytes=$(printf '%s' "$content" | wc -c)
+        local ascii_bytes=$(printf '%s' "$content" | LC_ALL=C tr -d '[\200-\377]' | wc -c)
+        local non_ascii_bytes=$((total_bytes - ascii_bytes))
+        local display_width=$((ascii_bytes + non_ascii_bytes * 2 / 3))
+        local pad=$((total - display_width))
+        [ $pad -lt 1 ] && pad=1
+        printf "|%s%${pad}s|" "$content" ""
+    }
+
     echo ""
     Echo_Green "+==============================================================+"
     Echo_Green "|                                                              |"
-    Echo_Green "|      ✅ NextLNMP v${NEXTLNMP_Ver} 安装成功！耗时 ${COST_MIN} 分钟       |"
-    Echo_Green "|         系统：${DISTRO} Linux · 作者：静水流深               |"
-    Echo_Green "|         中国站长论坛：https://cnwebmasters.com               |"
+    Echo_Green "$(_pad "  NextLNMP v${NEXTLNMP_Ver} 安装成功！耗时 ${COST_MIN} 分钟")"
+    Echo_Green "$(_pad "  系统：${DISTRO} Linux · 作者：静水流深")"
+    Echo_Green "$(_pad "  中国站长论坛：https://cnwebmasters.com")"
     Echo_Green "|                                                              |"
     Echo_Green "+==============================================================+"
     echo "|"

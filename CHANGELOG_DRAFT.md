@@ -1,0 +1,2 @@
+- 🐛 修复 uninstall.sh 版本号显示为空（未从 nextlnmp.sh 读取 NEXTLNMP_Ver）
+- 🔧 uninstall.sh / 安装完成界面 banner 右边框自动对齐（支持中英文混排动态计算列宽）

@@ -10,12 +10,29 @@ cur_dir=$(pwd)
 . ${cur_dir}/nextlnmp.conf
 . ${cur_dir}/include/main.sh
 
+# 从 nextlnmp.sh 读取版本号
+NEXTLNMP_Ver=$(grep "^NEXTLNMP_Ver=" ${cur_dir}/nextlnmp.sh 2>/dev/null | cut -d"'" -f2)
+[ -z "$NEXTLNMP_Ver" ] && NEXTLNMP_Ver="unknown"
+
 Get_Dist_Name
+
+# 中英文混排对齐函数（中文占2列，ASCII占1列，兼容任何locale）
+pad_line() {
+    local content="$1"
+    local total=58
+    local total_bytes=$(printf '%s' "$content" | wc -c)
+    local ascii_bytes=$(printf '%s' "$content" | LC_ALL=C tr -d '[\200-\377]' | wc -c)
+    local non_ascii_bytes=$((total_bytes - ascii_bytes))
+    local display_width=$((ascii_bytes + non_ascii_bytes * 2 / 3))
+    local pad=$((total - display_width))
+    [ $pad -lt 1 ] && pad=1
+    printf "|%s%${pad}s|\n" "$content" ""
+}
 
 clear
 echo "+----------------------------------------------------------+"
-echo "|         NextLNMP v${NEXTLNMP_Ver} 卸载程序                       |"
-echo "|         官网：https://nextlnmp.cn                       |"
+pad_line "  NextLNMP v${NEXTLNMP_Ver} 卸载程序"
+pad_line "  官网：https://nextlnmp.cn"
 echo "+----------------------------------------------------------+"
 echo ""
 echo "请选择操作："

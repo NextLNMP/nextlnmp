@@ -15,7 +15,7 @@ else
     Stack=$1
 fi
 
-NEXTLNMP_Ver='1.5.3'
+NEXTLNMP_Ver='1.5.4'
 . nextlnmp.conf
 . include/main.sh
 . include/init.sh
