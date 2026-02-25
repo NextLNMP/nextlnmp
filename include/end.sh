@@ -344,7 +344,7 @@ Check_nextLNMPA_Install()
     Check_DB_Files
     Check_PHP_Files
     Check_Apache_Files
-    if [[ "${isNginx}" = "ok" && "${isDB}" = "ok" && "${isPHP}" = "ok"  &&"${isApache}" = "ok" ]]; then
+    if [[ "${isNginx}" = "ok" && "${isDB}" = "ok" && "${isPHP}" = "ok"  && "${isApache}" = "ok" ]]; then
         Print_Sucess_Info
     else
         Print_Failed_Info

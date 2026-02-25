@@ -121,9 +121,6 @@ case "$action" in
     rm -f /root/nextlnmp-info.txt
     rm -rf /root/nextlnmp
 
-    apt-get remove -y nginx mysql-server mysql-client php* 2>/dev/null
-    apt-get autoremove -y 2>/dev/null
-    apt-get autoclean 2>/dev/null
     Echo_Green "恢复出厂完成，服务器已恢复至初始状态。"
     ;;
 *)
