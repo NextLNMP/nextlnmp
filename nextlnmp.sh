@@ -47,12 +47,24 @@ fi
 Check_nextLNMPConf
 
 clear
+# Dynamic banner with CJK-aware padding (inner width=72)
+_banner_pad() {
+    local text="$1" width=72
+    local byte_len=${#text}
+    local ascii_only=$(printf '%s' "$text" | tr -dc '\x00-\x7F' | wc -c)
+    local non_ascii=$(( byte_len - ascii_only ))
+    local display_width=$(( ascii_only + non_ascii * 2 / 3 ))
+    local pad=$(( width - display_width ))
+    local left=$(( pad / 2 ))
+    local right=$(( pad - left ))
+    printf '|%*s%s%*s|\n' $left '' "$text" $right ''
+}
 echo "+------------------------------------------------------------------------+"
-echo "|          NextLNMP v1.4.2 一键建站安装程序                    |"
+_banner_pad "NextLNMP v${NEXTLNMP_Ver} 一键建站安装程序"
 echo "+------------------------------------------------------------------------+"
-echo "|        安全可信 · SHA256 逐包校验 · 掌媒科技出品              |"
+_banner_pad "安全可信 · SHA256 逐包校验 · 掌媒科技出品"
 echo "+------------------------------------------------------------------------+"
-echo "|           官网：nextlnmp.com · QQ群：615298                    |"
+_banner_pad "官网：nextlnmp.com · QQ群：615298"
 echo "+------------------------------------------------------------------------+"
 
 Init_Install()

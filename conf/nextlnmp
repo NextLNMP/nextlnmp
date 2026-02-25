@@ -14,7 +14,7 @@ fi
 echo "+-------------------------------------------+"
 echo "|    NextLNMP 服务器管理工具 by 静水流深    |"
 echo "+-------------------------------------------+"
-echo "|              https://nextlnmp.cn              |"
+echo "|          https://nextlnmp.cn              |"
 echo "+-------------------------------------------+"
 
 PHPFPMPIDFILE=/usr/local/php/var/run/php-fpm.pid
@@ -67,10 +67,10 @@ lnmp_reload()
 lnmp_kill()
 {
     echo "Kill nginx,php-fpm,mysql process..."
-    killall nginx
-    killall mysqld
-    killall php-fpm
-    killall php-cgi
+    pkill -9 nginx 2>/dev/null
+    pkill -9 mysqld 2>/dev/null
+    pkill -9 php-fpm 2>/dev/null
+    pkill -9 php-cgi 2>/dev/null
     echo "done."
 }
 
@@ -78,7 +78,7 @@ lnmp_status()
 {
     /etc/init.d/nginx status
     if [ -f $PHPFPMPIDFILE ]; then
-        echo "php-fpm is runing!"
+        echo "php-fpm is running!"
     else
         echo "php-fpm is stop!"
     fi
@@ -165,9 +165,9 @@ Function_Ftp()
 Add_VHost_Config()
 {
     if [ ! -f /usr/local/nginx/conf/rewrite/${rewrite}.conf ]; then
-        echo "Create Virtul Host Rewrite file......"
+        echo "Create Virtual Host Rewrite file......"
         touch /usr/local/nginx/conf/rewrite/${rewrite}.conf
-        echo "Create rewirte file successful,You can add rewrite rule into /usr/local/nginx/conf/rewrite/${rewrite}.conf."
+        echo "Create rewrite file successful,You can add rewrite rule into /usr/local/nginx/conf/rewrite/${rewrite}.conf."
     else
         echo "You select the exist rewrite rule:/usr/local/nginx/conf/rewrite/${rewrite}.conf"
     fi
@@ -345,7 +345,7 @@ Multiple_PHP_Select()
                 fi
                 ;;
             7)
-                echo "Current selection:: PHP `/usr/local/php7.0/bin/php-config --version`"
+                echo "Current selection: PHP `/usr/local/php7.0/bin/php-config --version`"
                 if [ "${enable_pathinfo}" == "y" ]; then
                     include_enable_php="include enable-php7.0-pathinfo.conf;"
                     if [ ! -s /usr/local/nginx/conf/enable-php7.0-pathinfo.conf ]; then
@@ -357,7 +357,7 @@ Multiple_PHP_Select()
                 fi
                 ;;
             8)
-                echo "Current selection:: PHP `/usr/local/php7.1/bin/php-config --version`"
+                echo "Current selection: PHP `/usr/local/php7.1/bin/php-config --version`"
                 if [ "${enable_pathinfo}" == "y" ]; then
                     include_enable_php="include enable-php7.1-pathinfo.conf;"
                     if [ ! -s /usr/local/nginx/conf/enable-php7.1-pathinfo.conf ]; then
@@ -369,7 +369,7 @@ Multiple_PHP_Select()
                 fi
                 ;;
             9)
-                echo "Current selection:: PHP `/usr/local/php7.2/bin/php-config --version`"
+                echo "Current selection: PHP `/usr/local/php7.2/bin/php-config --version`"
                 if [ "${enable_pathinfo}" == "y" ]; then
                     include_enable_php="include enable-php7.2-pathinfo.conf;"
                     if [ ! -s /usr/local/nginx/conf/enable-php7.2-pathinfo.conf ]; then
@@ -381,7 +381,7 @@ Multiple_PHP_Select()
                 fi
                 ;;
             10)
-                echo "Current selection:: PHP `/usr/local/php7.3/bin/php-config --version`"
+                echo "Current selection: PHP `/usr/local/php7.3/bin/php-config --version`"
                 if [ "${enable_pathinfo}" == "y" ]; then
                     include_enable_php="include enable-php7.3-pathinfo.conf;"
                     if [ ! -s /usr/local/nginx/conf/enable-php7.3-pathinfo.conf ]; then
@@ -393,7 +393,7 @@ Multiple_PHP_Select()
                 fi
                 ;;
             11)
-                echo "Current selection:: PHP `/usr/local/php7.4/bin/php-config --version`"
+                echo "Current selection: PHP `/usr/local/php7.4/bin/php-config --version`"
                 if [ "${enable_pathinfo}" == "y" ]; then
                     include_enable_php="include enable-php7.4-pathinfo.conf;"
                     if [ ! -s /usr/local/nginx/conf/enable-php7.4-pathinfo.conf ]; then
@@ -405,7 +405,7 @@ Multiple_PHP_Select()
                 fi
                 ;;
             12)
-                echo "Current selection:: PHP `/usr/local/php8.0/bin/php-config --version`"
+                echo "Current selection: PHP `/usr/local/php8.0/bin/php-config --version`"
                 if [ "${enable_pathinfo}" == "y" ]; then
                     include_enable_php="include enable-php8.0-pathinfo.conf;"
                     if [ ! -s /usr/local/nginx/conf/enable-php8.0-pathinfo.conf ]; then
@@ -417,7 +417,7 @@ Multiple_PHP_Select()
                 fi
                 ;;
             13)
-                echo "Current selection:: PHP `/usr/local/php8.1/bin/php-config --version`"
+                echo "Current selection: PHP `/usr/local/php8.1/bin/php-config --version`"
                 if [ "${enable_pathinfo}" == "y" ]; then
                     include_enable_php="include enable-php8.1-pathinfo.conf;"
                     if [ ! -s /usr/local/nginx/conf/enable-php8.1-pathinfo.conf ]; then
@@ -429,7 +429,7 @@ Multiple_PHP_Select()
                 fi
                 ;;
             14)
-                echo "Current selection:: PHP `/usr/local/php8.2/bin/php-config --version`"
+                echo "Current selection: PHP `/usr/local/php8.2/bin/php-config --version`"
                 if [ "${enable_pathinfo}" == "y" ]; then
                     include_enable_php="include enable-php8.2-pathinfo.conf;"
                     if [ ! -s /usr/local/nginx/conf/enable-php8.2-pathinfo.conf ]; then
@@ -515,15 +515,21 @@ Add_VHost()
     esac
     echo "已选择伪静态规则：${rewrite}"
 
-    echo ""
-    echo "是否启用 PHP Pathinfo？（一般不需要，直接回车关闭）[y/N] "
-    read -e enable_pathinfo
-    if [[ "${enable_pathinfo}" == "y" || "${enable_pathinfo}" == "Y" ]]; then
-        echo "已启用 Pathinfo。"
+    # Typecho/ThinkPHP/Laravel/Yii2 需要 pathinfo，自动开启
+    if [[ "${rewrite}" == "typecho" || "${rewrite}" == "thinkphp" || "${rewrite}" == "laravel" || "${rewrite}" == "yii2" ]]; then
         enable_pathinfo="y"
+        Echo_Green "已自动启用 Pathinfo（${rewrite} 需要此功能）。"
     else
-        echo "Pathinfo 已关闭。"
-        enable_pathinfo="n"
+        echo ""
+        echo "是否启用 PHP Pathinfo？（Typecho/ThinkPHP/Laravel 需要，WordPress/Discuz 不需要）[y/N] "
+        read -e enable_pathinfo
+        if [[ "${enable_pathinfo}" == "y" || "${enable_pathinfo}" == "Y" ]]; then
+            echo "已启用 Pathinfo。"
+            enable_pathinfo="y"
+        else
+            echo "Pathinfo 已关闭。"
+            enable_pathinfo="n"
+        fi
     fi
 
     echo ""
@@ -567,7 +573,7 @@ Add_VHost()
     fi
 
     if [ -s /usr/local/pureftpd/sbin/pure-ftpd ]; then
-        Echo_Yellow "Create ftp account (y/n) "
+        Echo_Yellow "是否创建 FTP 账号？[y/N] "
         read create_ftp
 
         if [ "${create_ftp}" == "y" ]; then
@@ -586,13 +592,13 @@ Add_VHost()
     fi
 
     echo ""
-    echo "Press any key to start create virtul host..."
+    echo "按任意键开始创建虚拟主机..."
     OLDCONFIG=`stty -g`
     stty -icanon -echo min 1 time 0
     dd count=1 2>/dev/null
     stty ${OLDCONFIG}
 
-    echo "Create Virtul Host directory......"
+    echo "创建网站目录..."
     mkdir -p ${vhostdir}
     if [ "${access_log}" == "y" ]; then
         touch /home/wwwlogs/${al_name}.log
@@ -602,7 +608,7 @@ Add_VHost()
         chattr -i "${vhostdir}/.user.ini" 2>/dev/null
         rm -f "${vhostdir}/.user.ini"
     fi
-    echo "set permissions of Virtual Host directory......"
+    echo "设置目录权限..."
     chmod -R 755 ${vhostdir}
     chown -R www:www ${vhostdir}
     Add_VHost_Config
@@ -631,85 +637,90 @@ EOF
     fi
 
     Echo_Green "================================================"
-    echo "Virtualhost infomation:"
-    echo "Your domain: ${domain}"
-    echo "Home Directory: ${vhostdir}"
-    echo "Rewrite: ${rewrite}"
+    echo "虚拟主机信息："
+    echo "域名：${domain}"
+    echo "网站目录：${vhostdir}"
+    echo "伪静态：${rewrite}"
     if [ "${access_log}" == "n" ]; then
-        echo "Enable log: no"
+        echo "访问日志：关闭"
     else
-        echo "Enable log: yes"
+        echo "访问日志：/home/wwwlogs/${al_name}.log"
     fi
     if [ "${create_database}" == "y" ]; then
-        echo "Database username: ${database_name}"
-        echo "Database userpassword: ${mysql_password}"
-        echo "Database Name: ${database_name}"
+        echo "数据库名：${database_name}"
+        echo "数据库用户：${database_name}"
+        echo "数据库密码：${mysql_password}"
     else
-        echo "Create database: no"
+        echo "创建数据库：否"
     fi
     if [ "${create_ftp}" == "y" ]; then
-        echo "FTP account name: ${ftp_account_name}"
-        echo "FTP account password: ${ftp_account_password}"
-    else
-        echo "Create ftp account: no"
+        echo "FTP 用户：${ftp_account_name}"
+        echo "FTP 密码：${ftp_account_password}"
     fi
     if [ "${create_ssl}" == "y" ]; then
-        echo "Enable SSL: yes"
-        if [ "${ssl_choice}" == "1" ]; then
-            echo "  =>Certificate file"
-        elif [ "${ssl_choice}" == "2" ]; then
-            echo "  =>Let's Encrypt"
+        echo "SSL 证书：已申请"
+        if [ "${ssl_choice}" == "2" ]; then
+            echo "  => Let's Encrypt"
         elif [ "${ssl_choice}" == "3" ]; then
-            echo "  =>BuyPass"
+            echo "  => BuyPass"
         elif [ "${ssl_choice}" == "4" ]; then
-            echo "  =>ZeroSSL"
+            echo "  => ZeroSSL"
+        elif [ "${ssl_choice}" == "1" ]; then
+            echo "  => 自有证书"
         fi
     fi
     if [ "${enable_ipv6}" == "y" ]; then
-        echo "IPv6 Support: Enabled"
-    else
-        echo "IPv6 Support: Disabled"
+        echo "IPv6：已启用"
+    fi
+    if [ "${enable_pathinfo}" == "y" ]; then
+        echo "Pathinfo：已启用"
     fi
     Echo_Green "================================================"
+    echo ""
+    echo "💡 部署网站程序提示："
+    echo "   cd ${vhostdir}"
+    echo "   chattr -i .user.ini        # 先解锁"
+    echo "   （上传/解压网站文件...）"
+    echo "   chown -R www:www .         # 设置权限"
+    echo "   chattr +i .user.ini        # 再锁回"
 }
 
 List_VHost()
 {
-    echo "Nginx Virtualhost list:"
+    echo "当前虚拟主机列表："
     ls /usr/local/nginx/conf/vhost/ | grep ".conf$" | sed 's/.conf//g'
 }
 
 Del_VHost()
 {
     echo "======================================="
-    echo "Current Virtualhost:"
+    echo "当前虚拟主机："
     List_VHost
     echo "======================================="
     domain=""
     while :;do
-        Echo_Yellow "Please enter domain you want to delete: "
+        Echo_Yellow "请输入要删除的域名："
         read domain
         if [ "${domain}" == "" ]; then
-            Echo_Red "Domain name can't be empty."
+            Echo_Red "域名不能为空！"
         else
             break
         fi
     done
     if [ ! -f "/usr/local/nginx/conf/vhost/${domain}.conf" ]; then
-        echo "=========================================="
-        echo "Domain: ${domain} was not exist!"
-        echo "=========================================="
+        Echo_Red "${domain} 不存在！"
         exit 1
     else
+        vhostdir=$(grep -m1 'root ' /usr/local/nginx/conf/vhost/${domain}.conf | awk '{print $2}' | sed 's/;//g')
         if [ -f "${vhostdir}/.user.ini" ]; then
             chattr -i "${vhostdir}/.user.ini"
             rm -f "${vhostdir}/.user.ini"
         fi
         rm -f /usr/local/nginx/conf/vhost/${domain}.conf
         echo "========================================================"
-        echo "Domain: ${domain} has been deleted."
-        echo "Website files will not be deleted for security reasons."
-        echo "You need to manually delete the website files."
+        echo "✓ 虚拟主机 ${domain} 已删除"
+        echo "  网站文件未删除（安全起见），如需删除请手动执行："
+        echo "  rm -rf ${vhostdir}"
         echo "========================================================"
     fi
 }
@@ -847,14 +858,14 @@ EOF
 
     fi
     ${MySQL_Bin} --defaults-file=~/.my.cnf < /tmp/.add_mysql.sql
-    [ $? -eq 0 ] && echo "Add database Sucessfully." || echo "Add database failed!"
+    [ $? -eq 0 ] && echo "Add database Successfully." || echo "Add database failed!"
     rm -f /tmp/.add_mysql.sql
 }
 
 List_Database()
 {
     ${MySQL_Bin} --defaults-file=~/.my.cnf -e "SHOW DATABASES;"
-    [ $? -eq 0 ] && echo "List all databases Sucessfully." || echo "List all databases failed!"
+    [ $? -eq 0 ] && echo "List all databases Successfully." || echo "List all databases failed!"
 }
 
 Edit_Database()
@@ -886,7 +897,7 @@ Edit_Database()
     else
         Do_Query "UPDATE mysql.user SET Password=PASSWORD('${database_username_passwd}') WHERE User='${database_username}' AND Host IN ('localhost', '127.0.0.1', '::1');"
     fi
-    [ $? -eq 0 ] && echo "Edit user password Sucessfully." || echo "Edit user password databases failed!"
+    [ $? -eq 0 ] && echo "Edit user password Successfully." || echo "Edit user password databases failed!"
     Do_Query "FLUSH PRIVILEGES;"
 }
 
@@ -908,7 +919,7 @@ DROP DATABASE \`${database_name}\`;
 FLUSH PRIVILEGES;
 EOF
     ${MySQL_Bin} --defaults-file=~/.my.cnf < /tmp/.del.mysql.sql
-    [ $? -eq 0 ] && echo "Delete database: ${database_name} Sucessfully." || echo "Delete database: ${database_name} failed!"
+    [ $? -eq 0 ] && echo "Delete database: ${database_name} Successfully." || echo "Delete database: ${database_name} failed!"
     rm -f /tmp/.del.mysql.sql
 }
 
@@ -971,14 +982,14 @@ ${ftp_account_password}
 ${ftp_account_password}
 EOF
     /usr/local/pureftpd/bin/pure-pw useradd ${ftp_account_name} -f /usr/local/pureftpd/etc/pureftpd.passwd -u ${www_uid} -g ${www_gid} -d ${vhostdir} -m < /tmp/pass${ftp_account_name}
-    [ $? -eq 0 ] && echo "Created FTP User: ${ftp_account_name} Sucessfully." || echo "FTP User: ${ftp_account_name} already exists!"
+    [ $? -eq 0 ] && echo "Created FTP User: ${ftp_account_name} Successfully." || echo "FTP User: ${ftp_account_name} already exists!"
     rm -f /tmp/pass${ftp_account_name}
 }
 
 List_Ftp()
 {
     /usr/local/pureftpd/bin/pure-pw list -f /usr/local/pureftpd/etc/pureftpd.passwd
-    [ $? -eq 0 ] && echo "List FTP User Sucessfully." || echo "Read database failed."
+    [ $? -eq 0 ] && echo "List FTP User Successfully." || echo "Read database failed."
 }
 
 Edit_Ftp()
@@ -993,7 +1004,7 @@ ${ftp_account_password}
 ${ftp_account_password}
 EOF
         /usr/local/pureftpd/bin/pure-pw passwd ${ftp_account_name} -f /usr/local/pureftpd/etc/pureftpd.passwd -m < /tmp/pass${ftp_account_name}
-        [ $? -eq 0 ] && echo "FTP User: ${ftp_account_name} change password Sucessfully." || echo "FTP User: ${ftp_account_name} change password failed!"
+        [ $? -eq 0 ] && echo "FTP User: ${ftp_account_name} change password Successfully." || echo "FTP User: ${ftp_account_name} change password failed!"
         rm -f /tmp/pass${ftp_account_name}
     else
         echo "FTP password will not change."
@@ -1008,7 +1019,7 @@ EOF
             chown www:www -R ${vhostdir}
         fi
         /usr/local/pureftpd/bin/pure-pw usermod ${ftp_account_name} -f /usr/local/pureftpd/etc/pureftpd.passwd -u ${www_uid} -g ${www_gid} -d ${vhostdir} -m
-        [ $? -eq 0 ] && echo "FTP User: ${ftp_account_name} change diretcory Sucessfully." || echo "FTP User: ${ftp_account_name} change directory failed!"
+        [ $? -eq 0 ] && echo "FTP User: ${ftp_account_name} change directory Successfully." || echo "FTP User: ${ftp_account_name} change directory failed!"
     else
         echo "Directory will not change."
     fi
@@ -1022,7 +1033,7 @@ Del_Ftp()
     echo "Sleep 3s,Press ctrl+c to cancel..."
     Sleep_Sec 3
     /usr/local/pureftpd/bin/pure-pw userdel ${ftp_account_name} -f /usr/local/pureftpd/etc/pureftpd.passwd -m
-    [ $? -eq 0 ] && echo "FTP User: ${ftp_account_name} deleted Sucessfully." || echo "FTP User: ${ftp_account_name} not exists!"
+    [ $? -eq 0 ] && echo "FTP User: ${ftp_account_name} deleted Successfully." || echo "FTP User: ${ftp_account_name} not exists!"
 }
 
 Show_Ftp()
@@ -1480,7 +1491,7 @@ Add_Dns_SSL()
     fi
     if [ "${lets_status}" = 0 ] || [[ "${provider}" = "" && "${lets_status}" = 1 && -s "/usr/local/nginx/conf/ssl/${domain}/fullchain.cer" ]]; then
         if [ ! -d "${vhostdir}" ]; then
-            echo "Create Virtul Host directory......"
+            echo "Create Virtual Host directory......"
             mkdir -p ${vhostdir}
             echo "set permissions of Virtual Host directory......"
             chmod -R 755 ${vhostdir}
@@ -1703,16 +1714,6 @@ case "${arg1}" in
     onlyssl)
         Add_Dns_SSL_Only ${arg2}
         ;;
-    *)
-        echo "Usage: lnmp {start|stop|reload|restart|kill|status}"
-        echo "Usage: lnmp {nginx|mysql|mariadb|php-fpm|pureftpd} {start|stop|reload|restart|kill|status}"
-        echo "Usage: lnmp vhost {add|list|del}"
-        echo "Usage: lnmp database {add|list|edit|del}"
-        echo "Usage: lnmp ftp {add|list|edit|del|show}"
-        echo "Usage: lnmp ssl add"
-        echo "Usage: lnmp {dnsssl|dns} {cx|ali|cf|dp|he|gd|aws}"
-        echo "Usage: lnmp onlyssl {cx|ali|cf|dp|he|gd|aws}"
-        ;;
     info)
         if [ -f /root/nextlnmp-info.txt ]; then
             cat /root/nextlnmp-info.txt
@@ -1738,6 +1739,16 @@ case "${arg1}" in
                 echo "如需重置密码：bash tools/reset_mysql_root_password.sh"
             fi
         fi
+        ;;
+    *)
+        echo "Usage: nextlnmp {start|stop|reload|restart|kill|status}"
+        echo "Usage: nextlnmp {nginx|mysql|mariadb|php-fpm|pureftpd} {start|stop|reload|restart|kill|status}"
+        echo "Usage: nextlnmp vhost {add|list|del}"
+        echo "Usage: nextlnmp database {add|list|edit|del}"
+        echo "Usage: nextlnmp ftp {add|list|edit|del|show}"
+        echo "Usage: nextlnmp ssl add"
+        echo "Usage: nextlnmp {dnsssl|dns} {cx|ali|cf|dp|he|gd|aws}"
+        echo "Usage: nextlnmp onlyssl {cx|ali|cf|dp|he|gd|aws}"
         ;;
 esac
 exit

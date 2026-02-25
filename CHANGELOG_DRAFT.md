@@ -1,0 +1,10 @@
+- 🐛 修复 `nextlnmp info` / `nextlnmp password` 命令无效（case 分支在 `*` 通配符之后，永远执行不到）
+- 🐛 修复安装 banner 版本号写死 v1.4.2，改为动态读取 `$NEXTLNMP_Ver` + 中文自动居中
+- 🐛 修复 `nextlnmp vhost del` 时 `$vhostdir` 为空导致 .user.ini 解锁失败
+- 🔧 选择 Typecho/ThinkPHP/Laravel/Yii2 伪静态时自动启用 Pathinfo（坑32）
+- 🔧 `vhost add` 完成后显示部署提示：chattr 解锁→部署→chown→锁回（坑31）
+- 🔧 管理工具 banner 边框对齐修正
+- 🔧 Usage 提示从 `lnmp` 统一改为 `nextlnmp`
+- 🔧 `lnmp_kill()` 用 `pkill` 替代 `killall`（Debian/Ubuntu 兼容）
+- 🔧 `vhost add` 完成信息、`vhost del`、`vhost list` 等提示全面中文化
+- 🔧 修正 9 处 `Sucessfully`、`rewirte`、`Virtul`、`selection::`、`diretcory` 等拼写错误
