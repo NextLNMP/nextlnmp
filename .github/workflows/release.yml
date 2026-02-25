@@ -57,11 +57,34 @@ jobs:
           git diff --cached --quiet || git commit -m "chore: release v${{ steps.version.outputs.VERSION }} (version, SHA256, README)"
           git push origin main
 
+      - name: Generate release body
+        id: body
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          SHA=${{ steps.sha256.outputs.SHA256 }}
+          cat > /tmp/release-body.md << BODYEOF
+          ## ⚡ 一行安装
+
+          bash <(curl -sL https://gitee.com/palmmedia/nextlnmp/raw/main/install.sh)
+
+          ## 📦 SHA256
+
+          ${SHA}  nextlnmp-${VERSION}.tar.gz
+
+          ## 📋 更新内容
+
+          $(cat CHANGELOG_DRAFT.md 2>/dev/null || echo "详见 README")
+
+          ---
+          官网：https://nextlnmp.cn · QQ群：615298
+          BODYEOF
+          sed -i 's/^          //' /tmp/release-body.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "${{ github.ref_name }}"
-          body: "## ⚡ 一行安装\nbash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/raw/main/install.sh)\n\n## 📦 SHA256\n${{ steps.sha256.outputs.SHA256 }}  nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz\n\n更新内容详见 https://github.com/NextLNMP/nextlnmp"
+          name: "NextLNMP v${{ steps.version.outputs.VERSION }}"
+          body_path: /tmp/release-body.md
           files: nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz
 
       - name: Sync to mirror server
