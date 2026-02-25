@@ -61,19 +61,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "${{ github.ref_name }}"
-          body: |
-            ## ⚡ 一行安装
-```bash
-            bash <(curl -sL https://raw.githubusercontent.com/adsorgcn/nextlnmp/main/install.sh)
-```
-
-            ## 📦 SHA256
-
-            `${{ steps.sha256.outputs.SHA256 }}  nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz`
-
-            ---
-
-            更新内容详见 [README 更新日志](https://github.com/adsorgcn/nextlnmp#-%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97)
+          body: "## ⚡ 一行安装\nbash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/raw/main/install.sh)\n\n## 📦 SHA256\n${{ steps.sha256.outputs.SHA256 }}  nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz\n\n更新内容详见 https://github.com/NextLNMP/nextlnmp"
           files: nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz
 
       - name: Sync to mirror server
