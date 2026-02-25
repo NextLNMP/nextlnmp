@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.5.6-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.7-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
@@ -89,13 +89,13 @@ bash <(curl -sL https://gitee.com/palmmedia/nextlnmp/raw/main/install.sh)
 **方式二：从 Gitee 下载安装（国内快）**
 
 ```bash
-wget https://gitee.com/palmmedia/nextlnmp/releases/download/v1.5.6/nextlnmp-1.5.6.tar.gz && tar zxf nextlnmp-1.5.6.tar.gz && cd nextlnmp-1.5.6 && bash install.sh
+wget https://gitee.com/palmmedia/nextlnmp/releases/download/v1.5.7/nextlnmp-1.5.7.tar.gz && tar zxf nextlnmp-1.5.7.tar.gz && cd nextlnmp-1.5.7 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
 
 ```bash
-wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.5.6/nextlnmp-1.5.6.tar.gz && tar zxf nextlnmp-1.5.6.tar.gz && cd nextlnmp-1.5.6 && bash install.sh
+wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.5.7/nextlnmp-1.5.7.tar.gz && tar zxf nextlnmp-1.5.7.tar.gz && cd nextlnmp-1.5.7 && bash install.sh
 ```
 
 三种方式装出来的东西完全一样，选哪个都行。
@@ -279,7 +279,7 @@ NextLNMP 的安全不是一句口号，是工程化落地的完整方案：
 ## 📂 目录结构
 
 ```
-nextlnmp-1.5.6/
+nextlnmp-1.5.7/
 ├── install.sh          # 安装入口
 ├── nextlnmp.conf       # 配置文件（镜像源地址等）
 ├── upgrade.sh          # 升级脚本
@@ -360,6 +360,17 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 
 ## 🔄 更新日志
 
+### v1.5.7 (2026-02-25)
+### Bug 修复
+- 修复 DB_Info 显示 MySQL 8.4.0 实际为 8.4.4 的版本号不一致
+- 修复 PHP_Info 显示 PHP 8.2.19 实际 Binary 包为 8.2.28 的版本号不一致
+- 修复 Check_nextLNMPA_Install 条件判断缺少空格
+- 清理 uninstall.sh 恢复出厂中无效的 apt-get remove 命令
+
+### 改进
+- PHP 选择菜单新增 PHP 8.4 选项
+- 修正 Dispaly_Selection 拼写错误为 Display_Selection
+
 ### v1.5.6 (2025-02-25)
 
 ### Bug 修复
@@ -372,9 +383,7 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 - Release 说明改用 body_path，自动包含更新内容
 - 修复 GitHub URL 指向旧账号的问题
 
-
 - 修复 Binary 安装从 GitHub 下载 php.ini 国内不可达，改为镜像站 + 内置兜底
-
 
 ### v1.5.5 (2026-02-25)
 - 🐛 修复 `nextlnmp info` / `nextlnmp password` 命令无效（case 分支在 `*` 通配符之后，永远执行不到）
@@ -388,18 +397,15 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 - 🔧 `vhost add` 完成信息、`vhost del`、`vhost list` 等提示全面中文化
 - 🔧 修正 9 处 `Sucessfully`、`rewirte`、`Virtul`、`selection::`、`diretcory` 等拼写错误
 
-
 ### v1.5.4 (2026-02-25)
 - 🐛 修复 uninstall.sh 版本号显示为空（未从 nextlnmp.sh 读取 NEXTLNMP_Ver）
 - 🔧 uninstall.sh / 安装完成界面 banner 右边框自动对齐（支持中英文混排动态计算列宽）
-
 
 ### v1.5.3 (2026-02-25)
 - 🐛 修复安装完成界面 Unicode 边框字符在部分终端显示为乱码，改用 ASCII 字符
 - 🔧 重写 uninstall.sh，修复 Echo_Red/Press_Start/Check_Stack 未定义函数报错
 - ✨ uninstall.sh 新增「恢复出厂」选项，彻底清空服务器还原初始状态
 - 🔧 uninstall.sh banner 改为动态读取版本号，URL 改为 nextlnmp.cn
-
 
 ### v1.5.2 (2026-02-25)
 - 🐛 修复 CI 打包顺序，先回写版本号再打 tarball，解决 banner 显示旧版本号问题
@@ -417,7 +423,6 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 - 🐛 修复 nginx http2 语法警告
 - ✨ nextlnmp ssl add 重写为站点列表选择模式
 
-
 ### v1.5.1 (2026-02-24)
 - 🎨 安装完成界面新增中国站长论坛标志（https://cnwebmasters.com），致敬情怀
 - 🌐 访问地址加「复制到浏览器打开」说明，新手更友好
@@ -426,11 +431,9 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 - 📝 README 自动更新日志、badge、下载链接全流程自动化上线
 - ✅ CI 全自动发版完成闭环，打 tag 即触发全流程
 
-
 ### v1.5.0 (2026-02-24)
 - 🔧 CI 版本号回写 bug 修复，发版全流程自动化完成
 - 📝 README 更新日志自动化，打 tag 即同步更新
-
 
 ### v1.4.6 (2026-02-24)
 - ✅ CI 全自动化发版完成：打包 → SHA256 → GitHub Release → 镜像站同步 → Gitee Release + 附件上传，一个 tag 触发全流程
