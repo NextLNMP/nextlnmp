@@ -76,7 +76,7 @@ Function_Vhost()
             exit 1
             ;;
         *)
-            echo "Usage: lnmp vhost {add|list|del}"
+            echo "Usage: nextlnmp vhost {add|list|del}"
             exit 1
             ;;
 esac
@@ -102,7 +102,7 @@ Function_Database()
             exit 1
             ;;
         *)
-            echo "Usage: lnmp mysql {add|list|del}"
+            echo "Usage: nextlnmp mysql {add|list|del}"
             exit 1
             ;;
 esac
@@ -131,7 +131,7 @@ Function_Ftp()
             Show_Ftp
             ;;
         *)
-            echo "Usage: lnmp ftp {add|list|del}"
+            echo "Usage: nextlnmp ftp {add|list|del}"
             exit 1
             ;;
 esac
@@ -216,6 +216,8 @@ EOF
     echo ""
     echo "Reload Nginx......"
     /usr/local/nginx/sbin/nginx -s reload
+        echo "Reload Apache..."
+        /etc/init.d/httpd reload
     echo "Test Apache configure file..."
     /etc/init.d/httpd configtest
     echo "Restart Apache..."
@@ -422,10 +424,14 @@ Del_VHost()
     else
         rm -f /usr/local/nginx/conf/vhost/${domain}.conf
         rm -f /usr/local/apache/conf/vhost/${domain}.conf
+        echo "Reload Nginx..."
+        /usr/local/nginx/sbin/nginx -s reload
+        echo "Reload Apache..."
+        /etc/init.d/httpd reload
         echo "========================================================"
-        echo "Domain: ${domain} has been deleted."
-        echo "Website files will not be deleted for security reasons."
-        echo "You need to manually delete the website files."
+        echo "✓ 虚拟主机 ${domain} 已删除"
+        echo "  网站文件未删除（安全起见），如需删除请手动执行："
+        echo "  rm -rf ${vhostdir}"
         echo "========================================================"
     fi
 }
@@ -1017,6 +1023,8 @@ EOF
     /usr/local/nginx/sbin/nginx -t
     echo "Reload Nginx......"
     /usr/local/nginx/sbin/nginx -s reload
+        echo "Reload Apache..."
+        /etc/init.d/httpd reload
 }
 
 Add_SSL()
@@ -1327,13 +1335,13 @@ case "${arg1}" in
         Add_Dns_SSL_Only ${arg2}
         ;;
     *)
-        echo "Usage: lnmp {start|stop|reload|restart|kill|status}"
-        echo "Usage: lnmp {nginx|mysql|mariadb|pureftpd|httpd} {start|stop|reload|restart|kill|status}"
-        echo "Usage: lnmp vhost {add|list|del}"
-        echo "Usage: lnmp database {add|list|edit|del}"
-        echo "Usage: lnmp ftp {add|list|edit|del|show}"
-        echo "Usage: lnmp ssl add"
-        echo "Usage: lnmp {dnsssl|dns} {cx|ali|cf|dp|he|gd|aws}"
-        echo "Usage: lnmp onlyssl {cx|ali|cf|dp|he|gd|aws}"
+        echo "Usage: nextlnmp {start|stop|reload|restart|kill|status}"
+        echo "Usage: nextlnmp {nginx|mysql|mariadb|pureftpd|httpd} {start|stop|reload|restart|kill|status}"
+        echo "Usage: nextlnmp vhost {add|list|del}"
+        echo "Usage: nextlnmp database {add|list|edit|del}"
+        echo "Usage: nextlnmp ftp {add|list|edit|del|show}"
+        echo "Usage: nextlnmp ssl add"
+        echo "Usage: nextlnmp {dnsssl|dns} {cx|ali|cf|dp|he|gd|aws}"
+        echo "Usage: nextlnmp onlyssl {cx|ali|cf|dp|he|gd|aws}"
 esac
 exit

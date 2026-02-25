@@ -58,7 +58,7 @@ case "$action" in
     for svc in nginx mysql mysqld mariadb; do
         [ -f /etc/init.d/$svc ] && /etc/init.d/$svc stop 2>/dev/null
     done
-    for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[5,7,8].[0-9]; do
+    for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[578].[0-9]; do
         [ -f "$phpfpm" ] && $phpfpm stop 2>/dev/null
     done
     pkill -f nginx 2>/dev/null
@@ -79,7 +79,7 @@ case "$action" in
     echo "删除 NextLNMP 文件..."
     rm -rf /usr/local/nginx /usr/local/php /usr/local/mysql /usr/local/mariadb /usr/local/zend
     rm -f /etc/my.cnf /etc/init.d/nginx /etc/init.d/mysql /etc/init.d/mysqld /etc/init.d/mariadb
-    for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[5,7,8].[0-9]; do
+    for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[578].[0-9]; do
         rm -f "$phpfpm" 2>/dev/null
     done
     rm -f /bin/nextlnmp /usr/bin/nextlnmp
@@ -98,7 +98,7 @@ case "$action" in
     for svc in nginx mysql mysqld mariadb; do
         [ -f /etc/init.d/$svc ] && /etc/init.d/$svc stop 2>/dev/null
     done
-    for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[5,7,8].[0-9]; do
+    for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[578].[0-9]; do
         [ -f "$phpfpm" ] && $phpfpm stop 2>/dev/null
     done
     pkill -f nginx 2>/dev/null
@@ -114,7 +114,7 @@ case "$action" in
     rm -rf /usr/local/nginx /usr/local/php /usr/local/mysql /usr/local/mariadb /usr/local/zend
     rm -rf /home/wwwroot
     rm -f /etc/my.cnf /etc/init.d/nginx /etc/init.d/mysql /etc/init.d/mysqld /etc/init.d/mariadb
-    for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[5,7,8].[0-9]; do
+    for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[578].[0-9]; do
         rm -f "$phpfpm" 2>/dev/null
     done
     rm -f /bin/nextlnmp /usr/bin/nextlnmp
