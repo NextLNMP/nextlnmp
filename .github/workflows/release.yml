@@ -69,7 +69,7 @@ jobs:
           cat > /tmp/release-body.md << BODYEOF
           ## ⚡ 一行安装
 
-          bash <(curl -sL https://gitee.com/palmmedia/nextlnmp/raw/main/install.sh)
+          bash <(curl -sL https://cnb.cool/NextLNMP/NextLNMP/-/git/raw/main/install.sh?download=true)
 
           ## 📦 SHA256
 
@@ -80,7 +80,7 @@ jobs:
           ${CHANGELOG}
 
           ---
-          官网：https://nextlnmp.cn · QQ群：615298
+          官网：https://nextlnmp.cn · 镜像：https://cnb.cool/NextLNMP · QQ群：615298
           BODYEOF
           sed -i 's/^          //' /tmp/release-body.md
 
