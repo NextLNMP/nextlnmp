@@ -25,7 +25,7 @@ INSTALL_DIR="/root/nextlnmp"
 TMP_FILE="/tmp/nextlnmp-${NEXTLNMP_VER}.tar.gz"
 
 # ── 下载源（按优先级）────────────────────────────────────────────────
-MIRROR_URL="https://nextlnmp.cn/nextlnmp-${NEXTLNMP_VER}.tar.gz"
+MIRROR_URL="https://mirror.nextlnmp.cn/nextlnmp-${NEXTLNMP_VER}.tar.gz"
 GITEE_URL="https://gitee.com/palmmedia/nextlnmp/releases/download/v${NEXTLNMP_VER}/nextlnmp-${NEXTLNMP_VER}.tar.gz"
 GITHUB_URL="https://github.com/NextLNMP/nextlnmp/releases/download/v${NEXTLNMP_VER}/nextlnmp-${NEXTLNMP_VER}.tar.gz"
 

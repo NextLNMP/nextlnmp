@@ -122,7 +122,7 @@ Check_Hosts()
     fi
     if [ "${CheckMirror}" != "n" ]; then
         if command -v ping >/dev/null 2>&1; then
-            pingresult=$(ping -c1 nextlnmp.cn 2>&1)
+            pingresult=$(ping -c1 mirror.nextlnmp.cn 2>&1)
             echo "${pingresult}"
             if echo "${pingresult}" | grep -qiE "unknown host|No address|not known|failure"; then
                 echo "DNS...fail"
