@@ -121,14 +121,18 @@ Check_Hosts()
         echo "127.0.0.1 localhost.localdomain localhost" >> /etc/hosts
     fi
     if [ "${CheckMirror}" != "n" ]; then
-        pingresult=`ping -c1 nextlnmp.com 2>&1`
-        echo "${pingresult}"
-        if echo "${pingresult}" | grep -q "unknown host"; then
-            echo "DNS...fail"
-            echo "Writing nameserver to /etc/resolv.conf ..."
-            echo -e "nameserver 208.67.220.220\nnameserver 114.114.114.114" > /etc/resolv.conf
+        if command -v ping >/dev/null 2>&1; then
+            pingresult=$(ping -c1 nextlnmp.cn 2>&1)
+            echo "${pingresult}"
+            if echo "${pingresult}" | grep -qiE "unknown host|No address|not known|failure"; then
+                echo "DNS...fail"
+                echo "Writing nameserver to /etc/resolv.conf ..."
+                echo -e "nameserver 208.67.220.220\nnameserver 114.114.114.114" > /etc/resolv.conf
+            else
+                echo "DNS...ok"
+            fi
         else
-            echo "DNS...ok"
+            echo "ping 未安装，跳过 DNS 检测"
         fi
     fi
 }

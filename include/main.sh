@@ -1098,14 +1098,11 @@ Check_Mirror()
         fi
     fi
     echo "正在检测镜像站..."
-    mirror_code=$(curl -o /dev/null -m 10 --connect-timeout 10 -sk -w %{http_code} https://mirror.zhangmei.com/sha256sums.txt)
+    mirror_code=$(curl -o /dev/null -m 10 --connect-timeout 10 -sk -w %{http_code} "${Download_Mirror}/sha256sums.txt")
     if [[ "${mirror_code}" = "200" ]]; then
-        echo "✓ 镜像站连接正常"
+        echo "✓ 镜像站连接正常（${Download_Mirror}）"
     else
-        echo "❌ 无法连接镜像站（HTTP ${mirror_code}）"
-        echo "请检查网络或手动修改 nextlnmp.conf"
-        echo "帮助文档：https://nextlnmp.com"
-        exit 1
+        Echo_Yellow "⚠ 镜像站无法连接（HTTP ${mirror_code}），将尝试使用备用下载源"
     fi
 }
 Check_CMPT()

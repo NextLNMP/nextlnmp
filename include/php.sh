@@ -1219,8 +1219,8 @@ Install_PHP_82()
         fi
         Ln_PHP_Bin
         mkdir -p /usr/local/php/{etc,conf.d}
-        # 优先从镜像站下载 php.ini，GitHub 国内不可达
-        if ! wget -q --timeout=15 -O /usr/local/php/etc/php.ini https://mirror.zhangmei.com/php/php.ini-production-8.2 2>/dev/null; then
+        # 优先从镜像站下载 php.ini
+        if ! wget -q --timeout=15 -O /usr/local/php/etc/php.ini ${Download_Mirror}/php/php.ini-production-8.2 2>/dev/null; then
             # 兜底：用内置模板生成基础配置
             Echo_Blue "镜像站下载失败，使用内置 php.ini 模板..."
             cat >/usr/local/php/etc/php.ini<<'PHPINIEOF'
