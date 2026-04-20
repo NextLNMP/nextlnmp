@@ -102,49 +102,4 @@ jobs:
             wget -q -O nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz https://github.com/NextLNMP/nextlnmp/releases/download/v${{ steps.version.outputs.VERSION }}/nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz
             echo "Mirror synced: nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz"
 
-          import json, os, subprocess
 
-          token = os.environ["GITEE_TOKEN"]
-          version = os.environ["VERSION"]
-
-          body = ""
-          if os.path.exists("/tmp/release-body.md"):
-              body = open("/tmp/release-body.md").read().strip()
-          if not body:
-              body = f"NextLNMP v{version}"
-
-          payload = json.dumps({
-              "access_token": token,
-              "tag_name": f"v{version}",
-              "name": f"NextLNMP v{version}",
-              "body": body,
-              "target_commitish": "main",
-              "prerelease": False
-          })
-
-          result = subprocess.run(
-              ["curl", "-s", "-X", "POST",
-               "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases",
-               "-H", "Content-Type: application/json",
-               "-d", payload],
-              capture_output=True, text=True
-          )
-          print("Gitee API response:", result.stdout)
-
-          try:
-              release_id = json.loads(result.stdout)["id"]
-              print(f"Gitee Release ID: {release_id}")
-
-              tarball = f"nextlnmp-{version}.tar.gz"
-              upload = subprocess.run(
-                  ["curl", "-s", "-X", "POST",
-                   f"https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases/{release_id}/attach_files",
-                   "-F", f"access_token={token}",
-                   "-F", f"file=@{tarball}"],
-                  capture_output=True, text=True
-              )
-              print("Upload response:", upload.stdout)
-          except (KeyError, json.JSONDecodeError) as e:
-              print(f"Failed to create Gitee release: {e}")
-              exit(1)
-          GITEE_PYEOF
