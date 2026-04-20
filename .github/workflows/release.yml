@@ -102,20 +102,6 @@ jobs:
             wget -q -O nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz https://github.com/NextLNMP/nextlnmp/releases/download/v${{ steps.version.outputs.VERSION }}/nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz
             echo "Mirror synced: nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz"
 
-      - name: Create Gitee Release
-        env:
-          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
-          VERSION: ${{ steps.version.outputs.VERSION }}
-        run: |
-          # 先删除已存在的同名 release（防止重发版冲突）
-          OLD_ID=$(curl -s "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases/tags/v${VERSION}?access_token=${GITEE_TOKEN}" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || echo "")
-          if [ -n "$OLD_ID" ] && [ "$OLD_ID" != "None" ] && [ "$OLD_ID" != "" ]; then
-            echo "Deleting old Gitee release: $OLD_ID"
-            curl -s -X DELETE "https://gitee.com/api/v5/repos/palmmedia/nextlnmp/releases/${OLD_ID}?access_token=${GITEE_TOKEN}"
-          fi
-
-          # 用 Python 创建 release（避免 shell 引号嵌套问题）
-          python3 << 'GITEE_PYEOF'
           import json, os, subprocess
 
           token = os.environ["GITEE_TOKEN"]
