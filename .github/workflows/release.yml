@@ -94,7 +94,7 @@ jobs:
       - name: Sync to mirror server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: 8.148.21.254
+          host: 47.122.115.39
           username: root
           key: ${{ secrets.MIRROR_SSH_KEY }}
           script: |
