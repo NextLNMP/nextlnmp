@@ -1,0 +1,50 @@
+name: Sync Checksums
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan mirror and generate manifest
+        env:
+          SSH_KEY: ${{ secrets.MIRROR_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_mirror
+          chmod 600 ~/.ssh/id_mirror
+          ssh -i ~/.ssh/id_mirror -o StrictHostKeyChecking=accept-new root@47.122.115.39 \
+            'cd /data/mirror && find . -type f \( -name "*.tar.gz" -o -name "*.tar.bz2" -o -name "*.tar.xz" -o -name "*.tgz" -o -name "*.zip" \) -print0 | xargs -0 -r sha256sum' > raw_sums.txt
+          echo "镜像站扫描到 $(wc -l < raw_sums.txt) 个包"
+          awk '{h=$1; $1=""; sub(/^ +/,""); n=split($0,a,"/"); print h "  " a[n]}' raw_sums.txt | sort -u > body.txt
+          dup=$(awk '{print $3}' body.txt | sort | uniq -d)
+          if [ -n "$dup" ]; then
+            echo "❌ 镜像站存在同名但内容不同的包，需先人工清理："
+            echo "$dup"
+            exit 1
+          fi
+          {
+            echo "# NextLNMP 组件校验清单（权威源）"
+            echo "# 本文件随主包分发；主包由 install.sh 内嵌锚点校验，信任链闭合到本仓库。"
+            echo "# 生成方式：Actions → sync-checksums 工作流，从镜像站全量扫描后自动提交。"
+            echo "# 任何变更均为公开 git 提交，欢迎审计。"
+            cat body.txt
+          } > sha256sums.txt
+          echo "清单条目数: $(grep -c '^[0-9a-f]' sha256sums.txt)"
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add sha256sums.txt
+          if git diff --cached --quiet; then
+            echo "清单无变化，跳过提交"
+            exit 0
+          fi
+          git commit -m "chore: sync component checksums from mirror ($(grep -c '^[0-9a-f]' sha256sums.txt) entries)"
+          git push origin main
