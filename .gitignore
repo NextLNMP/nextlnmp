@@ -1,3 +1,4 @@
 *.tar.gz
 nextlnmp-*/
 *.bak
+__pycache__/

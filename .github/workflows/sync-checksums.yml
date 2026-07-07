@@ -22,7 +22,7 @@ jobs:
             'cd /data/mirror && find . -type f \( -name "*.tar.gz" -o -name "*.tar.bz2" -o -name "*.tar.xz" -o -name "*.tgz" -o -name "*.zip" \) -print0 | xargs -0 -r sha256sum' > raw_sums.txt
           echo "镜像站扫描到 $(wc -l < raw_sums.txt) 个包"
           awk '{h=$1; $1=""; sub(/^ +/,""); n=split($0,a,"/"); print h "  " a[n]}' raw_sums.txt | sort -u > body.txt
-          dup=$(awk '{print $3}' body.txt | sort | uniq -d)
+          dup=$(awk '{print $2}' body.txt | sort | uniq -d)
           if [ -n "$dup" ]; then
             echo "❌ 镜像站存在同名但内容不同的包，需先人工清理："
             echo "$dup"
@@ -41,6 +41,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
           git add sha256sums.txt
           if git diff --cached --quiet; then
             echo "清单无变化，跳过提交"
