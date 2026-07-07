@@ -19,7 +19,7 @@ jobs:
           echo "$SSH_KEY" > ~/.ssh/id_mirror
           chmod 600 ~/.ssh/id_mirror
           ssh -i ~/.ssh/id_mirror -o StrictHostKeyChecking=accept-new root@47.122.115.39 \
-            'cd /data/mirror && find . -type f \( -name "*.tar.gz" -o -name "*.tar.bz2" -o -name "*.tar.xz" -o -name "*.tgz" -o -name "*.zip" \) -print0 | xargs -0 -r sha256sum' > raw_sums.txt
+            'cd /data/mirror && find . -type f \( -name "*.tar.gz" -o -name "*.tar.bz2" -o -name "*.tar.xz" -o -name "*.tgz" -o -name "*.zip" -o -name "php.ini-production-*" \) -print0 | xargs -0 -r sha256sum' > raw_sums.txt
           echo "镜像站扫描到 $(wc -l < raw_sums.txt) 个包"
           awk '{h=$1; $1=""; sub(/^ +/,""); n=split($0,a,"/"); print h "  " a[n]}' raw_sums.txt | sort -u > body.txt
           dup=$(awk '{print $2}' body.txt | sort | uniq -d)
