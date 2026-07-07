@@ -826,14 +826,18 @@ Download_Files()
 {
     local URL=$1
     local FileName=$2
-    local SHA256_FILE="${cur_dir}/src/sha256sums.txt"
-    
-    # First run: download checksums file
+    # 权威校验清单：随主包分发（主包已被 install.sh 内嵌锚点校验，信任链闭合到仓库）
+    local SHA256_FILE="${cur_dir}/sha256sums.txt"
+
     if [ ! -f "${SHA256_FILE}" ]; then
-        echo "正在下载 SHA256 校验文件..."
-        wget -q --no-check-certificate -O "${SHA256_FILE}" "${Download_Mirror}/sha256sums.txt"
+        # 降级路径：主包内无清单（开发/异常场景），回退从镜像站获取并明确警告
+        SHA256_FILE="${cur_dir}/src/sha256sums.txt"
+        if [ ! -f "${SHA256_FILE}" ]; then
+            echo "⚠️  主包内未找到校验清单，降级从镜像站下载（此模式下清单可信度依赖镜像站自身）"
+            wget -q -O "${SHA256_FILE}" "${Download_Mirror}/sha256sums.txt"
+        fi
     fi
-    
+
     if [ -s "${FileName}" ]; then
         echo "${FileName} [已存在]"
     else
@@ -844,11 +848,12 @@ Download_Files()
             exit 1
         fi
     fi
-    
-    # SHA256 verification
+
+    # SHA256 逐包校验
     if [ -f "${SHA256_FILE}" ] && [ -s "${FileName}" ]; then
         local actual_sha256=$(sha256sum "${FileName}" | awk "{print \$1}")
-        local expected_sha256=$(grep "${FileName}" "${SHA256_FILE}" | awk "{print \$1}" | head -1)
+        local expected_sha256=$(grep "  ${FileName}\$" "${SHA256_FILE}" | awk "{print \$1}" | head -1)
+        [ -z "${expected_sha256}" ] && expected_sha256=$(grep "${FileName}" "${SHA256_FILE}" | awk "{print \$1}" | head -1)
         if [ -n "${expected_sha256}" ]; then
             if [ "${actual_sha256}" != "${expected_sha256}" ]; then
                 echo "❌ SHA256 校验失败：${FileName}"
@@ -860,7 +865,11 @@ Download_Files()
                 echo "${FileName} ✓ SHA256 校验通过"
             fi
         else
-            echo "⚠️  未找到 ${FileName} 的校验值，跳过校验"
+            if [ "${NEXTLNMP_VERIFY:-warn}" = "strict" ]; then
+                echo "❌ 严格模式：校验清单中没有 ${FileName} 的条目，终止安装"
+                exit 1
+            fi
+            echo "⚠️  清单中未找到 ${FileName} 的校验值，跳过校验（NEXTLNMP_VERIFY=strict 可强制终止）"
         fi
     fi
 }
