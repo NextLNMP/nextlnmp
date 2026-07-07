@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# NextLNMP 一键安装引导脚本 v1.8.1
+# NextLNMP 一键安装引导脚本 v1.9.0
 # 用法：bash <(curl -sL "https://cnb.cool/NextLNMP/NextLNMP/-/git/raw/main/install.sh?download=true")
 # 项目：https://github.com/NextLNMP/nextlnmp
 # 作者：静水流深 · 掌媒科技有限公司
@@ -17,8 +17,8 @@ BLUE='\033[0;36m'
 PLAIN='\033[0m'
 
 # ── 版本与配置（每次发版更新这两个值）────────────────────────────────
-NEXTLNMP_VER="1.8.1"
-TARBALL_SHA256="653409cf15ab8de21fb0fdcb1a07af6ebccf423944c031e7e2a9843a360aa788"
+NEXTLNMP_VER="1.9.0"
+TARBALL_SHA256="2596622d8b31d032750e2d0fe202f7b2f4b982818c647612afb3ec8de707f0e5"
 
 # ── 固定配置 ──────────────────────────────────────────────────────────
 INSTALL_DIR="/root/nextlnmp"
