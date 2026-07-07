@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================================
 # NextLNMP 一键安装引导脚本 v1.5.9
-# 用法：bash <(curl -sL https://gitee.com/palmmedia/nextlnmp/raw/main/install.sh)
+# 用法：bash <(curl -sL "https://cnb.cool/NextLNMP/NextLNMP/-/git/raw/main/install.sh?download=true")
 # 项目：https://github.com/NextLNMP/nextlnmp
 # 作者：静水流深 · 掌媒科技有限公司
 # 授权：GPL-3.0
@@ -26,7 +26,6 @@ TMP_FILE="/tmp/nextlnmp-${NEXTLNMP_VER}.tar.gz"
 
 # ── 下载源（按优先级）────────────────────────────────────────────────
 MIRROR_URL="https://mirror.nextlnmp.cn/nextlnmp-${NEXTLNMP_VER}.tar.gz"
-GITEE_URL="https://gitee.com/palmmedia/nextlnmp/releases/download/v${NEXTLNMP_VER}/nextlnmp-${NEXTLNMP_VER}.tar.gz"
 GITHUB_URL="https://github.com/NextLNMP/nextlnmp/releases/download/v${NEXTLNMP_VER}/nextlnmp-${NEXTLNMP_VER}.tar.gz"
 
 # ====================================================================
@@ -413,7 +412,6 @@ bbr_setup() {
 # ====================================================================
 download_tarball() {
     local urls=(
-        "${GITEE_URL}"
         "${MIRROR_URL}"
         "${GITHUB_URL}"
     )
@@ -465,8 +463,12 @@ verify_sha256() {
     echo "正在校验安装包完整性..."
 
     if [[ "${TARBALL_SHA256}" == "TO_BE_FILLED" ]]; then
-        echo "⚠️  开发版本，跳过校验"
-        return 0
+        if [[ "${NEXTLNMP_DEV:-0}" == "1" ]]; then
+            echo "⚠️  开发模式（NEXTLNMP_DEV=1），跳过主包校验"
+            return 0
+        fi
+        echo "❌ 构建异常：脚本未注入主包校验值，拒绝安装（开发调试请设置 NEXTLNMP_DEV=1）"
+        exit 1
     fi
 
     local actual
