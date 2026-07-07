@@ -1,4 +1,0 @@
-- 功能：PHP 二进制快车道支持 aarch64（包名追加 -aarch64 后缀，清单驱动逻辑不变）
-- 基建：build-php-binaries 产线扩展为 x86_64 + aarch64 双架构八腿矩阵（GitHub ARM Runner）
-- 基建：新增 smoke-mariadb 真机冒烟工作流（下载 bintar → 布局校验 → install_db → 起服务 → 版本断言 → utf8mb4 读写回环 → 关停）
-- 结论：MariaDB 官方无 aarch64 通用 bintar（已核实），ARM 上走源码编译回退属上游事实
