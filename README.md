@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.7.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.8.0-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
@@ -95,13 +95,13 @@ bash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/main/install
 **方式二：从镜像站下载安装（国内快）**
 
 ```bash
-wget https://mirror.nextlnmp.cn/nextlnmp-1.7.0.tar.gz && tar zxf nextlnmp-1.7.0.tar.gz && cd nextlnmp-1.7.0 && bash install.sh
+wget https://mirror.nextlnmp.cn/nextlnmp-1.8.0.tar.gz && tar zxf nextlnmp-1.8.0.tar.gz && cd nextlnmp-1.8.0 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
 
 ```bash
-wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.7.0/nextlnmp-1.7.0.tar.gz && tar zxf nextlnmp-1.7.0.tar.gz && cd nextlnmp-1.7.0 && bash install.sh
+wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.8.0/nextlnmp-1.8.0.tar.gz && tar zxf nextlnmp-1.8.0.tar.gz && cd nextlnmp-1.8.0 && bash install.sh
 ```
 
 三种方式装出来的东西完全一样，选哪个都行。
@@ -291,7 +291,7 @@ NextLNMP 的安全不是一句口号，是一条闭合的信任链：
 ## 📂 目录结构
 
 ```
-nextlnmp-1.7.0/
+nextlnmp-1.8.0/
 ├── install.sh          # 安装入口
 ├── nextlnmp.conf       # 配置文件（镜像源地址等）
 ├── upgrade.sh          # 升级脚本
@@ -371,6 +371,11 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 </details>
 
 ## 🔄 更新日志
+
+### v1.8.0 (2026-07-07)
+- 组件：Nginx 升级至 1.30.3 稳定版；MariaDB 新增 11.8 LTS 与 12.3 LTS 选项，10.11 更新至 10.11.18；MySQL 8.4 更新至 8.4.9，8.0 定格终版 8.0.46 并标注 EOL，10.6 同标 EOL；phpMyAdmin 更新至 5.2.2
+- 组件：MySQL 8.0 二进制统一 glibc2.17 线（2.12 已停发），8.4 上游回退源改为 Downloads
+- 基建：新增 sync-upstream 工作流与 tools/upstream-sources.txt 声明式清单，官方源到镜像站一键同步并自动刷新校验清单
 
 ### v1.7.0 (2026-07-07)
 - 功能：PHP 急速安装升级为清单驱动，支持任意版本 × Ubuntu 22/24、Debian 12/13，修复旧版在 Ubuntu22/Debian12 上无视所选版本强制下载 8.2.28 的问题
