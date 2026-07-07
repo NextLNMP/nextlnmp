@@ -3,6 +3,10 @@ name: Sync Checksums
 on:
   workflow_dispatch:
 
+concurrency:
+  group: sync-checksums
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
