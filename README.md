@@ -80,16 +80,22 @@
 
 **方式一：一行命令安装（推荐）**
 
-自动检测网络，三源容灾，哪个快用哪个：
+国内直连 CNB 源：
 
 ```bash
-bash <(curl -sL https://gitee.com/palmmedia/nextlnmp/raw/main/install.sh)
+bash <(curl -sL "https://cnb.cool/NextLNMP/NextLNMP/-/git/raw/main/install.sh?download=true")
 ```
 
-**方式二：从 Gitee 下载安装（国内快）**
+GitHub 源备用：
 
 ```bash
-wget https://gitee.com/palmmedia/nextlnmp/releases/download/v1.5.9/nextlnmp-1.5.9.tar.gz && tar zxf nextlnmp-1.5.9.tar.gz && cd nextlnmp-1.5.9 && bash install.sh
+bash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/main/install.sh)
+```
+
+**方式二：从镜像站下载安装（国内快）**
+
+```bash
+wget https://mirror.nextlnmp.cn/nextlnmp-1.5.9.tar.gz && tar zxf nextlnmp-1.5.9.tar.gz && cd nextlnmp-1.5.9 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
@@ -197,30 +203,33 @@ bash tools/cut_nginx_logs.sh
 
 ## 🔒 安全机制详解
 
-NextLNMP 的安全不是一句口号，是工程化落地的完整方案：
+NextLNMP 的安全不是一句口号，是一条闭合的信任链：
 
 ```
-用户执行 install.sh
+用户执行 install.sh（托管于 GitHub / CNB，内嵌主包 SHA256 锚点）
     ↓
-检测镜像站连通性（HTTPS）
+多源下载主包（mirror.nextlnmp.cn → GitHub），与内嵌锚点比对
+    ↓  ❌ 不匹配 → 立即终止
+主包内自带 sha256sums.txt 校验清单（与代码同仓，逐次变更公开可审计）
     ↓
-下载 sha256sums.txt（校验清单，60个包全覆盖）
+逐个下载组件包，计算 SHA256 与清单比对
     ↓
-逐个下载源码包
-    ↓
-每个包下载后，计算 SHA256 并与清单比对
-    ↓
-✅ 匹配 → 继续安装
-❌ 不匹配 → 删除可疑文件，立即终止
+✅ 匹配 → 继续    ❌ 不匹配 → 删除可疑文件，立即终止
+⚠️ 清单暂缺该包 → 黄色警告放行；NEXTLNMP_VERIFY=strict 时直接终止
 ```
 
-**镜像站：** `https://mirror.zhangmei.com`
+设计要点：
 
-- ✅ 部署于阿里云国内节点，全程 HTTPS 加密传输
-- ✅ 仅允许下载源码包格式（.tar.gz / .tar.bz2 / .tar.xz / .tgz）
-- ✅ 禁止目录遍历，防止信息泄露
-- ✅ 60 个源码包，全部可溯源至官方发布页
-- ✅ sha256sums.txt 公开访问，任何人可独立审计
+- **锚点分离**：引导脚本与主包走不同渠道。脚本在 GitHub/CNB，包在镜像站。镜像站即使被完全攻陷，也伪造不出能通过脚本内嵌锚点的主包
+- **清单随包**：组件校验清单不从镜像站下载（那会形成"自证清白"），而是打进主包分发，可信度等同主包本身
+- **全程可审计**：清单就是仓库里的 `sha256sums.txt`，由 CI 从镜像站全量生成，每次更新都是一次公开的 git 提交
+- **严格模式**：`NEXTLNMP_VERIFY=strict bash install.sh` 让任何未列入清单的包直接终止安装
+
+**镜像站：** `https://mirror.nextlnmp.cn`
+
+- 部署于阿里云国内节点，全程 HTTPS 加密传输
+- 仅提供源码包格式（.tar.gz / .tar.bz2 / .tar.xz / .tgz），禁止目录遍历
+- 全部包可溯源至官方发布页
 
 ## 🖥️ 推荐服务器
 
@@ -526,7 +535,7 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 - **QQ群：** 615298
 - **作者：** 静水流深
 - **网站：** [中国站长](https://cnwebmasters.com)
-- **问题反馈：** [Gitee Issues](https://gitee.com/palmmedia/nextlnmp/issues) · [GitHub Issues](https://github.com/NextLNMP/nextlnmp/issues)
+- **问题反馈：** [GitHub Issues](https://github.com/NextLNMP/nextlnmp/issues) · [CNB](https://cnb.cool/NextLNMP/NextLNMP)
 
 ## 🤝 相关项目
 
@@ -536,7 +545,7 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 |------|------|------|
 | **VPSCheck** | VPS 全能检测（流媒体/AI/回程/跑分） | [GitHub](https://github.com/adsorgcn/vpscheck) · [Gitee](https://gitee.com/palmmedia/vpscheck) |
 | **BBR 一键加速** | Google BBR 拥塞控制一键开启 | [GitHub](https://github.com/adsorgcn/bbr-script) · [Gitee](https://gitee.com/palmmedia/bbr-script) |
-| **NextLNMP** | 安全可信的 LNMP 一键安装（本项目） | [GitHub](https://github.com/NextLNMP/nextlnmp) · [Gitee](https://gitee.com/palmmedia/nextlnmp) |
+| **NextLNMP** | 安全可信的 LNMP 一键安装（本项目） | [GitHub](https://github.com/NextLNMP/nextlnmp) · [CNB](https://cnb.cool/NextLNMP/NextLNMP) |
 
 **推荐部署流程：** VPSCheck 检测 → BBR 加速 → NextLNMP 部署
 
@@ -557,7 +566,7 @@ Copyright © 2026 掌媒科技有限公司. All rights reserved.
 
 **如果这个项目对你有帮助，请给个 ⭐ Star 支持一下！**
 
-👉 [Gitee](https://gitee.com/palmmedia/nextlnmp) · [GitHub](https://github.com/NextLNMP/nextlnmp)
+👉 [GitHub](https://github.com/NextLNMP/nextlnmp) · [CNB](https://cnb.cool/NextLNMP/NextLNMP)
 
 Made with ❤️ by 静水流深 | 掌媒科技有限公司
 
