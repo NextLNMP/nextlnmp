@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DB_Info=('MySQL 5.1.73' 'MySQL 5.5.62' 'MySQL 5.6.51' 'MySQL 5.7.44' 'MySQL 8.0.37' 'MariaDB 5.5.68' 'MariaDB 10.4.33' 'MariaDB 10.5.24' 'MariaDB 10.6.17' 'MariaDB 10.11.7' 'MySQL 8.4.4')
+DB_Info=('MySQL 5.1.73' 'MySQL 5.5.62' 'MySQL 5.6.51' 'MySQL 5.7.44' 'MySQL 8.0.46 EOL' 'MariaDB 5.5.68' 'MariaDB 10.4.33' 'MariaDB 10.5.24' 'MariaDB 10.6.27 EOL' 'MariaDB 10.11.18 LTS' 'MySQL 8.4.9 LTS' 'MariaDB 11.8.8 LTS' 'MariaDB 12.3.2 LTS')
 PHP_Info=('PHP 5.2.17' 'PHP 5.3.29' 'PHP 5.4.45' 'PHP 5.5.38' 'PHP 5.6.40' 'PHP 7.0.33' 'PHP 7.1.33' 'PHP 7.2.34' 'PHP 7.3.33' 'PHP 7.4.33' 'PHP 8.0.30' 'PHP 8.1.28' 'PHP 8.2.28' 'PHP 8.3.7' 'PHP 8.4.18')
 Apache_Info=('Apache 2.2.34' 'Apache 2.4.57')
 
@@ -371,6 +371,64 @@ Database_Selection()
             Bin="n"
         fi
         ;;
+    12)
+        echo "即将安装 ${DB_Info[11]}"
+        if [[ "${DB_ARCH}" = "x86_64" ]]; then
+            if [ -z ${Bin} ]; then
+                read -p "使用预编译二进制包？（推荐，回车默认 Y）[Y/n]： " Bin
+            fi
+            case "${Bin}" in
+            [yY][eE][sS]|[yY])
+                echo "即将安装 ${DB_Info[11]} （预编译二进制包）"
+                Bin="y"
+                ;;
+            [nN][oO]|[nN])
+                echo "即将安装 ${DB_Info[11]} （源码编译）"
+                Bin="n"
+                ;;
+            *)
+                if [ "${CheckMirror}" != "n" ]; then
+                    echo "默认安装 ${DB_Info[11]} （预编译二进制包）"
+                    Bin="y"
+                else
+                    echo "默认安装 ${DB_Info[11]} （源码编译）"
+                    Bin="y"
+                fi
+                ;;
+            esac
+        else
+            Bin="n"
+        fi
+        ;;
+    13)
+        echo "即将安装 ${DB_Info[12]}"
+        if [[ "${DB_ARCH}" = "x86_64" ]]; then
+            if [ -z ${Bin} ]; then
+                read -p "使用预编译二进制包？（推荐，回车默认 Y）[Y/n]： " Bin
+            fi
+            case "${Bin}" in
+            [yY][eE][sS]|[yY])
+                echo "即将安装 ${DB_Info[12]} （预编译二进制包）"
+                Bin="y"
+                ;;
+            [nN][oO]|[nN])
+                echo "即将安装 ${DB_Info[12]} （源码编译）"
+                Bin="n"
+                ;;
+            *)
+                if [ "${CheckMirror}" != "n" ]; then
+                    echo "默认安装 ${DB_Info[12]} （预编译二进制包）"
+                    Bin="y"
+                else
+                    echo "默认安装 ${DB_Info[12]} （源码编译）"
+                    Bin="y"
+                fi
+                ;;
+            esac
+        else
+            Bin="n"
+        fi
+        ;;
     0)
         echo "不安装数据库"
         ;;
@@ -380,12 +438,12 @@ Database_Selection()
         Bin="y"
     esac
 
-    if [ "${Bin}" != "y" ] && [[ "${DBSelect}" =~ ^5|[7-9]|1[0-1]$ ]] && [ $(awk '/MemTotal/ {printf( "%d\n", $2 / 1024 )}' /proc/meminfo) -le 1024 ]; then
+    if [ "${Bin}" != "y" ] && [[ "${DBSelect}" =~ ^5|[7-9]|1[0-3]$ ]] && [ $(awk '/MemTotal/ {printf( "%d\n", $2 / 1024 )}' /proc/meminfo) -le 1024 ]; then
         echo "内存不足 1GB，无法安装 MySQL 8.0 或 MariaDB 10.3+"
         exit 1
     fi
 
-    if [[ "${DBSelect}" =~ ^(6|7|8|9|10)$ ]]; then
+    if [[ "${DBSelect}" =~ ^(6|7|8|9|10|12|13)$ ]]; then
         MySQL_Bin="/usr/local/mariadb/bin/mysql"
         MySQL_Config="/usr/local/mariadb/bin/mysql_config"
         MySQL_Dir="/usr/local/mariadb"
@@ -919,7 +977,7 @@ Print_APP_Ver()
 
     if [[ "${DBSelect}" =~ ^(1|2|3|4|5|11)$ ]]; then
         echo "${Mysql_Ver}"
-    elif [[ "${DBSelect}" =~ ^(6|7|8|9|10)$ ]]; then
+    elif [[ "${DBSelect}" =~ ^(6|7|8|9|10|12|13)$ ]]; then
         echo "${Mariadb_Ver}"
     elif [ "${DBSelect}" = "0" ]; then
         echo "不安装数据库"
@@ -949,7 +1007,7 @@ Print_APP_Ver()
     fi
     if [[ "${DBSelect}" =~ ^(1|2|3|4|5|11)$ ]]; then
         echo "数据库目录：${MySQL_Data_Dir}"
-    elif [[ "${DBSelect}" =~ ^(6|7|8|9|10)$ ]]; then
+    elif [[ "${DBSelect}" =~ ^(6|7|8|9|10|12|13)$ ]]; then
         echo "数据库目录：${MariaDB_Data_Dir}"
     elif [ "${DBSelect}" = "0" ]; then
         echo "不安装数据库"
