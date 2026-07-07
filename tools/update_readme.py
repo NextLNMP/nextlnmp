@@ -34,6 +34,8 @@ readme = re.sub(r'version-[\d.]+-blue', f'version-{version}-blue', readme)
 # 更新下载链接
 readme = re.sub(r'releases/download/v[\d.]+/nextlnmp-[\d.]+\.tar\.gz',
                 f'releases/download/v{version}/nextlnmp-{version}.tar.gz', readme)
+readme = re.sub(r'mirror\.nextlnmp\.cn/nextlnmp-[\d.]+\.tar\.gz',
+                f'mirror.nextlnmp.cn/nextlnmp-{version}.tar.gz', readme)
 readme = re.sub(r'tar zxf nextlnmp-[\d.]+\.tar\.gz',
                 f'tar zxf nextlnmp-{version}.tar.gz', readme)
 readme = re.sub(r'cd nextlnmp-[\d.]+\b',

@@ -80,7 +80,7 @@ jobs:
           ${CHANGELOG}
 
           ---
-          官网：https://nextlnmp.cn · 镜像：https://cnb.cool/NextLNMP · QQ群：615298
+          官网：https://cnwebmasters.com · 镜像：https://cnb.cool/NextLNMP · QQ群：615298
           BODYEOF
           sed -i 's/^          //' /tmp/release-body.md
 
