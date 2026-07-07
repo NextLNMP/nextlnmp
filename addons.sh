@@ -15,8 +15,6 @@ action2=$2
 . include/main.sh
 . include/init.sh
 . include/version.sh
-. include/eaccelerator.sh
-. include/xcache.sh
 . include/memcached.sh
 . include/opcache.sh
 . include/redis.sh
@@ -262,12 +260,6 @@ Select_PHP
     case "${action}" in
     install)
         case "${action2}" in
-            1|e[aA]ccelerator)
-                Install_eAccelerator
-                ;;
-            2|[xX]cache)
-                Install_XCache
-                ;;
             3|[mM]emcached)
                 Install_Memcached
                 ;;
@@ -314,18 +306,12 @@ Select_PHP
                 exit 1
                 ;;
             *)
-                echo "Usage: ./addons.sh install {eaccelerator|xcache|memcached|opcache|redis|imagemagick|ioncube|sg|exif|fileinfo|ldap|bz2|sodium|imap|swoole}"
+                echo "Usage: ./addons.sh install {memcached|opcache|redis|imagemagick|ioncube|sg|exif|fileinfo|ldap|bz2|sodium|imap|swoole}"
                 ;;
         esac
         ;;
     uninstall)
         case "${action2}" in
-            e[aA]ccelerator)
-                Uninstall_eAccelerator
-                ;;
-            [xX]cache)
-                Uninstall_XCache
-                ;;
             [mM]emcached)
                 Uninstall_Memcached
                 ;;
@@ -369,7 +355,7 @@ Select_PHP
                 Uninstall_PHP_Swoole
                 ;;
             *)
-                echo "Usage: ./addons.sh uninstall {eaccelerator|xcache|memcached|opcache|redis|apcu|imagemagick|ioncube|sg|exif|fileinfo|ldap|bz2|sodium|imap|swoole}"
+                echo "Usage: ./addons.sh uninstall {memcached|opcache|redis|apcu|imagemagick|ioncube|sg|exif|fileinfo|ldap|bz2|sodium|imap|swoole}"
                 ;;
         esac
         ;;
@@ -377,7 +363,7 @@ Select_PHP
         exit 1
         ;;
     *)
-        echo "Usage: ./addons.sh {install|uninstall} {eaccelerator|xcache|memcached|opcache|redis|apcu|imagemagick|ioncube|sg|exif|fileinfo|ldap|bz2|sodium|imap|swoole}"
+        echo "Usage: ./addons.sh {install|uninstall} {memcached|opcache|redis|apcu|imagemagick|ioncube|sg|exif|fileinfo|ldap|bz2|sodium|imap|swoole}"
         exit 1
         ;;
     esac

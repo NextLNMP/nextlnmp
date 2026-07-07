@@ -20,20 +20,11 @@ Install_ionCube()
     [[ "${ARCH}" = "i386" ]] && ARCH='x86'
     [[ "${ARCH}" = "x86_64" ]] && ARCH='x86-64'
     [[ "${ARCH}" = "armhf" ]] && ARCH='armv7l'
-    if grep -Eqi "xcache.so" ${PHP_Path}/conf.d/006-xcache.ini; then
-        if echo "${ARCH}" | grep -Eqi "x86*"; then
-            Download_Files ${Download_Mirror}/web/ioncube/4.7.5/ioncube_loaders_lin_${ARCH}.tar.gz ioncube_loaders_lin_${ARCH}.tar.gz
-        else
-            Echo_Red "Unsupported architecture with xcache! You can try uninstall xcache and reinstall ioncube loader."
-            exit 1
-        fi
-    else
-        if echo "${ARCH}" | grep -Eqi "x86*|armv7l|aarch64"; then
+    if echo "${ARCH}" | grep -Eqi "x86*|armv7l|aarch64"; then
             Download_Files https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_${ARCH}.tar.gz ioncube_loaders_lin_${ARCH}.tar.gz
         else
             Echo_Red "Unsupported architecture!"
             exit 1
-        fi
     fi
     tar zxf ioncube_loaders_lin_${ARCH}.tar.gz
     if [ ! -d "/usr/local/ioncube" ]; then
