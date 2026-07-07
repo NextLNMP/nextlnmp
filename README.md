@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.6.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.7.0-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
@@ -95,13 +95,13 @@ bash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/main/install
 **方式二：从镜像站下载安装（国内快）**
 
 ```bash
-wget https://mirror.nextlnmp.cn/nextlnmp-1.6.0.tar.gz && tar zxf nextlnmp-1.6.0.tar.gz && cd nextlnmp-1.6.0 && bash install.sh
+wget https://mirror.nextlnmp.cn/nextlnmp-1.7.0.tar.gz && tar zxf nextlnmp-1.7.0.tar.gz && cd nextlnmp-1.7.0 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
 
 ```bash
-wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.6.0/nextlnmp-1.6.0.tar.gz && tar zxf nextlnmp-1.6.0.tar.gz && cd nextlnmp-1.6.0 && bash install.sh
+wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.7.0/nextlnmp-1.7.0.tar.gz && tar zxf nextlnmp-1.7.0.tar.gz && cd nextlnmp-1.7.0 && bash install.sh
 ```
 
 三种方式装出来的东西完全一样，选哪个都行。
@@ -288,7 +288,7 @@ NextLNMP 的安全不是一句口号，是一条闭合的信任链：
 ## 📂 目录结构
 
 ```
-nextlnmp-1.6.0/
+nextlnmp-1.7.0/
 ├── install.sh          # 安装入口
 ├── nextlnmp.conf       # 配置文件（镜像源地址等）
 ├── upgrade.sh          # 升级脚本
@@ -368,6 +368,12 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 </details>
 
 ## 🔄 更新日志
+
+### v1.7.0 (2026-07-07)
+- 功能：PHP 急速安装升级为清单驱动，支持任意版本 × Ubuntu 22/24、Debian 12/13，修复旧版在 Ubuntu22/Debian12 上无视所选版本强制下载 8.2.28 的问题
+- 功能：8.3 / 8.4 安装接入二进制快车道，运行时依赖自动解析
+- 基建：新增 build-php-binaries 产线工作流，一键构建四发行版二进制并自动上传镜像、刷新校验清单
+- 清理：移除 eAccelerator 与 XCache 遗留组件（PHP 5 时代产物）
 
 ### v1.6.0 (2026-07-07)
 - 安全：组件校验清单改为随主包分发，信任链闭合到仓库，不再依赖镜像站自证；新增 NEXTLNMP_VERIFY=strict 严格模式
