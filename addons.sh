@@ -33,8 +33,6 @@ action2=$2
 Display_Addons_Menu()
 {
     echo "##### cache / optimizer / accelerator #####"
-    echo "  1: eAccelerator"
-    echo "  2: XCache"
     echo "  3: Memcached"
     echo "  4: opcache"
     echo "  5: Redis"
