@@ -1,0 +1,3 @@
+- 组件：Nginx 升级至 1.30.3 稳定版；MariaDB 新增 11.8 LTS 与 12.3 LTS 选项，10.11 更新至 10.11.18；MySQL 8.4 更新至 8.4.9，8.0 定格终版 8.0.46 并标注 EOL，10.6 同标 EOL；phpMyAdmin 更新至 5.2.2
+- 组件：MySQL 8.0 二进制统一 glibc2.17 线（2.12 已停发），8.4 上游回退源改为 Downloads
+- 基建：新增 sync-upstream 工作流与 tools/upstream-sources.txt 声明式清单，官方源到镜像站一键同步并自动刷新校验清单

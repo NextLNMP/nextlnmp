@@ -57,7 +57,7 @@ EOF
 user=root
 password=''
 EOF
-        if [[ "${DBSelect}" =~ ^[89]|10$ ]] || echo "${mariadb_version}" | grep -Eqi '^10.[4-7].'; then
+        if [[ "${DBSelect}" =~ ^([89]|10|12|13)$ ]] || echo "${mariadb_version}" | grep -Eqi '^10.[4-7].'; then
             /usr/local/mariadb/bin/mysql --defaults-file=~/.emptymy.cnf -e "SET PASSWORD = PASSWORD('${DB_Root_Password}');"
         else
             /usr/local/mariadb/bin/mysql --defaults-file=~/.emptymy.cnf -e "UPDATE mysql.user SET Password=PASSWORD('${DB_Root_Password}') WHERE User='root';"

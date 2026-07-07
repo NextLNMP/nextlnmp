@@ -850,7 +850,7 @@ Upgrade_MySQL()
     echo "============================check files=================================="
     cd ${cur_dir}/src
     if [[ "${Bin}" = "y" && "${mysql_short_version}" = "8.0" ]]; then
-        [[ "${DB_ARCH}" = "aarch64" ]] && mysql8_glibc_ver="2.17" || mysql8_glibc_ver="2.12"
+        mysql8_glibc_ver="2.17"
         mysql_src="mysql-${mysql_version}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz"
     elif [[ "${Bin}" = "y" && "${mysql_short_version}" = "8.4" ]]; then
         mysql_src="mysql-${mysql_version}-linux-glibc2.17-${DB_ARCH}.tar.xz"
