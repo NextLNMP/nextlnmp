@@ -326,8 +326,12 @@ Install_PHP_Bin()
     Ln_PHP_Bin
     mkdir -p /usr/local/php/{etc,conf.d}
     local mm=$(echo ${Php_Ver} | grep -oE '[0-9]+\.[0-9]+' | head -1)
-    # 优先从镜像站下载 php.ini
-    if ! wget -q --timeout=15 -O /usr/local/php/etc/php.ini ${Download_Mirror}/php/php.ini-production-${mm} 2>/dev/null; then
+    # 优先从镜像站下载 php.ini（经 Download_Files 走清单校验，防模板投毒）
+    cd ${cur_dir}/src
+    Download_Files ${Download_Mirror}/php/php.ini-production-${mm} php.ini-production-${mm} || true
+    if [ -s "${cur_dir}/src/php.ini-production-${mm}" ]; then
+        \cp ${cur_dir}/src/php.ini-production-${mm} /usr/local/php/etc/php.ini
+    else
         # 兜底：用内置模板生成基础配置
         Echo_Blue "镜像站下载失败，使用内置 php.ini 模板..."
         cat >/usr/local/php/etc/php.ini<<'PHPINIEOF'
