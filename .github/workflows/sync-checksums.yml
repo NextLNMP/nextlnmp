@@ -41,11 +41,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main
           git add sha256sums.txt
           if git diff --cached --quiet; then
             echo "清单无变化，跳过提交"
             exit 0
           fi
           git commit -m "chore: sync component checksums from mirror ($(grep -c '^[0-9a-f]' sha256sums.txt) entries)"
+          git pull --rebase origin main
           git push origin main
