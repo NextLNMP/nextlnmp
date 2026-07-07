@@ -343,7 +343,7 @@ nextlnmp-1.5.9/
 <details>
 <summary><b>Q4: 镜像站在哪里？可靠吗？</b></summary>
 
-镜像站 `mirror.zhangmei.com` 部署于阿里云国内节点，全程 HTTPS 加密传输。
+镜像站 `mirror.nextlnmp.cn` 部署于阿里云国内节点，全程 HTTPS 加密传输。
 
 所有文件均从官方上游获取后存放，SHA256 校验清单公开可查。你也可以自行从官方下载同版本源码包，对比哈希值独立验证。
 </details>
@@ -372,11 +372,11 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 ### v1.5.9 (2026-04-20)
 **镜像站迁移 + 下载架构升级**
 
-- 镜像站从 mirror.zhangmei.com 迁移至 nextlnmp.cn（国内BGP加速）
+- 镜像站从 mirror.nextlnmp.cn 迁移至 nextlnmp.cn（国内BGP加速）
 - install.sh 下载优先级调整为：Gitee > 镜像站 > GitHub
 - 镜像站检测失败不再中断安装，改为警告并尝试备用下载源
 - 修复 DNS 检测 bug：兼容 Oracle Cloud 等最小化镜像（ping 未安装 / 多种 DNS 错误格式）
-- 清除全部 mirror.zhangmei.com 硬编码引用（共4处）
+- 清除全部 mirror.nextlnmp.cn 硬编码引用（共4处）
 
 ### v1.5.8 (2026-02-25)
 ### Bug 修复
