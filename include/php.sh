@@ -290,7 +290,10 @@ PHP_Bin_OSTag()
 PHP_Bin_Pkg()
 {
     local tag=$(PHP_Bin_OSTag)
-    [ -n "${tag}" ] && echo "${Php_Ver}-bin-${tag}.tar.gz"
+    [ -n "${tag}" ] || return 0
+    local arch=""
+    [ "$(uname -m)" = "aarch64" ] && arch="-aarch64"
+    echo "${Php_Ver}-bin-${tag}${arch}.tar.gz"
 }
 
 PHP_Bin_Available()

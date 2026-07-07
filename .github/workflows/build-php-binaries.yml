@@ -14,19 +14,19 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - target: ubuntu22
-            image: ubuntu:22.04
-          - target: ubuntu24
-            image: ubuntu:24.04
-          - target: debian12
-            image: debian:12
-          - target: debian13
-            image: debian:13
+          - { target: ubuntu22, image: 'ubuntu:22.04', runner: ubuntu-latest,      suffix: '' }
+          - { target: ubuntu24, image: 'ubuntu:24.04', runner: ubuntu-latest,      suffix: '' }
+          - { target: debian12, image: 'debian:12',    runner: ubuntu-latest,      suffix: '' }
+          - { target: debian13, image: 'debian:13',    runner: ubuntu-latest,      suffix: '' }
+          - { target: ubuntu22, image: 'ubuntu:22.04', runner: ubuntu-24.04-arm,   suffix: '-aarch64' }
+          - { target: ubuntu24, image: 'ubuntu:24.04', runner: ubuntu-24.04-arm,   suffix: '-aarch64' }
+          - { target: debian12, image: 'debian:12',    runner: ubuntu-24.04-arm,   suffix: '-aarch64' }
+          - { target: debian13, image: 'debian:13',    runner: ubuntu-24.04-arm,   suffix: '-aarch64' }
+    runs-on: ${{ matrix.runner }}
     container:
       image: ${{ matrix.image }}
     steps:
@@ -73,8 +73,8 @@ jobs:
           VER="${{ inputs.php_version }}"
           find /usr/local/php -type f \( -name '*.so' -o -perm -111 \) -exec sh -c \
             'file -b "$1" | grep -q ELF && strip --strip-unneeded "$1" || true' _ {} \; 2>/dev/null || true
-          tar czf "/tmp/php-${VER}-bin-${{ matrix.target }}.tar.gz" -C /usr/local php
-          ls -lh "/tmp/php-${VER}-bin-${{ matrix.target }}.tar.gz"
+          tar czf "/tmp/php-${VER}-bin-${{ matrix.target }}${{ matrix.suffix }}.tar.gz" -C /usr/local php
+          ls -lh "/tmp/php-${VER}-bin-${{ matrix.target }}${{ matrix.suffix }}.tar.gz"
 
       - name: Upload to mirror
         env:
@@ -87,11 +87,11 @@ jobs:
           chmod 600 ~/.ssh/id_mirror
           SSH_OPTS="-i $HOME/.ssh/id_mirror -o StrictHostKeyChecking=accept-new"
           ssh ${SSH_OPTS} root@47.122.115.39 "mkdir -p /data/mirror/php"
-          scp ${SSH_OPTS} "/tmp/php-${VER}-bin-${{ matrix.target }}.tar.gz" root@47.122.115.39:/data/mirror/php/
-          if [ "${{ matrix.target }}" = "ubuntu22" ]; then
+          scp ${SSH_OPTS} "/tmp/php-${VER}-bin-${{ matrix.target }}${{ matrix.suffix }}.tar.gz" root@47.122.115.39:/data/mirror/php/
+          if [ "${{ matrix.target }}" = "ubuntu22" ] && [ -z "${{ matrix.suffix }}" ]; then
             scp ${SSH_OPTS} "php-${VER}/php.ini-production" "root@47.122.115.39:/data/mirror/php/php.ini-production-${MM}"
           fi
-          echo "uploaded php-${VER}-bin-${{ matrix.target }}.tar.gz"
+          echo "uploaded php-${VER}-bin-${{ matrix.target }}${{ matrix.suffix }}.tar.gz"
 
   refresh-manifest:
     needs: build

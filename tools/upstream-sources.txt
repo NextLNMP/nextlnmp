@@ -18,5 +18,7 @@ datebase/mysql mysql-8.4.9-linux-glibc2.17-x86_64.tar.xz https://cdn.mysql.com/D
 # datebase/mysql mysql-8.0.46-linux-glibc2.17-aarch64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-linux-glibc2.17-aarch64.tar.xz
 # datebase/mysql mysql-8.4.9-linux-glibc2.17-aarch64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.9-linux-glibc2.17-aarch64.tar.xz
 
-# 注: 以上 aarch64 条目上游 URL 命名待核实(首跑 404), ARM 用户暂走 cdn 回退, 核实后取消注释重跑
+# 结论(2026-07-07 已核实): MariaDB 官方不发布 aarch64 通用 bintar(档案库各版本仅 bintar-linux-systemd-x86_64),
+# ARM 上 MariaDB 走源码编译回退, 属上游事实而非命名问题, 以上三条永久注释留档。
+# MySQL aarch64 走 cdn 直连回退可用, 镜像加速项待 ARM 整体排产时核实命名后启用。
 datebase/phpmyadmin phpMyAdmin-5.2.2-all-languages.tar.xz https://files.phpmyadmin.net/phpMyAdmin/5.2.2/phpMyAdmin-5.2.2-all-languages.tar.xz

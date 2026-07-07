@@ -1,0 +1,79 @@
+name: Smoke MariaDB
+
+on:
+  workflow_dispatch:
+    inputs:
+      mariadb_version:
+        description: 'MariaDB version to smoke test (e.g. 11.8.8)'
+        required: true
+        default: '11.8.8'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download bintar from mirror
+        run: |
+          VER="${{ inputs.mariadb_version }}"
+          curl -fL --retry 3 -o "/tmp/mariadb-${VER}.tar.gz" \
+            "https://mirror.nextlnmp.cn/datebase/mariadb/mariadb-${VER}-linux-systemd-x86_64.tar.gz"
+          ls -lh "/tmp/mariadb-${VER}.tar.gz"
+
+      - name: Layout compat check (install_db script)
+        run: |
+          VER="${{ inputs.mariadb_version }}"
+          tar tzf "/tmp/mariadb-${VER}.tar.gz" | grep -E "scripts/(mysql_install_db|mariadb-install-db)$"
+
+      - name: Extract as /usr/local/mariadb
+        run: |
+          VER="${{ inputs.mariadb_version }}"
+          sudo tar zxf "/tmp/mariadb-${VER}.tar.gz" -C /usr/local/
+          sudo mv "/usr/local/mariadb-${VER}-linux-systemd-x86_64" /usr/local/mariadb
+          sudo useradd -M -s /sbin/nologin mariadb || true
+          sudo mkdir -p /data/mariadb
+          sudo chown -R mariadb:mariadb /data/mariadb /usr/local/mariadb
+
+      - name: mysql_install_db (NextLNMP-style invocation)
+        run: |
+          sudo tee /etc/my.cnf >/dev/null <<'EOF'
+          [mysqld]
+          basedir = /usr/local/mariadb
+          datadir = /data/mariadb
+          socket = /tmp/mysql.sock
+          user = mariadb
+          EOF
+          sudo /usr/local/mariadb/scripts/mysql_install_db \
+            --defaults-file=/etc/my.cnf \
+            --basedir=/usr/local/mariadb \
+            --datadir=/data/mariadb \
+            --user=mariadb
+
+      - name: Start mysqld
+        run: |
+          sudo -u mariadb /usr/local/mariadb/bin/mysqld_safe --defaults-file=/etc/my.cnf &
+          for i in $(seq 1 30); do
+            [ -S /tmp/mysql.sock ] && break
+            sleep 1
+          done
+          test -S /tmp/mysql.sock
+
+      - name: Version assert
+        run: |
+          VER="${{ inputs.mariadb_version }}"
+          GOT=$(sudo /usr/local/mariadb/bin/mysql -uroot -S /tmp/mysql.sock -N -e "SELECT VERSION();")
+          echo "server reports: ${GOT}"
+          echo "${GOT}" | grep -q "^${VER}"
+
+      - name: CRUD + utf8mb4 round trip
+        run: |
+          M="sudo /usr/local/mariadb/bin/mysql -uroot -S /tmp/mysql.sock"
+          $M -e "CREATE DATABASE smoke DEFAULT CHARSET utf8mb4;"
+          $M smoke -e "CREATE TABLE t (id INT PRIMARY KEY AUTO_INCREMENT, s VARCHAR(64)) DEFAULT CHARSET utf8mb4;"
+          $M smoke -e "INSERT INTO t (s) VALUES ('冒烟测试 🔥');"
+          GOT=$($M smoke -N -e "SELECT s FROM t WHERE id=1;")
+          echo "round trip: ${GOT}"
+          echo "${GOT}" | grep -q "冒烟测试"
+
+      - name: Clean shutdown
+        run: |
+          sudo /usr/local/mariadb/bin/mysqladmin -uroot -S /tmp/mysql.sock shutdown
