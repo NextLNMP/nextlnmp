@@ -1,0 +1,25 @@
+name: Mirror LS Probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: List /data/mirror/php
+        env:
+          SSH_KEY: ${{ secrets.MIRROR_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh && echo "$SSH_KEY" > ~/.ssh/id_mirror && chmod 600 ~/.ssh/id_mirror
+          ssh -n -i ~/.ssh/id_mirror -o StrictHostKeyChecking=accept-new root@47.122.115.39 \
+            "ls -la /data/mirror/php/ | tail -30; echo '---'; ls /data/mirror/php/ | grep -c aarch64 || true"
+
+      - name: Assert aarch64 count >= 8
+        env:
+          SSH_KEY: ${{ secrets.MIRROR_SSH_KEY }}
+        run: |
+          N=$(ssh -n -i ~/.ssh/id_mirror -o StrictHostKeyChecking=accept-new root@47.122.115.39 \
+            "ls /data/mirror/php/ | grep -c aarch64 || true")
+          echo "aarch64 files on mirror: $N"
+          [ "$N" -ge 8 ]
