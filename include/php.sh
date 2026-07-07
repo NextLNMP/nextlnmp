@@ -267,6 +267,118 @@ PHP_ICU70_Patch()
     fi
 }
 
+# ====================================================================
+# 清单驱动的 PHP 二进制急速安装（NextLNMP）
+# 可用性以随主包分发的 sha256sums.txt 为索引：清单里有对应
+# ${Php_Ver}-bin-<os>.tar.gz 条目即走快车道，否则回落源码编译。
+# 新增版本只需产线构建并上传镜像、运行 sync-checksums，无需改代码。
+# ====================================================================
+PHP_Bin_OSTag()
+{
+    local id ver
+    id=$(grep "^ID=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+    ver=$(grep "^VERSION_ID=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+    case "${id}-${ver}" in
+        ubuntu-22.04) echo ubuntu22 ;;
+        ubuntu-24.04) echo ubuntu24 ;;
+        debian-12)    echo debian12 ;;
+        debian-13)    echo debian13 ;;
+        *) echo "" ;;
+    esac
+}
+
+PHP_Bin_Pkg()
+{
+    local tag=$(PHP_Bin_OSTag)
+    [ -n "${tag}" ] && echo "${Php_Ver}-bin-${tag}.tar.gz"
+}
+
+PHP_Bin_Available()
+{
+    local pkg=$(PHP_Bin_Pkg)
+    [ -n "${pkg}" ] || return 1
+    grep -q "  ${pkg}$" "${cur_dir}/sha256sums.txt" 2>/dev/null
+}
+
+Apt_Lib_Resolve()
+{
+    apt-cache search --names-only "$1" 2>/dev/null | awk '{print $1}' | sort -V | tail -1
+}
+
+PHP_Bin_Runtime_Deps()
+{
+    command -v apt-get >/dev/null 2>&1 || return 0
+    local icu=$(Apt_Lib_Resolve '^libicu[0-9]+$')
+    local jpeg=$(Apt_Lib_Resolve '^libjpeg[0-9a-z]*-turbo[0-9]*$|^libjpeg-turbo[0-9]+$')
+    apt-get install -y --no-install-recommends \
+        libxml2 libsqlite3-0 libcurl4 zlib1g libonig5 libzip4 \
+        libpng16-16 libwebp7 libfreetype6 libxslt1.1 libsodium23 \
+        libreadline8 ${icu} ${jpeg} > /dev/null 2>&1 || \
+        Echo_Yellow "部分运行时依赖安装失败，如 PHP 启动报缺库请手动 apt 安装"
+}
+
+Install_PHP_Bin()
+{
+    local pkg=$(PHP_Bin_Pkg)
+    Echo_Blue "[+] 急速安装模式：直接解压 ${Php_Ver} Binary 包（$(PHP_Bin_OSTag)）"
+    PHP_Bin_Runtime_Deps
+    tar zxf ${cur_dir}/src/${pkg} -C /usr/local/
+    Ln_PHP_Bin
+    mkdir -p /usr/local/php/{etc,conf.d}
+    local mm=$(echo ${Php_Ver} | grep -oE '[0-9]+\.[0-9]+' | head -1)
+    # 优先从镜像站下载 php.ini
+    if ! wget -q --timeout=15 -O /usr/local/php/etc/php.ini ${Download_Mirror}/php/php.ini-production-${mm} 2>/dev/null; then
+        # 兜底：用内置模板生成基础配置
+        Echo_Blue "镜像站下载失败，使用内置 php.ini 模板..."
+        cat >/usr/local/php/etc/php.ini<<'PHPINIEOF'
+[PHP]
+engine = On
+short_open_tag = On
+precision = 14
+output_buffering = 4096
+zlib.output_compression = Off
+implicit_flush = Off
+serialize_precision = -1
+zend.enable_gc = On
+expose_php = Off
+max_execution_time = 300
+max_input_time = 60
+memory_limit = 128M
+error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
+display_errors = Off
+log_errors = On
+error_log = /usr/local/php/var/log/php_errors.log
+post_max_size = 50M
+default_mimetype = "text/html"
+default_charset = "UTF-8"
+file_uploads = On
+upload_max_filesize = 50M
+max_file_uploads = 20
+allow_url_fopen = On
+allow_url_include = Off
+date.timezone = PRC
+cgi.fix_pathinfo=0
+disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,popen,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server
+[Session]
+session.save_handler = files
+session.save_path = "/tmp"
+session.use_strict_mode = 0
+session.use_cookies = 1
+session.use_only_cookies = 1
+session.name = PHPSESSID
+session.auto_start = 0
+session.gc_maxlifetime = 1440
+[opcache]
+opcache.enable=1
+opcache.memory_consumption=128
+opcache.max_accelerated_files=10000
+opcache.validate_timestamps=1
+opcache.revalidate_freq=60
+PHPINIEOF
+    fi
+    cp /usr/local/php/etc/php-fpm.d/www.conf.default /usr/local/php/etc/php-fpm.d/www.conf 2>/dev/null
+}
+
 Install_PHP_52()
 {
     Echo_Blue "[+] Installing ${Php_Ver}..."
@@ -1208,68 +1320,8 @@ fi
 
 Install_PHP_82()
 {
-    OS_ID=$(grep "^ID=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
-    OS_VER=$(grep "^VERSION_ID=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
-    if [[ "${OS_ID}" = "ubuntu" && "${OS_VER}" = "22.04" && -f "${cur_dir}/src/php-8.2.28-bin-ubuntu22.tar.gz" ]] || [[ "${OS_ID}" = "debian" && "${OS_VER}" = "12" && -f "${cur_dir}/src/php-8.2.28-bin-debian12.tar.gz" ]]; then
-        Echo_Blue "[+] 急速安装模式：直接解压 PHP 8.2.28 Binary 包"
-        if [[ "${OS_ID}" = "ubuntu" ]]; then
-            tar zxf ${cur_dir}/src/php-8.2.28-bin-ubuntu22.tar.gz -C /usr/local/
-        else
-            tar zxf ${cur_dir}/src/php-8.2.28-bin-debian12.tar.gz -C /usr/local/
-        fi
-        Ln_PHP_Bin
-        mkdir -p /usr/local/php/{etc,conf.d}
-        # 优先从镜像站下载 php.ini
-        if ! wget -q --timeout=15 -O /usr/local/php/etc/php.ini ${Download_Mirror}/php/php.ini-production-8.2 2>/dev/null; then
-            # 兜底：用内置模板生成基础配置
-            Echo_Blue "镜像站下载失败，使用内置 php.ini 模板..."
-            cat >/usr/local/php/etc/php.ini<<'PHPINIEOF'
-[PHP]
-engine = On
-short_open_tag = On
-precision = 14
-output_buffering = 4096
-zlib.output_compression = Off
-implicit_flush = Off
-serialize_precision = -1
-zend.enable_gc = On
-expose_php = Off
-max_execution_time = 300
-max_input_time = 60
-memory_limit = 128M
-error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
-display_errors = Off
-log_errors = On
-error_log = /usr/local/php/var/log/php_errors.log
-post_max_size = 50M
-default_mimetype = "text/html"
-default_charset = "UTF-8"
-file_uploads = On
-upload_max_filesize = 50M
-max_file_uploads = 20
-allow_url_fopen = On
-allow_url_include = Off
-date.timezone = PRC
-cgi.fix_pathinfo=0
-disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,popen,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server
-[Session]
-session.save_handler = files
-session.save_path = "/tmp"
-session.use_strict_mode = 0
-session.use_cookies = 1
-session.use_only_cookies = 1
-session.name = PHPSESSID
-session.auto_start = 0
-session.gc_maxlifetime = 1440
-[opcache]
-opcache.enable=1
-opcache.memory_consumption=128
-opcache.max_accelerated_files=10000
-opcache.validate_timestamps=1
-opcache.revalidate_freq=60
-PHPINIEOF
-        fi
-        cp /usr/local/php/etc/php-fpm.d/www.conf.default /usr/local/php/etc/php-fpm.d/www.conf
+    if PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then
+        Install_PHP_Bin
     else
         Install_Libzip
         Echo_Blue "[+] Installing ${Php_Ver}"
@@ -1338,6 +1390,9 @@ fi
 
 Install_PHP_83()
 {
+    if PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then
+        Install_PHP_Bin
+    else
     Install_Libzip
     Echo_Blue "[+] Installing ${Php_Ver}"
     Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
@@ -1354,6 +1409,7 @@ Install_PHP_83()
     echo "Copy new php configure file..."
     mkdir -p /usr/local/php/{etc,conf.d}
     \cp php.ini-production /usr/local/php/etc/php.ini
+    fi
 
     # php extensions
     echo "Modify php.ini......"
@@ -1409,6 +1465,9 @@ fi
 
 Install_PHP_84()
 {
+    if PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then
+        Install_PHP_Bin
+    else
     Install_Libzip
     Echo_Blue "[+] Installing ${Php_Ver}"
     Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
@@ -1425,6 +1484,7 @@ Install_PHP_84()
     echo "Copy new php configure file..."
     mkdir -p /usr/local/php/{etc,conf.d}
     \cp php.ini-production /usr/local/php/etc/php.ini
+    fi
 
     # php extensions
     echo "Modify php.ini......"

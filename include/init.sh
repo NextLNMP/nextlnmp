@@ -508,15 +508,19 @@ Check_Download()
             Download_Files https://downloads.mariadb.org/rest-api/mariadb/${Mariadb_Version}/${Mariadb_Ver}.tar.gz ${Mariadb_Ver}.tar.gz
         fi
     fi
-    # 急速安装模式：Ubuntu 22.04 / Debian 12 走 PHP Binary 包
+    # 急速安装模式：校验清单里存在当前 PHP 版本对应发行版的二进制包时启用
+    PHP_Bin_OS=""
     OS_ID=$(grep "^ID=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
     OS_VER=$(grep "^VERSION_ID=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
-    if [[ "${OS_ID}" = "ubuntu" && "${OS_VER}" = "22.04" ]]; then
-        Echo_Blue "[+] 检测到 Ubuntu 22.04，启用急速安装模式"
-        Download_Files ${Download_Mirror}/php/php-8.2.28-bin-ubuntu22.tar.gz php-8.2.28-bin-ubuntu22.tar.gz
-    elif [[ "${OS_ID}" = "debian" && "${OS_VER}" = "12" ]]; then
-        Echo_Blue "[+] 检测到 Debian 12，启用急速安装模式"
-        Download_Files ${Download_Mirror}/php/php-8.2.28-bin-debian12.tar.gz php-8.2.28-bin-debian12.tar.gz
+    case "${OS_ID}-${OS_VER}" in
+        ubuntu-22.04) PHP_Bin_OS=ubuntu22 ;;
+        ubuntu-24.04) PHP_Bin_OS=ubuntu24 ;;
+        debian-12)    PHP_Bin_OS=debian12 ;;
+        debian-13)    PHP_Bin_OS=debian13 ;;
+    esac
+    if [ -n "${PHP_Bin_OS}" ] && grep -q "  ${Php_Ver}-bin-${PHP_Bin_OS}.tar.gz$" "${cur_dir}/sha256sums.txt" 2>/dev/null; then
+        Echo_Blue "[+] 检测到 ${OS_ID} ${OS_VER}，${Php_Ver} 启用急速安装模式"
+        Download_Files ${Download_Mirror}/php/${Php_Ver}-bin-${PHP_Bin_OS}.tar.gz ${Php_Ver}-bin-${PHP_Bin_OS}.tar.gz
     else
         Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     fi
