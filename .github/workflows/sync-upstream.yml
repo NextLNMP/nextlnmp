@@ -1,0 +1,59 @@
+name: Sync Upstream
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync declared upstream files to mirror
+        env:
+          SSH_KEY: ${{ secrets.MIRROR_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_mirror
+          chmod 600 ~/.ssh/id_mirror
+          SSH="ssh -i $HOME/.ssh/id_mirror -o StrictHostKeyChecking=accept-new root@47.122.115.39"
+          MISS=""
+          SYNCED=0
+          SKIPPED=0
+          while read -r dir name url; do
+            case "$dir" in ''|\#*) continue ;; esac
+            if $SSH "test -e /data/mirror/${dir}/${name}"; then
+              echo "跳过(已存在): ${name}"
+              SKIPPED=$((SKIPPED+1))
+              continue
+            fi
+            echo "下载: ${name}"
+            if ! curl -fL --retry 3 --retry-delay 5 -o "/tmp/${name}" "$url"; then
+              echo "::warning::下载失败: ${name} <- ${url}"
+              MISS="${MISS} ${name}"
+              continue
+            fi
+            $SSH "mkdir -p /data/mirror/${dir}"
+            scp -i ~/.ssh/id_mirror -o StrictHostKeyChecking=accept-new "/tmp/${name}" "root@47.122.115.39:/data/mirror/${dir}/"
+            rm -f "/tmp/${name}"
+            echo "已同步: ${dir}/${name}"
+            SYNCED=$((SYNCED+1))
+          done < tools/upstream-sources.txt
+          echo "==== 汇总: 新同步 ${SYNCED} 个, 跳过 ${SKIPPED} 个 ===="
+          if [ -n "$MISS" ]; then
+            echo "::error::以下条目同步失败:${MISS}"
+            exit 1
+          fi
+
+      - name: Refresh checksum manifest
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/sync-checksums.yml/dispatches" \
+            -d '{"ref":"main"}'
+          echo "sync-checksums dispatched"

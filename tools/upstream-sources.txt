@@ -1,0 +1,21 @@
+# NextLNMP 上游源声明清单
+# 格式: <镜像站子目录> <文件名> <官方下载URL>
+# 用法: Actions -> Sync Upstream 工作流按本清单增量同步到镜像站并自动刷新校验清单
+# 版本升级 = 修改本文件 + include/version.sh 对应 pin, 然后跑一次工作流
+
+web/nginx nginx-1.30.3.tar.gz https://nginx.org/download/nginx-1.30.3.tar.gz
+
+datebase/mariadb mariadb-10.11.18-linux-systemd-x86_64.tar.gz https://archive.mariadb.org/mariadb-10.11.18/bintar-linux-systemd-x86_64/mariadb-10.11.18-linux-systemd-x86_64.tar.gz
+datebase/mariadb mariadb-10.6.27-linux-systemd-x86_64.tar.gz https://archive.mariadb.org/mariadb-10.6.27/bintar-linux-systemd-x86_64/mariadb-10.6.27-linux-systemd-x86_64.tar.gz
+datebase/mariadb mariadb-11.8.8-linux-systemd-x86_64.tar.gz https://archive.mariadb.org/mariadb-11.8.8/bintar-linux-systemd-x86_64/mariadb-11.8.8-linux-systemd-x86_64.tar.gz
+datebase/mariadb mariadb-12.3.2-linux-systemd-x86_64.tar.gz https://archive.mariadb.org/mariadb-12.3.2/bintar-linux-systemd-x86_64/mariadb-12.3.2-linux-systemd-x86_64.tar.gz
+datebase/mariadb mariadb-10.11.18-linux-systemd-aarch64.tar.gz https://archive.mariadb.org/mariadb-10.11.18/bintar-linux-systemd-aarch64/mariadb-10.11.18-linux-systemd-aarch64.tar.gz
+datebase/mariadb mariadb-11.8.8-linux-systemd-aarch64.tar.gz https://archive.mariadb.org/mariadb-11.8.8/bintar-linux-systemd-aarch64/mariadb-11.8.8-linux-systemd-aarch64.tar.gz
+datebase/mariadb mariadb-12.3.2-linux-systemd-aarch64.tar.gz https://archive.mariadb.org/mariadb-12.3.2/bintar-linux-systemd-aarch64/mariadb-12.3.2-linux-systemd-aarch64.tar.gz
+
+datebase/mysql mysql-8.0.46-linux-glibc2.17-x86_64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-linux-glibc2.17-x86_64.tar.xz
+datebase/mysql mysql-8.4.9-linux-glibc2.17-x86_64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.9-linux-glibc2.17-x86_64.tar.xz
+datebase/mysql mysql-8.0.46-linux-glibc2.17-aarch64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-linux-glibc2.17-aarch64.tar.xz
+datebase/mysql mysql-8.4.9-linux-glibc2.17-aarch64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.9-linux-glibc2.17-aarch64.tar.xz
+
+datebase/phpmyadmin phpMyAdmin-5.2.2-all-languages.tar.xz https://files.phpmyadmin.net/phpMyAdmin/5.2.2/phpMyAdmin-5.2.2-all-languages.tar.xz
