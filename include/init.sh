@@ -518,9 +518,11 @@ Check_Download()
         debian-12)    PHP_Bin_OS=debian12 ;;
         debian-13)    PHP_Bin_OS=debian13 ;;
     esac
-    if [ -n "${PHP_Bin_OS}" ] && grep -q "  ${Php_Ver}-bin-${PHP_Bin_OS}.tar.gz$" "${cur_dir}/sha256sums.txt" 2>/dev/null; then
-        Echo_Blue "[+] 检测到 ${OS_ID} ${OS_VER}，${Php_Ver} 启用急速安装模式"
-        Download_Files ${Download_Mirror}/php/${Php_Ver}-bin-${PHP_Bin_OS}.tar.gz ${Php_Ver}-bin-${PHP_Bin_OS}.tar.gz
+    PHP_Bin_Arch=""
+    [ "$(uname -m)" = "aarch64" ] && PHP_Bin_Arch="-aarch64"
+    if [ -n "${PHP_Bin_OS}" ] && grep -q "  ${Php_Ver}-bin-${PHP_Bin_OS}${PHP_Bin_Arch}.tar.gz$" "${cur_dir}/sha256sums.txt" 2>/dev/null; then
+        Echo_Blue "[+] 检测到 ${OS_ID} ${OS_VER} $(uname -m)，${Php_Ver} 启用急速安装模式"
+        Download_Files ${Download_Mirror}/php/${Php_Ver}-bin-${PHP_Bin_OS}${PHP_Bin_Arch}.tar.gz ${Php_Ver}-bin-${PHP_Bin_OS}${PHP_Bin_Arch}.tar.gz
     else
         Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     fi
