@@ -91,11 +91,16 @@ EOF
 
 Check_MariaDB_Data_Dir()
 {
-    if [ -d "${MariaDB_Data_Dir}" ]; then
+    if [ -d "${MariaDB_Data_Dir}" ] && [ -n "$(ls -A "${MariaDB_Data_Dir}" 2>/dev/null)" ]; then
         datetime=$(date +"%Y%m%d%H%M%S")
-        mkdir /root/mariadb-data-dir-backup${datetime}/
-        \cp ${MariaDB_Data_Dir}/* /root/mariadb-data-dir-backup${datetime}/
-        rm -rf ${MariaDB_Data_Dir}/*
+        local backup_dir="/root/mariadb-data-dir-backup${datetime}"
+        mkdir -p "${backup_dir}"
+        echo "检测到已有数据目录，正在完整备份到 ${backup_dir} ..."
+        if ! \cp -a "${MariaDB_Data_Dir}/." "${backup_dir}/"; then
+            Echo_Red "❌ 数据目录备份失败，为避免数据丢失已中止安装（原数据仍在 ${MariaDB_Data_Dir}）"
+            exit 1
+        fi
+        rm -rf "${MariaDB_Data_Dir:?}"/*
     else
         mkdir -p ${MariaDB_Data_Dir}
     fi

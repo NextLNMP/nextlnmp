@@ -177,11 +177,16 @@ MySQL_Opt()
 
 Check_MySQL_Data_Dir()
 {
-    if [ -d "${MySQL_Data_Dir}" ]; then
+    if [ -d "${MySQL_Data_Dir}" ] && [ -n "$(ls -A "${MySQL_Data_Dir}" 2>/dev/null)" ]; then
         datetime=$(date +"%Y%m%d%H%M%S")
-        mkdir -p /root/mysql-data-dir-backup${datetime}/
-        \cp ${MySQL_Data_Dir}/* /root/mysql-data-dir-backup${datetime}/
-        rm -rf ${MySQL_Data_Dir}/*
+        local backup_dir="/root/mysql-data-dir-backup${datetime}"
+        mkdir -p "${backup_dir}"
+        echo "检测到已有数据目录，正在完整备份到 ${backup_dir} ..."
+        if ! \cp -a "${MySQL_Data_Dir}/." "${backup_dir}/"; then
+            Echo_Red "❌ 数据目录备份失败，为避免数据丢失已中止安装（原数据仍在 ${MySQL_Data_Dir}）"
+            exit 1
+        fi
+        rm -rf "${MySQL_Data_Dir:?}"/*
     else
         mkdir -p ${MySQL_Data_Dir}
     fi

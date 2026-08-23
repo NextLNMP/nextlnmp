@@ -47,15 +47,18 @@ Upgrade_Multiplephp()
         if [[ -s /usr/local/php8.3/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php8.3.conf && -s /etc/init.d/php-fpm8.3 ]]; then
             Echo_Green "10: PHP 8.3 [found]"
         fi
+        if [[ -s /usr/local/php8.4/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php8.4.conf && -s /etc/init.d/php-fpm8.4 ]]; then
+            Echo_Green "11: PHP 8.4 [found]"
+        fi
     fi
 
     while :;do
         MPHP_Select=""
         read -p "Please select which multiple php version to upgrade: " MPHP_Select
-        if [ "${MPHP_Select}" = "" ]; then
-            Echo_Red "Error: Please input number!"
-        else
+        if [[ "${MPHP_Select}" =~ ^([1-9]|1[01])$ ]]; then
             break
+        else
+            Echo_Red "Error: Please input a number between 1 and 11!"
         fi
     done
 
@@ -89,6 +92,14 @@ Upgrade_Multiplephp()
     elif [ "${MPHP_Select}" = "10" ]; then
         Cur_MPHP_Big_Ver="8.3"
         Cur_MPHP_Path='/usr/local/php8.3'
+    elif [ "${MPHP_Select}" = "11" ]; then
+        Cur_MPHP_Big_Ver="8.4"
+        Cur_MPHP_Path='/usr/local/php8.4'
+    fi
+
+    if [ -z "${Cur_MPHP_Path}" ] || [ ! -x "${Cur_MPHP_Path}/bin/php-config" ]; then
+        Echo_Red "Error: PHP ${Cur_MPHP_Big_Ver} is not installed at ${Cur_MPHP_Path}, nothing to upgrade."
+        exit 1
     fi
 
     Echo_Yellow "Please choose whic multiple php version to upgrade."
@@ -103,7 +114,7 @@ Upgrade_Multiplephp()
         Echo_Red "Error: You must enter a corrent php version!!"
         exit 1
     fi
-    if echo "${php_version}" | grep -Eqi "${Cur_MPHP_Big_Ver}"; then
+    if echo "${php_version}" | grep -Eq "^${Cur_MPHP_Big_Ver//./\\.}\.[0-9]+$"; then
         Echo_Blue "You will upgrade php ${Cur_MPHP_Version} from to ${php_version}."
     else
         Echo_Red "Error: You can't upgrade php cross-version!"
@@ -172,6 +183,9 @@ Upgrade_Multiplephp()
     elif [ "${MPHP_Select}" = "9" ]; then
         Upgrade_MPHP8.2
     elif [ "${MPHP_Select}" = "10" ]; then
+        Upgrade_MPHP8.3
+    elif [ "${MPHP_Select}" = "11" ]; then
+        # 8.4 与 8.3 编译参数一致（对齐 php.sh 的 Install_PHP_83/84），函数按 Cur_MPHP_Path 参数化
         Upgrade_MPHP8.3
     else
         Echo_Red "PHP version: ${php_version} is not supported."

@@ -29,6 +29,19 @@ pad_line() {
     printf "|%s%${pad}s|\n" "$content" ""
 }
 
+Cleanup_Systemd_Units()
+{
+    command -v systemctl >/dev/null 2>&1 || return 0
+    local unit
+    for unit in nginx mysql mysqld mariadb httpd caddy pureftpd redis memcached php-fpm; do
+        if [ -f "/etc/systemd/system/${unit}.service" ]; then
+            systemctl disable --now "${unit}" 2>/dev/null
+            rm -f "/etc/systemd/system/${unit}.service"
+        fi
+    done
+    systemctl daemon-reload 2>/dev/null
+}
+
 clear
 echo "+----------------------------------------------------------+"
 pad_line "  NextLNMP v${NEXTLNMP_Ver} 卸载程序"
@@ -45,10 +58,10 @@ case "$action" in
 1)
     echo ""
     Echo_Yellow "即将卸载 NextLNMP，以下目录将被删除："
-    echo "  /usr/local/nginx"
-    echo "  /usr/local/php"
-    echo "  /usr/local/mysql（数据库将备份到 /root/）"
-    echo "  /etc/init.d/nginx、php-fpm"
+    echo "  /usr/local/nginx、/usr/local/apache"
+    echo "  /usr/local/php（含多版本 PHP）"
+    echo "  /usr/local/mysql、/usr/local/mariadb（数据库将备份到 /root/）"
+    echo "  /etc/init.d/nginx、php-fpm 及对应 systemd 服务"
     echo "  /bin/nextlnmp"
     echo ""
     read -p "确认卸载？[y/N]：" confirm
@@ -67,8 +80,13 @@ case "$action" in
 
     if [ -n "${MySQL_Data_Dir}" ] && [ -d "${MySQL_Data_Dir}" ]; then
         backup_dir="/root/databases_backup_$(date +%Y%m%d%H%M%S)"
-        echo "备份数据库到 ${backup_dir}..."
+        echo "备份 MySQL 数据库到 ${backup_dir}..."
         mv ${MySQL_Data_Dir} ${backup_dir}
+    fi
+    if [ -n "${MariaDB_Data_Dir}" ] && [ -d "${MariaDB_Data_Dir}" ]; then
+        backup_dir="/root/databases_backup_mariadb_$(date +%Y%m%d%H%M%S)"
+        echo "备份 MariaDB 数据库到 ${backup_dir}..."
+        mv ${MariaDB_Data_Dir} ${backup_dir}
     fi
 
     if [ -s /usr/local/acme.sh/acme.sh ]; then
@@ -76,9 +94,11 @@ case "$action" in
         rm -rf /usr/local/acme.sh
     fi
 
+    Cleanup_Systemd_Units
+
     echo "删除 NextLNMP 文件..."
-    rm -rf /usr/local/nginx /usr/local/php /usr/local/mysql /usr/local/mariadb /usr/local/zend
-    rm -f /etc/my.cnf /etc/init.d/nginx /etc/init.d/mysql /etc/init.d/mysqld /etc/init.d/mariadb
+    rm -rf /usr/local/nginx /usr/local/apache /usr/local/php /usr/local/php[0-9].[0-9]* /usr/local/mysql /usr/local/mariadb /usr/local/zend
+    rm -f /etc/my.cnf /etc/init.d/nginx /etc/init.d/mysql /etc/init.d/mysqld /etc/init.d/mariadb /etc/init.d/httpd
     for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[578].[0-9]; do
         rm -f "$phpfpm" 2>/dev/null
     done
@@ -110,10 +130,12 @@ case "$action" in
         rm -rf /usr/local/acme.sh
     fi
 
+    Cleanup_Systemd_Units
+
     echo "删除所有文件..."
-    rm -rf /usr/local/nginx /usr/local/php /usr/local/mysql /usr/local/mariadb /usr/local/zend
+    rm -rf /usr/local/nginx /usr/local/apache /usr/local/php /usr/local/php[0-9].[0-9]* /usr/local/mysql /usr/local/mariadb /usr/local/zend
     rm -rf /home/wwwroot
-    rm -f /etc/my.cnf /etc/init.d/nginx /etc/init.d/mysql /etc/init.d/mysqld /etc/init.d/mariadb
+    rm -f /etc/my.cnf /etc/init.d/nginx /etc/init.d/mysql /etc/init.d/mysqld /etc/init.d/mariadb /etc/init.d/httpd
     for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[578].[0-9]; do
         rm -f "$phpfpm" 2>/dev/null
     done
