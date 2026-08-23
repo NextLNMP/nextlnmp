@@ -224,26 +224,19 @@ Download_PHP_Src()
         echo "Notice: php-${Cur_PHP_Version}.tar.bz2 not found!!!download now..."
         Get_Country
         if [ "${country}" = "CN" ]; then
-            Download_Files http://php.vpszt.com/php-${Cur_PHP_Version}.tar.bz2 php-${Cur_PHP_Version}.tar.bz2
-            if [ $? -ne 0 ]; then
-                Download_Files https://www.php.net/distributions/php-${Cur_PHP_Version}.tar.bz2 php-${Cur_PHP_Version}.tar.bz2
-            fi
+            Try_Download http://php.vpszt.com/php-${Cur_PHP_Version}.tar.bz2 php-${Cur_PHP_Version}.tar.bz2 || \
+            Try_Download https://www.php.net/distributions/php-${Cur_PHP_Version}.tar.bz2 php-${Cur_PHP_Version}.tar.bz2
         else
-            Download_Files https://www.php.net/distributions/php-${Cur_PHP_Version}.tar.bz2 php-${Cur_PHP_Version}.tar.bz2
-            if [ $? -ne 0 ]; then
-                Download_Files http://php.vpszt.com/php-${Cur_PHP_Version}.tar.bz2 php-${Cur_PHP_Version}.tar.bz2
-            fi
+            Try_Download https://www.php.net/distributions/php-${Cur_PHP_Version}.tar.bz2 php-${Cur_PHP_Version}.tar.bz2 || \
+            Try_Download http://php.vpszt.com/php-${Cur_PHP_Version}.tar.bz2 php-${Cur_PHP_Version}.tar.bz2
         fi
         if [ $? -eq 0 ]; then
             echo "Download php-${Cur_PHP_Version}.tar.bz2 successfully!"
+        elif Try_Download http://museum.php.net/php5/php-${Cur_PHP_Version}.tar.bz2 php-${Cur_PHP_Version}.tar.bz2; then
+            echo "Download php-${Cur_PHP_Version}.tar.bz2 successfully!"
         else
-            Download_Files http://museum.php.net/php5/php-${Cur_PHP_Version}.tar.bz2 php-${Cur_PHP_Version}.tar.bz2
-            if [ $? -eq 0 ]; then
-                echo "Download php-${Cur_PHP_Version}.tar.bz2 successfully!"
-            else
-                Echo_Red "Error! Can't download PHP ${Cur_PHP_Version}, please check!"
-                exit 1
-            fi
+            Echo_Red "Error! Can't download PHP ${Cur_PHP_Version}, please check!"
+            exit 1
         fi
     fi
 }

@@ -128,27 +128,20 @@ Upgrade_Multiplephp()
         echo "Notice: php-${php_version}.tar.bz2 not found!!!download now..."
         Get_Country
         if [ "${country}" = "CN" ]; then
-            Download_Files http://php.vpszt.com/php-${php_version}.tar.bz2 php-${php_version}.tar.bz2
-            if [ $? -ne 0 ]; then
-                Download_Files https://www.php.net/distributions/php-${php_version}.tar.bz2 php-${php_version}.tar.bz2
-            fi
+            Try_Download http://php.vpszt.com/php-${php_version}.tar.bz2 php-${php_version}.tar.bz2 || \
+            Try_Download https://www.php.net/distributions/php-${php_version}.tar.bz2 php-${php_version}.tar.bz2
         else
-            Download_Files https://www.php.net/distributions/php-${php_version}.tar.bz2 php-${php_version}.tar.bz2
-            if [ $? -ne 0 ]; then
-                Download_Files http://php.vpszt.com/php-${php_version}.tar.bz2 php-${php_version}.tar.bz2
-            fi
+            Try_Download https://www.php.net/distributions/php-${php_version}.tar.bz2 php-${php_version}.tar.bz2 || \
+            Try_Download http://php.vpszt.com/php-${php_version}.tar.bz2 php-${php_version}.tar.bz2
         fi
         if [ $? -eq 0 ]; then
-            echo "Download php-${Php_Ver}.tar.bz2 successfully!"
+            echo "Download php-${php_version}.tar.bz2 successfully!"
+        elif Try_Download http://museum.php.net/php5/php-${php_version}.tar.bz2 php-${php_version}.tar.bz2; then
+            echo "Download php-${php_version}.tar.bz2 successfully!"
         else
-            Download_Files http://museum.php.net/php5/php-${php_version}.tar.bz2 php-${php_version}.tar.bz2
-            if [ $? -eq 0 ]; then
-                echo "Download php-${php_version}.tar.bz2 successfully!"
-            else
-                echo "You enter PHP Version was:"${php_version}
-                Echo_Red "Error! You entered a wrong version number, please check!"
-                exit 1
-            fi
+            echo "You enter PHP Version was:"${php_version}
+            Echo_Red "Error! You entered a wrong version number, please check!"
+            exit 1
         fi
     fi
 

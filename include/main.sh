@@ -880,7 +880,9 @@ Get_OS_Bit()
     fi
 }
 
-Download_Files()
+# 下载 + SHA256 逐包校验。失败【返回非零】而不退出——供带兜底源的调用链使用：
+#   Try_Download 镜像URL 文件 || Download_Files 官方URL 文件
+Try_Download()
 {
     local URL=$1
     local FileName=$2
@@ -903,22 +905,22 @@ Download_Files()
         wget -c --progress=bar:force --prefer-family=IPv4 --no-check-certificate ${URL}
         if [ $? -ne 0 ]; then
             echo "❌ 下载失败：${FileName}"
-            exit 1
+            return 1
         fi
     fi
 
     # SHA256 逐包校验
     if [ -f "${SHA256_FILE}" ] && [ -s "${FileName}" ]; then
-        local actual_sha256=$(sha256sum "${FileName}" | awk "{print \$1}")
-        local expected_sha256=$(grep "  ${FileName}\$" "${SHA256_FILE}" | awk "{print \$1}" | head -1)
-        [ -z "${expected_sha256}" ] && expected_sha256=$(grep "${FileName}" "${SHA256_FILE}" | awk "{print \$1}" | head -1)
+        local actual_sha256=$(sha256sum "${FileName}" | awk '{print $1}')
+        # 只精确匹配清单第二列的文件名（兼容带路径前缀的旧格式清单），杜绝子串误配到别的包
+        local expected_sha256=$(awk -v f="${FileName}" '$1 ~ /^[0-9a-f]{64}$/ {n=split($2,p,"/"); if ($2==f || p[n]==f) {print $1; exit}}' "${SHA256_FILE}")
         if [ -n "${expected_sha256}" ]; then
             if [ "${actual_sha256}" != "${expected_sha256}" ]; then
                 echo "❌ SHA256 校验失败：${FileName}"
                 echo "  期望值：${expected_sha256}"
                 echo "  实际值：${actual_sha256}"
                 rm -f "${FileName}"
-                exit 1
+                return 2
             else
                 echo "${FileName} ✓ SHA256 校验通过"
             fi
@@ -929,6 +931,16 @@ Download_Files()
             fi
             echo "⚠️  清单中未找到 ${FileName} 的校验值，跳过校验（NEXTLNMP_VERIFY=strict 可强制终止）"
         fi
+    fi
+    return 0
+}
+
+# 单一来源下载：失败即终止安装。有兜底源时请改用 Try_Download 组成调用链。
+Download_Files()
+{
+    if ! Try_Download "$1" "$2"; then
+        echo "❌ 下载失败且无备用源：$2"
+        exit 1
     fi
 }
 Tar_Cd()

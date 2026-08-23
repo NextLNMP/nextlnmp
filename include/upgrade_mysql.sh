@@ -866,17 +866,15 @@ Upgrade_MySQL()
     if [ -s "${mysql_src}" ]; then
         echo "${mysql_src} [found]"
     else
-        Download_Files http://cdn.mysql.com/Downloads/MySQL-${mysql_short_version}/${mysql_src} ${mysql_src}
-        if [ $? -eq 0 ]; then
+        if Try_Download http://cdn.mysql.com/Downloads/MySQL-${mysql_short_version}/${mysql_src} ${mysql_src}; then
+            echo "Download ${mysql_src} successfully!"
+        elif Try_Download https://cdn.mysql.com/archives/mysql-${mysql_short_version}/${mysql_src} ${mysql_src}; then
             echo "Download ${mysql_src} successfully!"
         else
-            Download_Files https://cdn.mysql.com/archives/mysql-${mysql_short_version}/${mysql_src} ${mysql_src}
-            if [ $? -ne 0 ]; then
-                echo "You enter MySQL Version was: ${mysql_version}"
-                Echo_Red "Error! You entered a wrong version number, please check!"
-                sleep 5
-                exit 1
-            fi
+            echo "You enter MySQL Version was: ${mysql_version}"
+            Echo_Red "Error! You entered a wrong version number, please check!"
+            sleep 5
+            exit 1
         fi
     fi
     Check_Openssl

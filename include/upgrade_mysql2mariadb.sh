@@ -133,7 +133,13 @@ Upgrade_MySQL2MariaDB()
         echo "${MariaDB_FileName}.tar.gz [found]"
     else
         echo "Notice: ${MariaDB_FileName}.tar.gz not found!!!download now......"
-        Download_Files https://downloads.mariadb.org/rest-api/mariadb/${mariadb_version}/${MariaDB_FileName}.tar.gz ${MariaDB_FileName}.tar.gz
+        if [ "${MariaDB_FileName}" = "mariadb-${mariadb_version}" ]; then
+            MariaDB_Archive_Sub="source"
+        else
+            MariaDB_Archive_Sub="bintar-linux-systemd-${DB_ARCH}"
+        fi
+        Try_Download https://downloads.mariadb.org/rest-api/mariadb/${mariadb_version}/${MariaDB_FileName}.tar.gz ${MariaDB_FileName}.tar.gz || \
+        Try_Download https://archive.mariadb.org/mariadb-${mariadb_version}/${MariaDB_Archive_Sub}/${MariaDB_FileName}.tar.gz ${MariaDB_FileName}.tar.gz
         if [ $? -eq 0 ]; then
             echo "Download ${MariaDB_FileName}.tar.gz successfully!"
         else
