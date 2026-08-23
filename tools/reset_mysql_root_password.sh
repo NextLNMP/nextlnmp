@@ -44,7 +44,8 @@ echo "Starting ${DB_Name} with skip grant tables"
 /usr/local/${DB_Name}/bin/mysqld_safe --skip-grant-tables >/dev/null 2>&1 &
 sleep 5
 echo "update ${DB_Name} root password..."
-if echo "${DB_Ver}" | grep -Eqi '^8.0.|^5.7.|^10.[2345678].'; then
+# MySQL 5.7/8.x（含 8.4）与 MariaDB 10.2+/11.x/12.x 均支持 ALTER USER；更老版本才走 UPDATE mysql.user
+if echo "${DB_Ver}" | grep -Eqi '^8\.|^5\.7\.|^10\.([2-9]|1[0-9])\.|^1[1-9]\.'; then
     /usr/local/${DB_Name}/bin/mysql -u root << EOF
 FLUSH PRIVILEGES;
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_Root_Password}';

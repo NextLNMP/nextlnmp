@@ -70,7 +70,7 @@ Database_Selection()
 #which MySQL Version do you want to install?
     if [ -z ${DBSelect} ]; then
         DBSelect="4"
-        Echo_Yellow "请选择数据库版本（共 11 个选项）："
+        Echo_Yellow "请选择数据库版本（共 13 个选项）："
         echo "1: 安装 ${DB_Info[0]}"
         echo "2: 安装 ${DB_Info[1]}"
         echo "3: 安装 ${DB_Info[2]}"
@@ -82,6 +82,8 @@ Database_Selection()
         echo "9: 安装 ${DB_Info[8]}"
         echo "10: 安装 ${DB_Info[9]}"
         echo "11: 安装 ${DB_Info[10]}"
+        echo "12: 安装 ${DB_Info[11]}"
+        echo "13: 安装 ${DB_Info[12]}"
         echo "0: 不安装数据库"
         read -p "请输入选项（回车默认 4=MySQL 5.7 推荐）： " DBSelect
     fi
@@ -133,7 +135,7 @@ Database_Selection()
                     Bin="y"
                 else
                     echo "默认安装 ${DB_Info[2]} （源码编译）"
-                    Bin="y"
+                    Bin="n"
                 fi
                 ;;
             esac
@@ -161,7 +163,7 @@ Database_Selection()
                     Bin="y"
                 else
                     echo "默认安装 ${DB_Info[3]} （源码编译）"
-                    Bin="y"
+                    Bin="n"
                 fi
                 ;;
             esac
@@ -189,7 +191,7 @@ Database_Selection()
                     Bin="y"
                 else
                     echo "默认安装 ${DB_Info[4]} （源码编译）"
-                    Bin="y"
+                    Bin="n"
                 fi
                 ;;
             esac
@@ -198,33 +200,9 @@ Database_Selection()
         fi
         ;;
     6)
-        echo "即将安装 ${DB_Info[5]}"
-        if [[ "${DB_ARCH}" = "x86_64" || "${DB_ARCH}" = "i686" ]]; then
-            if [ -z ${Bin} ]; then
-                read -p "使用预编译二进制包？（推荐，回车默认 Y）[Y/n]： " Bin
-            fi
-            case "${Bin}" in
-            [yY][eE][sS]|[yY])
-                echo "即将安装 ${DB_Info[5]} （预编译二进制包）"
-                Bin="y"
-                ;;
-            [nN][oO]|[nN])
-                echo "即将安装 ${DB_Info[5]} （源码编译）"
-                Bin="n"
-                ;;
-            *)
-                if [ "${CheckMirror}" != "n" ]; then
-                    echo "默认安装 ${DB_Info[5]} （预编译二进制包）"
-                    Bin="y"
-                else
-                    echo "默认安装 ${DB_Info[5]} （源码编译）"
-                    Bin="y"
-                fi
-                ;;
-            esac
-        else
-            Bin="n"
-        fi
+        # MariaDB 5.5 上游从未发布过 linux-systemd 命名的通用二进制包，强制走源码编译
+        echo "即将安装 ${DB_Info[5]} （源码编译，此版本无预编译包）"
+        Bin="n"
         ;;
     7)
         echo "即将安装 ${DB_Info[6]}"
@@ -247,7 +225,7 @@ Database_Selection()
                     Bin="y"
                 else
                     echo "默认安装 ${DB_Info[6]} （源码编译）"
-                    Bin="y"
+                    Bin="n"
                 fi
                 ;;
             esac
@@ -276,7 +254,7 @@ Database_Selection()
                     Bin="y"
                 else
                     echo "默认安装 ${DB_Info[7]} （源码编译）"
-                    Bin="y"
+                    Bin="n"
                 fi
                 ;;
             esac
@@ -305,7 +283,7 @@ Database_Selection()
                     Bin="y"
                 else
                     echo "默认安装 ${DB_Info[8]} （源码编译）"
-                    Bin="y"
+                    Bin="n"
                 fi
                 ;;
             esac
@@ -334,7 +312,7 @@ Database_Selection()
                     Bin="y"
                 else
                     echo "默认安装 ${DB_Info[9]} （源码编译）"
-                    Bin="y"
+                    Bin="n"
                 fi
                 ;;
             esac
@@ -363,7 +341,7 @@ Database_Selection()
                     Bin="y"
                 else
                     echo "默认安装 ${DB_Info[10]} （源码编译）"
-                    Bin="y"
+                    Bin="n"
                 fi
                 ;;
             esac
@@ -392,7 +370,7 @@ Database_Selection()
                     Bin="y"
                 else
                     echo "默认安装 ${DB_Info[11]} （源码编译）"
-                    Bin="y"
+                    Bin="n"
                 fi
                 ;;
             esac
@@ -421,7 +399,7 @@ Database_Selection()
                     Bin="y"
                 else
                     echo "默认安装 ${DB_Info[12]} （源码编译）"
-                    Bin="y"
+                    Bin="n"
                 fi
                 ;;
             esac
@@ -1186,13 +1164,13 @@ Check_Mirror()
 }
 Check_CMPT()
 {
-    if [[ "${DBSelect}" = "5" && "${Bin}" != "y" ]]; then
+    if [[ "${DBSelect}" =~ ^(5|11)$ && "${Bin}" != "y" ]]; then
         if echo "${Ubuntu_Version}" | grep -Eqi "^1[0-7]\." || echo "${Debian_Version}" | grep -Eqi "^[4-8]" || echo "${Raspbian_Version}" | grep -Eqi "^[4-8]" || echo "${CentOS_Version}" | grep -Eqi "^[4-7]"  || echo "${RHEL_Version}" | grep -Eqi "^[4-7]" || echo "${Fedora_Version}" | grep -Eqi "^2[0-3]"; then
-            Echo_Red "MySQL 8.0 需要较新的系统版本"
+            Echo_Red "MySQL 8.x 需要较新的系统版本"
             exit 1
         fi
     fi
-    if [[ "${PHPSelect}" =~ ^1[0-3]$ ]]; then
+    if [[ "${PHPSelect}" =~ ^1[0-5]$ ]]; then
         if echo "${Ubuntu_Version}" | grep -Eqi "^1[0-7]\." || echo "${Debian_Version}" | grep -Eqi "^[4-8]" || echo "${Raspbian_Version}" | grep -Eqi "^[4-8]" || echo "${CentOS_Version}" | grep -Eqi "^[4-6]"  || echo "${RHEL_Version}" | grep -Eqi "^[4-6]" || echo "${Fedora_Version}" | grep -Eqi "^2[0-3]"; then
             Echo_Red "PHP 7.4 及 8.x 需要较新的系统版本"
             exit 1

@@ -132,6 +132,9 @@ Init_Install()
         Install_MariaDB_1011
     elif [ "${DBSelect}" = "11" ]; then
         Install_MySQL_84
+    elif [ "${DBSelect}" = "12" ] || [ "${DBSelect}" = "13" ]; then
+        # 11.8/12.3 与 10.11 安装流程一致，函数按 ${Mariadb_Ver} 参数化
+        Install_MariaDB_1011
     fi
     TempMycnf_Clean
     Clean_DB_Src_Dir

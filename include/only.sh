@@ -169,14 +169,19 @@ Install_Database()
                 exit 1
             fi
         fi
-    elif [[ "${DBSelect}" =~ ^(6|7|8|9|10)$ ]]; then
+    elif [[ "${DBSelect}" =~ ^(6|7|8|9|10|12|13)$ ]]; then
         Mariadb_Version=$(echo ${Mariadb_Ver} | cut -d- -f2)
         if [ "${Bin}" = "y" ]; then
             MariaDB_FileName="${Mariadb_Ver}-linux-systemd-${DB_ARCH}"
+            MariaDB_Archive_Sub="bintar-linux-systemd-${DB_ARCH}"
+            Try_Download ${Download_Mirror}/datebase/mariadb/${MariaDB_FileName}.tar.gz ${MariaDB_FileName}.tar.gz || \
+            Try_Download https://downloads.mariadb.org/rest-api/mariadb/${Mariadb_Version}/${MariaDB_FileName}.tar.gz ${MariaDB_FileName}.tar.gz || \
+            Try_Download https://archive.mariadb.org/${Mariadb_Ver}/${MariaDB_Archive_Sub}/${MariaDB_FileName}.tar.gz ${MariaDB_FileName}.tar.gz
         else
             MariaDB_FileName="${Mariadb_Ver}"
+            Try_Download https://downloads.mariadb.org/rest-api/mariadb/${Mariadb_Version}/${MariaDB_FileName}.tar.gz ${MariaDB_FileName}.tar.gz || \
+            Try_Download https://archive.mariadb.org/${Mariadb_Ver}/source/${MariaDB_FileName}.tar.gz ${MariaDB_FileName}.tar.gz
         fi
-        Download_Files https://downloads.mariadb.org/rest-api/mariadb/${Mariadb_Version}/${MariaDB_FileName}.tar.gz ${MariaDB_FileName}.tar.gz
         if [ ! -s ${MariaDB_FileName}.tar.gz ]; then
             Echo_Red "Error! Unable to download MariaDB, please download it to src directory manually."
             sleep 5
@@ -212,10 +217,13 @@ Install_Database()
         Install_MariaDB_1011
     elif [ "${DBSelect}" = "11" ]; then
         Install_MySQL_84
+    elif [ "${DBSelect}" = "12" ] || [ "${DBSelect}" = "13" ]; then
+        # 11.8/12.3 与 10.11 安装流程一致，函数按 ${Mariadb_Ver} 参数化
+        Install_MariaDB_1011
     fi
     TempMycnf_Clean
 
-    if [[ "${DBSelect}" =~ ^(6|7|8|9|10)$ ]]; then
+    if [[ "${DBSelect}" =~ ^(6|7|8|9|10|12|13)$ ]]; then
         StartUp mariadb
         StartOrStop start mariadb
     elif [[ "${DBSelect}" =~ ^(1|2|3|4|5|11)$ ]]; then
@@ -229,7 +237,7 @@ Install_Database()
         if [[ "${DBSelect}" =~ ^(1|2|3|4|5|11)$ ]]; then
             Echo_Green "MySQL root password: ${DB_Root_Password}"
             Echo_Green "Install ${Mysql_Ver} completed! enjoy it."
-        elif [[ "${DBSelect}" =~ ^(6|7|8|9|10)$ ]]; then
+        elif [[ "${DBSelect}" =~ ^(6|7|8|9|10|12|13)$ ]]; then
             Echo_Green "MariaDB root password: ${DB_Root_Password}"
             Echo_Green "Install ${Mariadb_Ver} completed! enjoy it."
         fi

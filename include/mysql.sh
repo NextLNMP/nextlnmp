@@ -74,7 +74,7 @@ EOF
     echo "Update root password..."
     if [ "${DBSelect}" = "4" ] || echo "${mysql_version}" | grep -Eqi '^5.7.'; then
         Do_Query "UPDATE mysql.user SET authentication_string=PASSWORD('${DB_Root_Password}') WHERE User='root';"
-    elif [ "${DBSelect}" = "5" ] || echo "${mysql_version}" | grep -Eqi '^8.0.'; then
+    elif [[ "${DBSelect}" =~ ^(5|11)$ ]] || echo "${mysql_version}" | grep -Eqi '^8\.'; then
         Do_Query "SET PASSWORD FOR 'root'@'localhost' = '${DB_Root_Password}';"
     else
         Do_Query "UPDATE mysql.user SET Password=PASSWORD('${DB_Root_Password}') WHERE User='root';"

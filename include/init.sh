@@ -759,7 +759,7 @@ Download_Boost()
             cd -
             MySQL_WITH_BOOST="-DWITH_BOOST=${cur_dir}/src/${Boost_Ver}"
         fi
-    elif [ "${DBSelect}" = "5" ] || echo "${mysql_version}" | grep -Eqi '^8.'; then
+    elif [[ "${DBSelect}" =~ ^(5|11)$ ]] || echo "${mysql_version}" | grep -Eqi '^8.'; then
         Get_Boost_Ver=$(grep 'SET(BOOST_PACKAGE_NAME' cmake/boost.cmake |grep -oP '\d+(\_\d+){2}')
         if [ -s "${cur_dir}/src/boost_${Get_Boost_Ver}.tar.bz2" ]; then
             [[ -d "${cur_dir}/src/boost_${Get_Boost_Ver}" ]] && rm -rf "${cur_dir}/src/boost_${Get_Boost_Ver}"
@@ -774,7 +774,7 @@ Download_Boost()
 Install_Boost()
 {
     Echo_Blue "[+] Download or use exist boost..."
-    if [ "${DBSelect}" = "4" ] || [ "${DBSelect}" = "5" ]; then
+    if [[ "${DBSelect}" =~ ^(4|5|11)$ ]]; then
         if [ -d "${cur_dir}/src/${Mysql_Ver}/boost" ]; then
             MySQL_WITH_BOOST="-DWITH_BOOST=${cur_dir}/src/${Mysql_Ver}/boost"
         else
