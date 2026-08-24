@@ -1165,9 +1165,18 @@ Check_Mirror()
         fi
     fi
     echo "正在检测镜像站..."
-    mirror_code=$(curl -o /dev/null -m 10 --connect-timeout 10 -sk -w %{http_code} "${Download_Mirror}/sha256sums.txt")
+    mirror_code=$(curl -o /dev/null -m 10 --connect-timeout 10 -skL -w %{http_code} "${Download_Mirror}/sha256sums.txt")
     if [[ "${mirror_code}" = "200" ]]; then
         echo "✓ 镜像站连接正常（${Download_Mirror}）"
+    elif [ -n "${Download_Mirror_Backup}" ]; then
+        Echo_Yellow "⚠ 主镜像无法连接（HTTP ${mirror_code}），探测备用镜像..."
+        backup_code=$(curl -o /dev/null -m 15 --connect-timeout 10 -skL -w %{http_code} "${Download_Mirror_Backup}/sha256sums.txt")
+        if [[ "${backup_code}" = "200" ]]; then
+            Download_Mirror="${Download_Mirror_Backup}"
+            Echo_Yellow "✓ 已切换到备用镜像（${Download_Mirror}）"
+        else
+            Echo_Yellow "⚠ 备用镜像同样无法连接（HTTP ${backup_code}），组件将依赖各自的官方源兜底"
+        fi
     else
         Echo_Yellow "⚠ 镜像站无法连接（HTTP ${mirror_code}），将尝试使用备用下载源"
     fi

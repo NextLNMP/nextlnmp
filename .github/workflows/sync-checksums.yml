@@ -59,3 +59,9 @@ jobs:
           # 顺序在 git 提交之后：镜像站挂的清单必须先进公开审计轨道再上线
           scp -i ~/.ssh/id_mirror -o StrictHostKeyChecking=accept-new sha256sums.txt root@47.122.115.39:/data/mirror/sha256sums.txt
           echo "镜像站清单已同步"
+
+      - name: Sync to ModelScope backup mirror
+        run: |
+          # 在镜像机上后台增量推魔搭副镜像（LFS 按内容去重，未变文件不重传）；凭据已在机上 login 持久化
+          ssh -n -i ~/.ssh/id_mirror -o StrictHostKeyChecking=accept-new root@47.122.115.39 \
+            "cd /data/mirror && nohup /opt/modelscope-venv/bin/modelscope upload iLang/NextLNMP-dist /data/mirror --repo-type dataset --max-workers 16 --commit-message 'auto-sync from primary mirror' > /root/ms-upload.log 2>&1 & echo '魔搭同步已在镜像机后台启动'"

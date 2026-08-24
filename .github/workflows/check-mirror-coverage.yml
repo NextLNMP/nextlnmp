@@ -13,3 +13,7 @@ jobs:
 
       - name: HEAD-check every file the installer can request
         run: bash tools/check-mirror-coverage.sh
+
+      - name: HEAD-check ModelScope backup mirror
+        continue-on-error: true  # 副镜像滞后只警告，不判红
+        run: bash tools/check-mirror-coverage.sh "https://modelscope.cn/datasets/iLang/NextLNMP-dist/resolve/master"
