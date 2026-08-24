@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.sh text eol=lf
+conf/nextlnmp text eol=lf
+conf/nextlamp text eol=lf
+conf/nextlnmpa text eol=lf
