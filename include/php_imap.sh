@@ -25,11 +25,11 @@ Install_PHP_Imap()
         if echo "${CentOS_Version}" | grep -Eqi "^9" || echo "${Alma_Version}" | grep -Eqi "^9" || echo "${Rocky_Version}" | grep -Eqi "^9"; then
             if ! rpm -qa | grep "libc-client-2007f" || ! rpm -qa | grep "uw-imap-devel"; then
                 if [ "${CheckMirror}" = "n" ]; then
-                    rpm -ivh ${cur_dir}/src/libc-client-2007f-24.el9.${ARCH}.rpm ${cur_dir}/src/uw-imap-devel-2007f-24.el9.${ARCH}.rpm
+                    rpm -ivh ${cur_dir}/src/libc-client-2007f-30.el9.remi.${ARCH}.rpm ${cur_dir}/src/uw-imap-devel-2007f-30.el9.remi.${ARCH}.rpm
                 else
-                    rpm -ivh ${Download_Mirror}/lib/uw-imap/libc-client-2007f-24.el9.${ARCH}.rpm || \
+                    rpm -ivh ${Download_Mirror}/lib/uw-imap/libc-client-2007f-30.el9.remi.${ARCH}.rpm || \
                     Echo_Yellow "libc-client rpm 获取失败（镜像缺件），imap 扩展将无法构建"
-                    rpm -ivh ${Download_Mirror}/lib/uw-imap/uw-imap-devel-2007f-24.el9.${ARCH}.rpm || \
+                    rpm -ivh ${Download_Mirror}/lib/uw-imap/uw-imap-devel-2007f-30.el9.remi.${ARCH}.rpm || \
                     Echo_Yellow "uw-imap-devel rpm 获取失败（镜像缺件），imap 扩展将无法构建"
                 fi
             fi

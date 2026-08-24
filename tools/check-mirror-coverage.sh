@@ -79,9 +79,11 @@ for a in x86_64; do
     warn_chk "web/zend/zend-loader-php5.5-linux-${a}.tar.gz" zend-php55
     warn_chk "web/zend/zend-loader-php5.6-linux-${a}.tar.gz" zend-php56
 done
-# uw-imap el9 双 rpm：EL9 装 imap 扩展必经，无公网上游可补（需人工放原件），代码侧缺件时明确告警 → warn 层
-warn_chk lib/uw-imap/libc-client-2007f-24.el9.x86_64.rpm imap-el9
-warn_chk lib/uw-imap/uw-imap-devel-2007f-24.el9.x86_64.rpm imap-el9
+# uw-imap el9 双 rpm（Remi EL9 构建，v1.11.1 起转正式条目）
+chk lib/uw-imap/libc-client-2007f-30.el9.remi.x86_64.rpm imap-el9
+chk lib/uw-imap/uw-imap-devel-2007f-30.el9.remi.x86_64.rpm imap-el9
+chk lib/uw-imap/libc-client-2007f-30.el9.remi.aarch64.rpm imap-el9-arm
+chk lib/uw-imap/uw-imap-devel-2007f-30.el9.remi.aarch64.rpm imap-el9-arm
 
 # ---- 库与模块 ----
 chk lib/autoconf/autoconf-2.13.tar.gz lib

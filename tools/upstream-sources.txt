@@ -72,5 +72,8 @@ web/swoole swoole-1.6.10.tgz https://pecl.php.net/get/swoole-1.6.10.tgz
 web/sourceguardian/14.0.0 loaders.linux-x86_64.zip https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.zip
 web/sourceguardian/14.0.3 loaders.linux-aarch64.zip https://www.sourceguardian.com/loaders/download/loaders.linux-aarch64.zip
 
-# uw-imap el9 双 rpm（php.sh/php_imap.sh 在 EL9 请求 lib/uw-imap/*-2007f-24.el9.*.rpm）：
-# EPEL9/koji 均无此构建（2026-08-24 实测 404），疑为自建产物，需人工把原件放上镜像；代码侧已改为缺件时明确告警。
+# uw-imap el9 双 rpm（php.sh/php_imap.sh 在 EL9 装 imap 扩展用）：EPEL9 不发此包，Remi 仓库有 EL9 构建（2026-08-24 实测 200）
+lib/uw-imap libc-client-2007f-30.el9.remi.x86_64.rpm https://rpms.remirepo.net/enterprise/9/remi/x86_64/libc-client-2007f-30.el9.remi.x86_64.rpm
+lib/uw-imap uw-imap-devel-2007f-30.el9.remi.x86_64.rpm https://rpms.remirepo.net/enterprise/9/remi/x86_64/uw-imap-devel-2007f-30.el9.remi.x86_64.rpm
+lib/uw-imap libc-client-2007f-30.el9.remi.aarch64.rpm https://rpms.remirepo.net/enterprise/9/remi/aarch64/libc-client-2007f-30.el9.remi.aarch64.rpm
+lib/uw-imap uw-imap-devel-2007f-30.el9.remi.aarch64.rpm https://rpms.remirepo.net/enterprise/9/remi/aarch64/uw-imap-devel-2007f-30.el9.remi.aarch64.rpm
