@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.10.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.10.2-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
@@ -95,13 +95,13 @@ bash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/main/install
 **方式二：从镜像站下载安装（国内快）**
 
 ```bash
-wget https://mirror.nextlnmp.cn/nextlnmp-1.10.1.tar.gz && tar zxf nextlnmp-1.10.1.tar.gz && cd nextlnmp-1.10.1 && bash install.sh
+wget https://mirror.nextlnmp.cn/nextlnmp-1.10.2.tar.gz && tar zxf nextlnmp-1.10.2.tar.gz && cd nextlnmp-1.10.2 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
 
 ```bash
-wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.10.1/nextlnmp-1.10.1.tar.gz && tar zxf nextlnmp-1.10.1.tar.gz && cd nextlnmp-1.10.1 && bash install.sh
+wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.10.2/nextlnmp-1.10.2.tar.gz && tar zxf nextlnmp-1.10.2.tar.gz && cd nextlnmp-1.10.2 && bash install.sh
 ```
 
 三种方式装出来的东西完全一样，选哪个都行。
@@ -291,7 +291,7 @@ NextLNMP 的安全不是一句口号，是一条闭合的信任链：
 ## 📂 目录结构
 
 ```
-nextlnmp-1.10.1/
+nextlnmp-1.10.2/
 ├── install.sh          # 安装入口
 ├── nextlnmp.conf       # 配置文件（镜像源地址等）
 ├── upgrade.sh          # 升级脚本
@@ -371,6 +371,13 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 </details>
 
 ## 🔄 更新日志
+
+### v1.10.2 (2026-08-24)
+### v1.10.2 —— 闭环核销补遗（2026-08-24）
+
+- 84 条审计发现逐条对 v1.10.1 代码+镜像做闭环核销（7 路独立核查），补掉最后 1 条 open：addons.sh 的多版本 PHP 选择（Select_PHP）探测与菜单止步于 8.2，仅装 php8.3/8.4 时扩展会静默装进主 PHP——现已扩到 16 个选项与 8.4 对齐
+- 默认欢迎页引用的 nextlnmp.gif 不存在（死图），改为文字标头
+- 核销结论：84 条 = 79 fixed + 4 by_design（上游事实：MariaDB 5.5 无 systemd bintar ×2、MariaDB 无 aarch64 bintar、32 位 ARM 无 DB 预编译）+ 1 处外观残留已随本版清零
 
 ### v1.10.1 (2026-08-24)
 ### v1.10.1 —— 上游域名跟进（2026-08-24）
