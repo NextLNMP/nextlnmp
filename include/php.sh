@@ -329,7 +329,7 @@ Install_PHP_Bin()
     Ln_PHP_Bin
     mkdir -p /usr/local/php/{etc,conf.d}
     local mm=$(echo ${Php_Ver} | grep -oE '[0-9]+\.[0-9]+' | head -1)
-    # 优先从镜像站下载 php.ini（经 Download_Files 走清单校验，防模板投毒）
+    # 优先从镜像站下载 php.ini（Try_Download 走清单校验；镜像缺件/无清单条目时落内置模板）
     cd ${cur_dir}/src
     Try_Download ${Download_Mirror}/php/php.ini-production-${mm} php.ini-production-${mm} || true  # 取回失败落内置模板而非中断安装
     if [ -s "${cur_dir}/src/php.ini-production-${mm}" ]; then

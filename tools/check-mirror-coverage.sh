@@ -3,6 +3,8 @@
 # 用法: bash tools/check-mirror-coverage.sh [镜像地址]
 # 退出码: 0=全覆盖, 1=有缺件。CI 定期跑，防"升了版本号没传包"复发。
 # 2026-08-24 审计产物：当时 175 个展开 URL 中 88 个 404，全部因此类漂移或从未上传。
+# 覆盖说明：php.ini-production-*（软失败落内置模板）与 composer-2.2.phar（有官方兜底）为非致命请求，未列入；
+# 无稳定上游的文件（zend/uw-imap/5.2 fpm patch）在 warn 层，只告警不判红。
 
 MIRROR="${1:-https://mirror.nextlnmp.cn}"
 FAIL=0
