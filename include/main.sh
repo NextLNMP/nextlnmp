@@ -562,12 +562,13 @@ MemoryAllocator_Selection()
     if [ -z ${SelectMalloc} ]; then
         echo "==========================="
 
-        SelectMalloc="${REC_MALLOC}"
         Echo_Yellow "请选择内存分配器："
         echo "1: 不安装（默认）"
         echo "2: 安装 Jemalloc"
         echo "3: 安装 TCMalloc"
         read -p "请输入选项（回车使用推荐 ${REC_MALLOC}）： " SelectMalloc
+        # 回车兑现智能推荐值，而不是落进"未输入"分支强制为 1
+        [ -z "${SelectMalloc}" ] && SelectMalloc="${REC_MALLOC}"
     fi
 
     case "${SelectMalloc}" in
@@ -849,11 +850,13 @@ Get_OS_Bit()
         Is_ARM='y'
         if uname -m | grep -Eqi "armv7|armv6"; then
             ARCH='armhf'
+            DB_ARCH='armhf' # 32位 ARM 没有任何数据库预编译包，别让它冒充 i686 进 Bin 分支
         elif uname -m | grep -Eqi "aarch64"; then
             ARCH='aarch64'
             DB_ARCH='aarch64'
         else
             ARCH='arm'
+            DB_ARCH='arm'
         fi
     fi
 }

@@ -1294,7 +1294,7 @@ Install_Check_Acme.sh()
     else
         cd /tmp
         [[ -f latest.tar.gz ]] && rm -f latest.tar.gz
-        wget https://mirror.zhangmei.com/lib/acme.sh/latest.tar.gz -O latest.tar.gz --no-check-certificate
+        wget https://soft.vpser.net/lib/acme.sh/latest.tar.gz -O latest.tar.gz --prefer-family=IPv4 --no-check-certificate ||         wget https://github.com/acmesh-official/acme.sh/archive/refs/heads/master.tar.gz -O latest.tar.gz --no-check-certificate
         tar zxf latest.tar.gz
         cd acme.sh-*
         ./acme.sh --install ${acme_sh_sudo} --log --home /usr/local/acme.sh --certhome /usr/local/nginx/conf/ssl -m ${email_address}
@@ -1734,6 +1734,13 @@ case "${arg1}" in
                 fi
                 echo "绑定域名：${domain} ${moredomain}"
                 echo "网站目录：${vhostdir}"
+                # 从现有 80 端口配置继承 rewrite/PHP/日志设置，缺省兜底，避免生成 include rewrite/.conf; 这类损坏配置
+                rewrite=$(grep -oE 'include rewrite/[^.]+\.conf' /usr/local/nginx/conf/vhost/${domain}.conf | head -1 | sed 's#include rewrite/##;s#\.conf##')
+                [ -z "${rewrite}" ] && rewrite="none"
+                include_enable_php=$(grep -oE 'include enable-php[^;]*\.conf;' /usr/local/nginx/conf/vhost/${domain}.conf | head -1)
+                [ -z "${include_enable_php}" ] && include_enable_php="include enable-php.conf;"
+                al=$(grep -E '^\s*access_log' /usr/local/nginx/conf/vhost/${domain}.conf | head -1 | sed 's/^ *//')
+                [ -z "${al}" ] && al="access_log off;"
                 info="y"
                 Add_SSL_Menu
                 Add_SSL

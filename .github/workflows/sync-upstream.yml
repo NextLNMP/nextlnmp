@@ -50,6 +50,7 @@ jobs:
           fi
 
       - name: Refresh checksum manifest
+        if: always()  # 个别条目拉取失败(如 best-effort 源)时, 已同步的文件仍需进清单
         run: |
           curl -sf -X POST \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \

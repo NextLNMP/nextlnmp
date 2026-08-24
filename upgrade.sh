@@ -70,11 +70,11 @@ fi
     3|[mM][aA][rR][iI][aA][dD][bB])
         Upgrade_MariaDB 2>&1 | tee /root/upgrade_mariadb${Upgrade_Date}.log
         ;;
-    4|[pP][hP][pP])
+    4|[pP][hH][pP])
         Stack="nextlnmp"
         Upgrade_PHP 2>&1 | tee /root/upgrade_nextlnmp_php${Upgrade_Date}.log
         ;;
-    5|[pP][hP][pP][aA])
+    5|[pP][hH][pP][aA])
         Upgrade_PHP 2>&1 | tee /root/upgrade_a_php${Upgrade_Date}.log
         ;;
     6|[mM]2[mY])

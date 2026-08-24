@@ -230,6 +230,10 @@ Ubuntu_Modify_Source()
         CodeName='lunar'
     elif grep -Eqi "23.10" /etc/*-release || echo "${Ubuntu_Version}" | grep -Eqi '^23.10'; then
         Ubuntu_Deadline mantic
+    elif grep -Eqi "24.10" /etc/*-release || echo "${Ubuntu_Version}" | grep -Eqi '^24.10'; then
+        Ubuntu_Deadline oracular
+    elif grep -Eqi "25.04" /etc/*-release || echo "${Ubuntu_Version}" | grep -Eqi '^25.04'; then
+        Ubuntu_Deadline plucky
     fi
     if [ "${CodeName}" != "" ]; then
         \cp /etc/apt/sources.list /etc/apt/sources.list.$(date +"%Y%m%d")
@@ -321,7 +325,7 @@ Modify_Source()
             Echo_Blue "RHEL subscription exists on the system, skip setting up third-party sources."
             Get_RHEL_Version
             if echo "${RHEL_Version}" | grep -Eqi "^[89]"; then
-                subscription-manager repos --enable codeready-builder-for-rhel-${RHEL_Version}-${DB_ARCH}-rpms
+                subscription-manager repos --enable codeready-builder-for-rhel-${RHEL_Version%%.*}-${DB_ARCH}-rpms
             fi
         else
             RHEL_Modify_Source

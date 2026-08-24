@@ -1,0 +1,15 @@
+name: Check Mirror Coverage
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'  # 每周一 03:17 UTC
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: HEAD-check every file the installer can request
+        run: bash tools/check-mirror-coverage.sh

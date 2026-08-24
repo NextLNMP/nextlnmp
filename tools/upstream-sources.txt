@@ -2,6 +2,7 @@
 # 格式: <镜像站子目录> <文件名> <官方下载URL>
 # 用法: Actions -> Sync Upstream 工作流按本清单增量同步到镜像站并自动刷新校验清单
 # 版本升级 = 修改本文件 + include/version.sh 对应 pin, 然后跑一次工作流
+# 2026-08-24 审计后大补货: 以下 URL 均经 HTTP 实测(除注明 best-effort 的条目)
 
 web/nginx nginx-1.30.3.tar.gz https://nginx.org/download/nginx-1.30.3.tar.gz
 
@@ -9,16 +10,62 @@ datebase/mariadb mariadb-10.11.18-linux-systemd-x86_64.tar.gz https://archive.ma
 datebase/mariadb mariadb-10.6.27-linux-systemd-x86_64.tar.gz https://archive.mariadb.org/mariadb-10.6.27/bintar-linux-systemd-x86_64/mariadb-10.6.27-linux-systemd-x86_64.tar.gz
 datebase/mariadb mariadb-11.8.8-linux-systemd-x86_64.tar.gz https://archive.mariadb.org/mariadb-11.8.8/bintar-linux-systemd-x86_64/mariadb-11.8.8-linux-systemd-x86_64.tar.gz
 datebase/mariadb mariadb-12.3.2-linux-systemd-x86_64.tar.gz https://archive.mariadb.org/mariadb-12.3.2/bintar-linux-systemd-x86_64/mariadb-12.3.2-linux-systemd-x86_64.tar.gz
-# datebase/mariadb mariadb-10.11.18-linux-systemd-aarch64.tar.gz https://archive.mariadb.org/mariadb-10.11.18/bintar-linux-systemd-aarch64/mariadb-10.11.18-linux-systemd-aarch64.tar.gz
-# datebase/mariadb mariadb-11.8.8-linux-systemd-aarch64.tar.gz https://archive.mariadb.org/mariadb-11.8.8/bintar-linux-systemd-aarch64/mariadb-11.8.8-linux-systemd-aarch64.tar.gz
-# datebase/mariadb mariadb-12.3.2-linux-systemd-aarch64.tar.gz https://archive.mariadb.org/mariadb-12.3.2/bintar-linux-systemd-aarch64/mariadb-12.3.2-linux-systemd-aarch64.tar.gz
+
+# 结论(2026-07-07 已核实): MariaDB 官方不发布 aarch64 通用 bintar(档案库各版本仅 bintar-linux-systemd-x86_64),
+# ARM 上 MariaDB 走源码编译回退, 属上游事实而非命名问题。
+# MySQL 官方 aarch64 通用包用 glibc2.28 命名(2026-08-24 实测, glibc2.17-aarch64 在 cdn 上是 404),
+# 代码侧 init.sh/only.sh/mysql.sh 已按 DB_ARCH 自动切换 2.17/2.28。
 
 datebase/mysql mysql-8.0.46-linux-glibc2.17-x86_64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-linux-glibc2.17-x86_64.tar.xz
 datebase/mysql mysql-8.4.9-linux-glibc2.17-x86_64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.9-linux-glibc2.17-x86_64.tar.xz
-# datebase/mysql mysql-8.0.46-linux-glibc2.17-aarch64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-linux-glibc2.17-aarch64.tar.xz
-# datebase/mysql mysql-8.4.9-linux-glibc2.17-aarch64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.9-linux-glibc2.17-aarch64.tar.xz
+datebase/mysql mysql-8.0.46-linux-glibc2.28-aarch64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-linux-glibc2.28-aarch64.tar.xz
+datebase/mysql mysql-8.4.9-linux-glibc2.28-aarch64.tar.xz https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.9-linux-glibc2.28-aarch64.tar.xz
+# 8.x 源码编译模式用(此前只传了二进制, 源码选项必 404)
+datebase/mysql mysql-8.0.46.tar.gz https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46.tar.gz
+datebase/mysql mysql-8.4.9.tar.gz https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.9.tar.gz
 
-# 结论(2026-07-07 已核实): MariaDB 官方不发布 aarch64 通用 bintar(档案库各版本仅 bintar-linux-systemd-x86_64),
-# ARM 上 MariaDB 走源码编译回退, 属上游事实而非命名问题, 以上三条永久注释留档。
-# MySQL aarch64 走 cdn 直连回退可用, 镜像加速项待 ARM 整体排产时核实命名后启用。
 datebase/phpmyadmin phpMyAdmin-5.2.2-all-languages.tar.xz https://files.phpmyadmin.net/phpMyAdmin/5.2.2/phpMyAdmin-5.2.2-all-languages.tar.xz
+
+# PHP 源码: version.sh 定档 8.2.28 但镜像只有 8.2.19, 非 bin 快车道系统装 PHP 8.2 必死
+web/php php-8.2.28.tar.bz2 https://www.php.net/distributions/php-8.2.28.tar.bz2
+# 老版本 PHP(菜单选项 1-4)源码, php.net museum 存档
+web/php php-5.2.17.tar.bz2 http://museum.php.net/php5/php-5.2.17.tar.bz2
+web/php php-5.3.29.tar.bz2 http://museum.php.net/php5/php-5.3.29.tar.bz2
+web/php php-5.4.45.tar.bz2 http://museum.php.net/php5/php-5.4.45.tar.bz2
+web/php php-5.5.38.tar.bz2 http://museum.php.net/php5/php-5.5.38.tar.bz2
+# best-effort: soft.vpser.net(上游 lnmp 官方镜像)从部分网络不可达, CI 拉不到也不影响其余条目
+web/phpfpm php-5.2.17-fpm-0.5.14.diff.gz https://soft.vpser.net/web/phpfpm/php-5.2.17-fpm-0.5.14.diff.gz
+web/zend ZendOptimizer-3.3.9-linux-glibc23-x86_64.tar.gz https://soft.vpser.net/web/zend/ZendOptimizer-3.3.9-linux-glibc23-x86_64.tar.gz
+web/zend ZendGuardLoader-php-5.3-linux-glibc23-x86_64.tar.gz https://soft.vpser.net/web/zend/ZendGuardLoader-php-5.3-linux-glibc23-x86_64.tar.gz
+web/zend ZendGuardLoader-70429-PHP-5.4-linux-glibc23-x86_64.tar.gz https://soft.vpser.net/web/zend/ZendGuardLoader-70429-PHP-5.4-linux-glibc23-x86_64.tar.gz
+web/zend zend-loader-php5.5-linux-x86_64.tar.gz https://soft.vpser.net/web/zend/zend-loader-php5.5-linux-x86_64.tar.gz
+web/zend zend-loader-php5.6-linux-x86_64.tar.gz https://soft.vpser.net/web/zend/zend-loader-php5.6-linux-x86_64.tar.gz
+
+# Nginx Lua 全家(Enable_Nginx_Lua='y' 必需, 此前镜像整目录缺失)
+lib/lua luajit2-2.1-20230119.tar.gz https://github.com/openresty/luajit2/archive/refs/tags/v2.1-20230119.tar.gz
+lib/lua lua-nginx-module-0.10.26.tar.gz https://github.com/openresty/lua-nginx-module/archive/refs/tags/v0.10.26.tar.gz
+lib/lua lua-resty-core-0.1.28.tar.gz https://github.com/openresty/lua-resty-core/archive/refs/tags/v0.1.28.tar.gz
+lib/lua lua-resty-lrucache-0.13.tar.gz https://github.com/openresty/lua-resty-lrucache/archive/refs/tags/v0.13.tar.gz
+lib/lua ngx_devel_kit-0.3.3.tar.gz https://github.com/vision5/ngx_devel_kit/archive/refs/tags/v0.3.3.tar.gz
+web/nginx ngx-fancyindex-0.5.2.tar.xz https://github.com/aperezdc/ngx-fancyindex/releases/download/v0.5.2/ngx-fancyindex-0.5.2.tar.xz
+
+# 构建依赖与组件
+lib/libzip libzip-1.3.2.tar.xz https://libzip.org/download/libzip-1.3.2.tar.xz
+web/libmemcached libmemcached-1.0.18.tar.gz https://launchpad.net/libmemcached/1.0/1.0.18/+download/libmemcached-1.0.18.tar.gz
+ftp/pure-ftpd pure-ftpd-1.0.49.tar.bz2 https://download.pureftpd.org/pub/pure-ftpd/releases/obsolete/pure-ftpd-1.0.49.tar.bz2
+security/fail2ban fail2ban-1.1.0.tar.gz https://github.com/fail2ban/fail2ban/archive/refs/tags/1.1.0.tar.gz
+security/denyhosts denyhosts-3.1.tar.gz https://github.com/denyhosts/denyhosts/archive/refs/tags/v3.1.tar.gz
+web/imagemagick ImageMagick-6.9.9-27.tar.gz https://github.com/ImageMagick/ImageMagick6/archive/refs/tags/6.9.9-27.tar.gz
+web/opcache zendopcache-7.0.5.tgz https://pecl.php.net/get/zendopcache-7.0.5.tgz
+web/sodium libsodium-1.0.7.tgz https://pecl.php.net/get/libsodium-1.0.7.tgz
+
+# swoole: 5.1.8 给 PHP 8.4(5.1.6 起支持), 其余为老 PHP 版本线
+web/swoole swoole-5.1.8.tgz https://pecl.php.net/get/swoole-5.1.8.tgz
+web/swoole swoole-4.8.13.tgz https://pecl.php.net/get/swoole-4.8.13.tgz
+web/swoole swoole-4.5.11.tgz https://pecl.php.net/get/swoole-4.5.11.tgz
+web/swoole swoole-4.3.6.tgz https://pecl.php.net/get/swoole-4.3.6.tgz
+web/swoole swoole-1.10.5.tgz https://pecl.php.net/get/swoole-1.10.5.tgz
+web/swoole swoole-1.6.10.tgz https://pecl.php.net/get/swoole-1.6.10.tgz
+
+# SourceGuardian 官方只提供滚动 latest(含当前受支持 PHP 版本的 loader); 老 PHP 的历史版本 loader 官方已不再分发
+web/sourceguardian/14.0.3 loaders.linux-x86_64.zip https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.zip

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# NextLNMP 一键安装引导脚本 v1.9.1
+# NextLNMP 一键安装引导脚本 v1.10.0
 # 用法：bash <(curl -sL "https://cnb.cool/NextLNMP/NextLNMP/-/git/raw/main/install.sh?download=true")
 # 项目：https://github.com/NextLNMP/nextlnmp
 # 作者：静水流深 · 掌媒科技有限公司
@@ -17,7 +17,7 @@ BLUE='\033[0;36m'
 PLAIN='\033[0m'
 
 # ── 版本与配置（每次发版更新这两个值）────────────────────────────────
-NEXTLNMP_VER="1.9.1"
+NEXTLNMP_VER="1.10.0"
 TARBALL_SHA256="93c7f8789b7e2a32dd9385bc71abd590481c11fc360dbd50e5fbd17b1bdaaf14"
 
 # ── 固定配置 ──────────────────────────────────────────────────────────
@@ -33,7 +33,8 @@ GITHUB_URL="https://github.com/NextLNMP/nextlnmp/releases/download/v${NEXTLNMP_V
 # ====================================================================
 check_root() {
     if [[ $EUID -ne 0 ]]; then
-        if command -v sudo &>/dev/null; then
+        # bash <(curl ...) 场景下 $0 是 /dev/fd/N 管道，exec sudo 前管道已被回收，只能引导用户手动切 root
+        if command -v sudo &>/dev/null && [[ -f "$0" && "$0" != /dev/fd/* && "$0" != /proc/* ]]; then
             exec sudo bash "$0" "$@"
         fi
         echo ""
@@ -415,9 +416,9 @@ download_tarball() {
         "${MIRROR_URL}"
         "${GITHUB_URL}"
     )
-    local names=("Gitee（国内加速）" "镜像站" "GitHub")
+    local names=("镜像站" "GitHub")
 
-    echo "正在下载 NextLNMP v${NEXTLNMP_VER} 安装包..."
+    echo "正在下载 NextLNMP v${NEXTLNMP_VER} 安装包（双线路容灾）..."
     echo ""
 
     local downloaded=0
@@ -443,7 +444,7 @@ download_tarball() {
     echo ""
 
     if [[ ${downloaded} -eq 0 ]]; then
-        echo "❌ 三条下载线路全部失败"
+        echo "❌ 所有下载线路全部失败"
         echo ""
         echo "可能的原因："
         echo "  · 服务器无法访问外网"
