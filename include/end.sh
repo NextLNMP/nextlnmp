@@ -41,8 +41,8 @@ Add_nextLNMP_Startup()
     \cp ${cur_dir}/conf/nextlnmp /bin/nextlnmp
     chmod +x /bin/nextlnmp
     if [ "${WebServer}" = "caddy" ]; then
-        # caddy.sh 已 enable+start 自己的 systemd 单元；CLI 里的 nginx 操作对 Caddy 不适用
-        sed -i 's#/etc/init.d/nginx#/bin/true#g' /bin/nextlnmp
+        # caddy.sh 已 enable+start systemd 单元并装好 /etc/init.d/caddy shim；把 CLI 的 web 服务操作指过去
+        sed -i 's#/etc/init.d/nginx#/etc/init.d/caddy#g' /bin/nextlnmp
     else
         StartUp nginx
         StartOrStop start nginx

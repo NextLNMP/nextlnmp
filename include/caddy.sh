@@ -29,6 +29,10 @@ Install_Caddy()
         useradd -s /sbin/nologin -M -g www www
     fi
 
+    # WebServer=caddy 时 nginx.sh/apache.sh 都不执行，站点根目录在这里建（对齐 nginx.sh 行为）
+    mkdir -p ${Default_Website_Dir:-/home/wwwroot/default}
+    chown -R www:www ${Default_Website_Dir:-/home/wwwroot/default}
+
     if [ ! -d /etc/caddy ]; then
         mkdir -p /etc/caddy
     fi
@@ -73,7 +77,8 @@ ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile
 TimeoutStopSec=5s
 LimitNOFILE=1048576
 LimitNPROC=512
-PrivateTmp=true
+# php-fpm 的 socket 在 /tmp/php-cgi.sock，PrivateTmp 会让 Caddy 看不见它（PHP 全 502）
+PrivateTmp=false
 ProtectSystem=full
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
@@ -81,6 +86,16 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 WantedBy=multi-user.target
 EOF
     fi
+
+    # init.d 风格 shim：/bin/nextlnmp 等 CLI 用 /etc/init.d/<name> <action> 的调用约定
+    cat > /etc/init.d/caddy << 'EOF'
+#!/usr/bin/env bash
+case "$1" in
+    start|stop|restart|reload|status) systemctl "$1" caddy ;;
+    *) echo "Usage: $0 {start|stop|restart|reload|status}"; exit 1 ;;
+esac
+EOF
+    chmod +x /etc/init.d/caddy
 
     systemctl daemon-reload
     systemctl enable caddy

@@ -200,7 +200,9 @@ Install_MPHP5.2()
 
     cd ${cur_dir}/src
     if [ "${Is_ARM}" != "y" ]; then
-        Download_Files ${Download_Mirror}/web/zend/ZendOptimizer-3.3.9-linux-glibc23-${ARCH}.tar.gz ZendOptimizer-3.3.9-linux-glibc23-${ARCH}.tar.gz
+        if ! Try_Download ${Download_Mirror}/web/zend/ZendOptimizer-3.3.9-linux-glibc23-${ARCH}.tar.gz ZendOptimizer-3.3.9-linux-glibc23-${ARCH}.tar.gz; then
+            Echo_Yellow "Zend loader 组件不可用，跳过安装（仅影响运行 Zend 加密程序，PHP 本体不受影响）"
+        else
         Tar_Cd ZendOptimizer-3.3.9-linux-glibc23-${ARCH}.tar.gz
         mkdir -p /usr/local/zend/
         \cp ZendOptimizer-3.3.9-linux-glibc23-${ARCH}/data/5_2_x_comp/ZendOptimizer.so /usr/local/zend/ZendOptimizer5.2.so
@@ -210,6 +212,7 @@ Install_MPHP5.2()
 zend_optimizer.optimization_level=1
 zend_extension="/usr/local/zend/ZendOptimizer5.2.so"
 EOF
+        fi
     fi
 
     rm -f ${MPHP_Path}/etc/php-fpm.conf
@@ -273,7 +276,9 @@ Install_MPHP5.3()
     cd ${cur_dir}/src
     if [ "${Is_ARM}" != "y" ]; then
         echo "Install ZendGuardLoader for PHP 5.3..."
-        Download_Files ${Download_Mirror}/web/zend/ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}.tar.gz ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}.tar.gz
+        if ! Try_Download ${Download_Mirror}/web/zend/ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}.tar.gz ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}.tar.gz; then
+            Echo_Yellow "Zend loader 组件不可用，跳过安装（仅影响运行 Zend 加密程序，PHP 本体不受影响）"
+        else
         Tar_Cd ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}.tar.gz
         mkdir -p /usr/local/zend/
         \cp ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}/php-5.3.x/ZendGuardLoader.so /usr/local/zend/ZendGuardLoader5.3.so
@@ -287,6 +292,7 @@ zend_loader.disable_licensing=0
 zend_loader.obfuscation_level_support=3
 zend_loader.license_path=
 EOF
+        fi
     fi
 
     echo "Creating new php-fpm configure file..."
@@ -369,7 +375,9 @@ Install_MPHP5.4()
     cd ${cur_dir}/src
     if [ "${Is_ARM}" != "y" ]; then
         echo "Install ZendGuardLoader for PHP 5.4..."
-        Download_Files ${Download_Mirror}/web/zend/ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}.tar.gz ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}.tar.gz
+        if ! Try_Download ${Download_Mirror}/web/zend/ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}.tar.gz ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}.tar.gz; then
+            Echo_Yellow "Zend loader 组件不可用，跳过安装（仅影响运行 Zend 加密程序，PHP 本体不受影响）"
+        else
         Tar_Cd ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}.tar.gz
         mkdir -p /usr/local/zend/
         \cp ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}/php-5.4.x/ZendGuardLoader.so /usr/local/zend/ZendGuardLoader5.4.so
@@ -383,6 +391,7 @@ zend_loader.disable_licensing=0
 zend_loader.obfuscation_level_support=3
 zend_loader.license_path=
 EOF
+        fi
     fi
 
     echo "Creating new php-fpm configure file..."
@@ -468,7 +477,9 @@ Install_MPHP5.5()
     cd ${cur_dir}/src
     if [ "${Is_ARM}" != "y" ]; then
         echo "Install ZendGuardLoader for PHP 5.5..."
-        Download_Files ${Download_Mirror}/web/zend/zend-loader-php5.5-linux-${ARCH}.tar.gz zend-loader-php5.5-linux-${ARCH}.tar.gz
+        if ! Try_Download ${Download_Mirror}/web/zend/zend-loader-php5.5-linux-${ARCH}.tar.gz zend-loader-php5.5-linux-${ARCH}.tar.gz; then
+            Echo_Yellow "Zend loader 组件不可用，跳过安装（仅影响运行 Zend 加密程序，PHP 本体不受影响）"
+        else
         Tar_Cd zend-loader-php5.5-linux-${ARCH}.tar.gz
         mkdir -p /usr/local/zend/
         \cp zend-loader-php5.5-linux-${ARCH}/ZendGuardLoader.so /usr/local/zend/ZendGuardLoader5.5.so
@@ -482,6 +493,7 @@ zend_loader.disable_licensing=0
 zend_loader.obfuscation_level_support=3
 zend_loader.license_path=
 EOF
+        fi
     fi
 
     echo "Creating new php-fpm configure file..."
@@ -570,7 +582,9 @@ Install_MPHP5.6()
     cd ${cur_dir}/src
     if [ "${Is_ARM}" != "y" ]; then
         echo "Install ZendGuardLoader for PHP 5.6..."
-        Download_Files ${Download_Mirror}/web/zend/zend-loader-php5.6-linux-${ARCH}.tar.gz zend-loader-php5.6-linux-${ARCH}.tar.gz
+        if ! Try_Download ${Download_Mirror}/web/zend/zend-loader-php5.6-linux-${ARCH}.tar.gz zend-loader-php5.6-linux-${ARCH}.tar.gz; then
+            Echo_Yellow "Zend loader 组件不可用，跳过安装（仅影响运行 Zend 加密程序，PHP 本体不受影响）"
+        else
         Tar_Cd zend-loader-php5.6-linux-${ARCH}.tar.gz
         mkdir -p /usr/local/zend/
         \cp zend-loader-php5.6-linux-${ARCH}/ZendGuardLoader.so /usr/local/zend/ZendGuardLoader5.6.so
@@ -584,6 +598,7 @@ zend_loader.disable_licensing=0
 zend_loader.obfuscation_level_support=3
 zend_loader.license_path=
 EOF
+        fi
     fi
 
     echo "Creating new php-fpm configure file..."

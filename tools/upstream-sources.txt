@@ -67,5 +67,10 @@ web/swoole swoole-4.3.6.tgz https://pecl.php.net/get/swoole-4.3.6.tgz
 web/swoole swoole-1.10.5.tgz https://pecl.php.net/get/swoole-1.10.5.tgz
 web/swoole swoole-1.6.10.tgz https://pecl.php.net/get/swoole-1.6.10.tgz
 
-# SourceGuardian 官方只提供滚动 latest(含当前受支持 PHP 版本的 loader); 老 PHP 的历史版本 loader 官方已不再分发
-web/sourceguardian/14.0.3 loaders.linux-x86_64.zip https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.zip
+# SourceGuardian: 安装器请求路径是 14.0.0/x86_64、14.0.3/aarch64+armhf、12.1.2/i386+老PHP（见 php_SourceGuardian.sh）。
+# 官方只提供滚动 latest（含当前受支持 PHP 的 loader），按请求路径入仓；i386/armhf/12.1.2 官方已不再分发，无法补货。
+web/sourceguardian/14.0.0 loaders.linux-x86_64.zip https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.zip
+web/sourceguardian/14.0.3 loaders.linux-aarch64.zip https://www.sourceguardian.com/loaders/download/loaders.linux-aarch64.zip
+
+# uw-imap el9 双 rpm（php.sh/php_imap.sh 在 EL9 请求 lib/uw-imap/*-2007f-24.el9.*.rpm）：
+# EPEL9/koji 均无此构建（2026-08-24 实测 404），疑为自建产物，需人工把原件放上镜像；代码侧已改为缺件时明确告警。

@@ -267,6 +267,8 @@ Ubuntu_Deadline()
     xenial_deadline=`date -d "2026-4-30 00:00:00" +%s`
     bionic_deadline=`date -d "2028-7-30 00:00:00" +%s`
     mantic_deadline=`date -d "2024-7-30 00:00:00" +%s`
+    oracular_deadline=`date -d "2025-7-31 00:00:00" +%s`
+    plucky_deadline=`date -d "2026-1-31 00:00:00" +%s`
     cur_time=`date  +%s`
     case "$1" in
         trusty)
@@ -291,6 +293,18 @@ Ubuntu_Deadline()
             if [ ${cur_time} -gt ${mantic_deadline} ]; then
                 echo "${cur_time} > ${mantic_deadline}"
                 Check_Old_Releases_URL mantic
+            fi
+            ;;
+        oracular)
+            if [ ${cur_time} -gt ${oracular_deadline} ]; then
+                echo "${cur_time} > ${oracular_deadline}"
+                Check_Old_Releases_URL oracular
+            fi
+            ;;
+        plucky)
+            if [ ${cur_time} -gt ${plucky_deadline} ]; then
+                echo "${cur_time} > ${plucky_deadline}"
+                Check_Old_Releases_URL plucky
             fi
             ;;
     esac
@@ -505,9 +519,12 @@ Check_Download()
     elif [[ "${DBSelect}" =~ ^(6|7|8|9|10|12|13)$ ]]; then
         Mariadb_Version=$(echo ${Mariadb_Ver} | cut -d- -f2)
         if [ "${Bin}" = "y" ]; then
-            Download_Files ${Download_Mirror}/datebase/mariadb/${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz
+            Try_Download ${Download_Mirror}/datebase/mariadb/${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz || \
+            Try_Download https://downloads.mariadb.org/rest-api/mariadb/${Mariadb_Version}/${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz || \
+            Download_Files https://archive.mariadb.org/${Mariadb_Ver}/bintar-linux-systemd-${DB_ARCH}/${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz
         else
-            Download_Files https://downloads.mariadb.org/rest-api/mariadb/${Mariadb_Version}/${Mariadb_Ver}.tar.gz ${Mariadb_Ver}.tar.gz
+            Try_Download https://downloads.mariadb.org/rest-api/mariadb/${Mariadb_Version}/${Mariadb_Ver}.tar.gz ${Mariadb_Ver}.tar.gz || \
+            Download_Files https://archive.mariadb.org/${Mariadb_Ver}/source/${Mariadb_Ver}.tar.gz ${Mariadb_Ver}.tar.gz
         fi
     fi
     # 急速安装模式：校验清单里存在当前 PHP 版本对应发行版的二进制包时启用
@@ -526,10 +543,14 @@ Check_Download()
         Echo_Blue "[+] 检测到 ${OS_ID} ${OS_VER} $(uname -m)，${Php_Ver} 启用急速安装模式"
         Download_Files ${Download_Mirror}/php/${Php_Ver}-bin-${PHP_Bin_OS}${PHP_Bin_Arch}.tar.gz ${Php_Ver}-bin-${PHP_Bin_OS}${PHP_Bin_Arch}.tar.gz
     else
-        Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
+        # 镜像 → php.net → museum(仅老版本) 三级兜底
+        Try_Download ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2 || \
+        Try_Download https://www.php.net/distributions/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2 || \
+        Download_Files http://museum.php.net/php5/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     fi
     if [ ${PHPSelect} = "1" ]; then
-        Download_Files ${Download_Mirror}/web/phpfpm/${Php_Ver}-fpm-0.5.14.diff.gz ${Php_Ver}-fpm-0.5.14.diff.gz
+        Try_Download ${Download_Mirror}/web/phpfpm/${Php_Ver}-fpm-0.5.14.diff.gz ${Php_Ver}-fpm-0.5.14.diff.gz || \
+        Download_Files https://soft.vpser.net/web/phpfpm/${Php_Ver}-fpm-0.5.14.diff.gz ${Php_Ver}-fpm-0.5.14.diff.gz
     fi
     Download_Files ${Download_Mirror}/datebase/phpmyadmin/${PhpMyAdmin_Ver}.tar.xz ${PhpMyAdmin_Ver}.tar.xz
     Download_Files ${Download_Mirror}/prober/p.tar.gz p.tar.gz

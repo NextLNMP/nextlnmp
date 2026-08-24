@@ -8,6 +8,7 @@ MIRROR="${1:-https://mirror.nextlnmp.cn}"
 FAIL=0
 TOTAL=0
 MISSING=()
+WARNED=()
 
 chk() { # <path> <context>
     TOTAL=$((TOTAL+1))
@@ -16,6 +17,15 @@ chk() { # <path> <context>
     if [ "${code}" != "200" ]; then
         FAIL=$((FAIL+1))
         MISSING+=("${code}  $1  (${2})")
+    fi
+}
+
+# warn 层：确实会被请求、但上游无稳定补货渠道或代码侧已软失败兜底的文件——只告警不判红
+warn_chk() { # <path> <context>
+    local code
+    code=$(curl -o /dev/null -m 30 --connect-timeout 10 -skIL -w '%{http_code}' "${MIRROR}/$1")
+    if [ "${code}" != "200" ]; then
+        WARNED+=("${code}  $1  (${2})")
     fi
 }
 
@@ -58,14 +68,18 @@ done
 for v in 5.2.17 5.3.29 5.4.45 5.5.38 5.6.40 7.0.33 7.1.33 7.2.34 7.3.33 7.4.33 8.0.30 8.1.28 8.2.28 8.3.7 8.4.18; do
     chk "web/php/php-${v}.tar.bz2" php-src
 done
-chk web/phpfpm/php-5.2.17-fpm-0.5.14.diff.gz php5.2
+# php5.2 fpm 补丁与 Zend loader：唯一供源 soft.vpser.net 不保证可达，代码侧已有兜底/软失败 → warn 层
+warn_chk web/phpfpm/php-5.2.17-fpm-0.5.14.diff.gz php5.2
 for a in x86_64; do
-    chk "web/zend/ZendOptimizer-3.3.9-linux-glibc23-${a}.tar.gz" zend-php52
-    chk "web/zend/ZendGuardLoader-php-5.3-linux-glibc23-${a}.tar.gz" zend-php53
-    chk "web/zend/ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${a}.tar.gz" zend-php54
-    chk "web/zend/zend-loader-php5.5-linux-${a}.tar.gz" zend-php55
-    chk "web/zend/zend-loader-php5.6-linux-${a}.tar.gz" zend-php56
+    warn_chk "web/zend/ZendOptimizer-3.3.9-linux-glibc23-${a}.tar.gz" zend-php52
+    warn_chk "web/zend/ZendGuardLoader-php-5.3-linux-glibc23-${a}.tar.gz" zend-php53
+    warn_chk "web/zend/ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${a}.tar.gz" zend-php54
+    warn_chk "web/zend/zend-loader-php5.5-linux-${a}.tar.gz" zend-php55
+    warn_chk "web/zend/zend-loader-php5.6-linux-${a}.tar.gz" zend-php56
 done
+# uw-imap el9 双 rpm：EL9 装 imap 扩展必经，无公网上游可补（需人工放原件），代码侧缺件时明确告警 → warn 层
+warn_chk lib/uw-imap/libc-client-2007f-24.el9.x86_64.rpm imap-el9
+warn_chk lib/uw-imap/uw-imap-devel-2007f-24.el9.x86_64.rpm imap-el9
 
 # ---- 库与模块 ----
 chk lib/autoconf/autoconf-2.13.tar.gz lib
@@ -113,13 +127,26 @@ chk web/swoole/swoole-4.5.11.tgz swoole-old
 chk web/swoole/swoole-4.3.6.tgz swoole-old
 chk web/swoole/swoole-1.10.5.tgz swoole-old
 chk web/swoole/swoole-1.6.10.tgz swoole-old
-chk web/sourceguardian/14.0.3/loaders.linux-x86_64.zip sourceguardian
+# SourceGuardian 实际请求路径：x86_64 走 14.0.0，aarch64(7.4/8.x) 走 14.0.3（见 php_SourceGuardian.sh）
+chk web/sourceguardian/14.0.0/loaders.linux-x86_64.zip sourceguardian
+chk web/sourceguardian/14.0.3/loaders.linux-aarch64.zip sourceguardian-arm
 chk ftp/pure-ftpd/pure-ftpd-1.0.49.tar.bz2 ftp
 chk security/fail2ban/fail2ban-1.1.0.tar.gz tools
 chk security/denyhosts/denyhosts-3.1.tar.gz tools
 
+# PHP bin 急速包：清单有条目就会被 Download_Files 请求（致命路径），按 sha256sums.txt 动态展开
+if [ -f "$(dirname "$0")/../sha256sums.txt" ]; then
+    while read -r binpkg; do
+        chk "php/${binpkg}" php-bin-fastlane
+    done < <(awk '$2 ~ /-bin-.*\.tar\.gz$/ {print $2}' "$(dirname "$0")/../sha256sums.txt")
+fi
+
 echo "=========================================="
-echo "镜像覆盖体检：${TOTAL} 个文件，缺 ${FAIL} 个"
+if [ ${#WARNED[@]} -gt 0 ]; then
+    echo "warn 层缺件（不判红，见各条目注释）："
+    printf '%s\n' "${WARNED[@]}"
+fi
+echo "镜像覆盖体检：${TOTAL} 个必需文件，缺 ${FAIL} 个"
 if [ ${FAIL} -gt 0 ]; then
     printf '%s\n' "${MISSING[@]}"
     exit 1

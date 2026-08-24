@@ -41,14 +41,6 @@ jobs:
           } > sha256sums.txt
           echo "清单条目数: $(grep -c '^[0-9a-f]' sha256sums.txt)"
 
-      - name: Push fresh manifest to mirror
-        env:
-          SSH_KEY: ${{ secrets.MIRROR_SSH_KEY }}
-        run: |
-          # 镜像站 HTTP 挂的 sha256sums.txt 是降级路径的信任源, 必须与仓库同代
-          scp -i ~/.ssh/id_mirror -o StrictHostKeyChecking=accept-new sha256sums.txt root@47.122.115.39:/data/mirror/sha256sums.txt
-          echo "镜像站清单已同步"
-
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
@@ -61,3 +53,9 @@ jobs:
           git commit -m "chore: sync component checksums from mirror ($(grep -c '^[0-9a-f]' sha256sums.txt) entries)"
           git pull --rebase origin main
           git push origin main
+
+      - name: Push fresh manifest to mirror
+        run: |
+          # 顺序在 git 提交之后：镜像站挂的清单必须先进公开审计轨道再上线
+          scp -i ~/.ssh/id_mirror -o StrictHostKeyChecking=accept-new sha256sums.txt root@47.122.115.39:/data/mirror/sha256sums.txt
+          echo "镜像站清单已同步"

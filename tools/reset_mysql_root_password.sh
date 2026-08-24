@@ -58,10 +58,11 @@ fi
 
 if [ $? -eq 0 ]; then
     echo "Password reset succesfully. Now killing mysqld softly"
+    # MariaDB 10.5+ 的进程名是 mariadbd，两个名字都要杀，否则免密实例会一直挂着
     if command -v killall >/dev/null 2>&1; then
-        killall mysqld
+        killall mysqld mariadbd 2>/dev/null
     else
-        kill `pidof mysqld`
+        kill `pidof mysqld mariadbd` 2>/dev/null
     fi
     sleep 5
     echo "Restarting the actual ${DB_Name} service"

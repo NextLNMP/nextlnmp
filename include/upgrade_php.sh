@@ -25,6 +25,12 @@ Start_Upgrade_PHP()
         echo "Error: You must enter a corrent php version!!"
         exit 1
     fi
+    # 版本闸门必须在拆除旧 PHP（nextlnmp stop / mv）之前：不支持的版本在这里就拦下
+    if ! echo "${php_version}" | grep -Eq '^(5\.[2-6]|7\.[0-4]|8\.[0-4])\.[0-9]+$'; then
+        Echo_Red "PHP version: ${php_version} is not supported."
+        echo "支持的升级目标：5.2.x - 5.6.x / 7.0.x - 7.4.x / 8.0.x - 8.4.x"
+        exit 1
+    fi
     Press_Start
     cd ${cur_dir}/src
     if [ -s php-${php_version}.tar.bz2 ]; then
@@ -1189,12 +1195,7 @@ fi
 
 Upgrade_PHP()
 {
-    # 版本闸门必须在拆除旧 PHP 之前：不支持的版本在这里就拦下，避免停站搬目录后才发现无处可去
-    if ! echo "${php_version}" | grep -Eq '^(5\.[2-6]|7\.[0-4]|8\.[0-4])\.[0-9]+$'; then
-        Echo_Red "PHP version: ${php_version} is not supported."
-        echo "支持的升级目标：5.2.x - 5.6.x / 7.0.x - 7.4.x / 8.0.x - 8.4.x"
-        exit 1
-    fi
+    # 版本闸门在 Start_Upgrade_PHP 内、读取 php_version 之后、拆除旧环境之前执行
     Start_Upgrade_PHP
     if echo "${php_version}" | grep -Eqi '^5.2.';then
         Upgrade_PHP_52

@@ -883,9 +883,12 @@ Try_Download()
         echo "${FileName} [已存在]"
     else
         echo "正在下载 ${FileName}..."
-        wget -c --progress=bar:force --prefer-family=IPv4 --no-check-certificate ${URL}
+        # -O 强制落盘为约定文件名（GitHub 归档等 URL 的 basename 与目标名不一致）
+        wget -c --progress=bar:force --prefer-family=IPv4 --no-check-certificate -O "${FileName}" ${URL}
         if [ $? -ne 0 ]; then
             echo "❌ 下载失败：${FileName}"
+            # 清掉半截文件，否则链条里下一个源会把它当"已存在"直接放行
+            rm -f "${FileName}"
             return 1
         fi
     fi
@@ -894,7 +897,8 @@ Try_Download()
     if [ -f "${SHA256_FILE}" ] && [ -s "${FileName}" ]; then
         local actual_sha256=$(sha256sum "${FileName}" | awk '{print $1}')
         # 只精确匹配清单第二列的文件名（兼容带路径前缀的旧格式清单），杜绝子串误配到别的包
-        local expected_sha256=$(awk -v f="${FileName}" '$1 ~ /^[0-9a-f]{64}$/ {n=split($2,p,"/"); if ($2==f || p[n]==f) {print $1; exit}}' "${SHA256_FILE}")
+        # 不用 {64} 区间量词：老系统默认 mawk 1.3.3 不支持，会导致校验被静默跳过
+        local expected_sha256=$(awk -v f="${FileName}" 'length($1)==64 && $1 ~ /^[0-9a-f]+$/ {n=split($2,p,"/"); if ($2==f || p[n]==f) {print $1; exit}}' "${SHA256_FILE}")
         if [ -n "${expected_sha256}" ]; then
             if [ "${actual_sha256}" != "${expected_sha256}" ]; then
                 echo "❌ SHA256 校验失败：${FileName}"
@@ -907,8 +911,11 @@ Try_Download()
             fi
         else
             if [ "${NEXTLNMP_VERIFY:-warn}" = "strict" ]; then
-                echo "❌ 严格模式：校验清单中没有 ${FileName} 的条目，终止安装"
-                exit 1
+                # 返回非零而不是 exit：保住调用点 || true（可选文件）和 || 兜底链 的契约；
+                # 必经路径由 Download_Files 把非零转成终止
+                echo "❌ 严格模式：校验清单中没有 ${FileName} 的条目，拒绝采用"
+                rm -f "${FileName}"
+                return 3
             fi
             echo "⚠️  清单中未找到 ${FileName} 的校验值，跳过校验（NEXTLNMP_VERIFY=strict 可强制终止）"
         fi

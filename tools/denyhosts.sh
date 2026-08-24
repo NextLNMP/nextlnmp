@@ -34,14 +34,19 @@ fi
 
 echo "Downloading..."
 cd ../src
-if ! command -v python2 >/dev/null 2>&1 && ! command -v python >/dev/null 2>&1; then
-    Echo_Red "DenyHosts 依赖 python2，当前系统没有 python2，无法安装。建议改用 fail2ban（tools/fail2ban.sh）。"
+# python-is-python3 的系统上 python 是 py3，必须确认拿到的真是 python2
+if command -v python2 >/dev/null 2>&1; then
+    DH_PY=python2
+elif command -v python >/dev/null 2>&1 && python -c 'import sys; sys.exit(sys.version_info[0]!=2)' 2>/dev/null; then
+    DH_PY=python
+else
+    Echo_Red "DenyHosts 依赖 python2，当前系统没有可用的 python2，无法安装。建议改用 fail2ban（tools/fail2ban.sh）。"
     exit 1
 fi
 Try_Download ${Download_Mirror}/security/denyhosts/denyhosts-3.1.tar.gz denyhosts-3.1.tar.gz || Download_Files https://github.com/denyhosts/denyhosts/archive/refs/tags/v3.1.tar.gz denyhosts-3.1.tar.gz
 Tar_Cd denyhosts-3.1.tar.gz denyhosts-3.1
 echo "Installing..."
-python2 setup.py install 2>/dev/null || python setup.py install
+${DH_PY} setup.py install
 
 echo "Copy files..."
 \cp denyhosts.conf /etc

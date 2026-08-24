@@ -27,8 +27,10 @@ Install_PHP_Imap()
                 if [ "${CheckMirror}" = "n" ]; then
                     rpm -ivh ${cur_dir}/src/libc-client-2007f-24.el9.${ARCH}.rpm ${cur_dir}/src/uw-imap-devel-2007f-24.el9.${ARCH}.rpm
                 else
-                    rpm -ivh ${Download_Mirror}/lib/uw-imap/libc-client-2007f-24.el9.${ARCH}.rpm
-                    rpm -ivh ${Download_Mirror}/lib/uw-imap/uw-imap-devel-2007f-24.el9.${ARCH}.rpm
+                    rpm -ivh ${Download_Mirror}/lib/uw-imap/libc-client-2007f-24.el9.${ARCH}.rpm || \
+                    Echo_Yellow "libc-client rpm 获取失败（镜像缺件），imap 扩展将无法构建"
+                    rpm -ivh ${Download_Mirror}/lib/uw-imap/uw-imap-devel-2007f-24.el9.${ARCH}.rpm || \
+                    Echo_Yellow "uw-imap-devel rpm 获取失败（镜像缺件），imap 扩展将无法构建"
                 fi
             fi
         fi

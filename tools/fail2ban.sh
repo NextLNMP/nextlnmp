@@ -65,7 +65,7 @@ fi
 
 chmod +x /etc/init.d/fail2ban
 cd ..
-rm -rf fail2ban-1.0.3
+rm -rf fail2ban-1.1.0
 
 StartUp fail2ban
 
