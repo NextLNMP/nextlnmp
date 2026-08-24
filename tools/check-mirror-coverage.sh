@@ -70,7 +70,7 @@ done
 for v in 5.2.17 5.3.29 5.4.45 5.5.38 5.6.40 7.0.33 7.1.33 7.2.34 7.3.33 7.4.33 8.0.30 8.1.28 8.2.28 8.3.7 8.4.18; do
     chk "web/php/php-${v}.tar.bz2" php-src
 done
-# php5.2 fpm 补丁与 Zend loader：唯一供源 soft.vpser.net 不保证可达，代码侧已有兜底/软失败 → warn 层
+# php5.2 fpm 补丁与 Zend loader：唯一供源 soft.lnmp.com 不保证可达，代码侧已有兜底/软失败 → warn 层
 warn_chk web/phpfpm/php-5.2.17-fpm-0.5.14.diff.gz php5.2
 for a in x86_64; do
     warn_chk "web/zend/ZendOptimizer-3.3.9-linux-glibc23-${a}.tar.gz" zend-php52

@@ -550,7 +550,7 @@ Check_Download()
     fi
     if [ ${PHPSelect} = "1" ]; then
         Try_Download ${Download_Mirror}/web/phpfpm/${Php_Ver}-fpm-0.5.14.diff.gz ${Php_Ver}-fpm-0.5.14.diff.gz || \
-        Download_Files https://soft.vpser.net/web/phpfpm/${Php_Ver}-fpm-0.5.14.diff.gz ${Php_Ver}-fpm-0.5.14.diff.gz
+        Download_Files https://soft.lnmp.com/web/phpfpm/${Php_Ver}-fpm-0.5.14.diff.gz ${Php_Ver}-fpm-0.5.14.diff.gz
     fi
     Download_Files ${Download_Mirror}/datebase/phpmyadmin/${PhpMyAdmin_Ver}.tar.xz ${PhpMyAdmin_Ver}.tar.xz
     Download_Files ${Download_Mirror}/prober/p.tar.gz p.tar.gz

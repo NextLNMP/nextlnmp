@@ -33,13 +33,13 @@ web/php php-5.2.17.tar.bz2 http://museum.php.net/php5/php-5.2.17.tar.bz2
 web/php php-5.3.29.tar.bz2 http://museum.php.net/php5/php-5.3.29.tar.bz2
 web/php php-5.4.45.tar.bz2 http://museum.php.net/php5/php-5.4.45.tar.bz2
 web/php php-5.5.38.tar.bz2 http://museum.php.net/php5/php-5.5.38.tar.bz2
-# best-effort: soft.vpser.net(上游 lnmp 官方镜像)从部分网络不可达, CI 拉不到也不影响其余条目
-web/phpfpm php-5.2.17-fpm-0.5.14.diff.gz https://soft.vpser.net/web/phpfpm/php-5.2.17-fpm-0.5.14.diff.gz
-web/zend ZendOptimizer-3.3.9-linux-glibc23-x86_64.tar.gz https://soft.vpser.net/web/zend/ZendOptimizer-3.3.9-linux-glibc23-x86_64.tar.gz
-web/zend ZendGuardLoader-php-5.3-linux-glibc23-x86_64.tar.gz https://soft.vpser.net/web/zend/ZendGuardLoader-php-5.3-linux-glibc23-x86_64.tar.gz
-web/zend ZendGuardLoader-70429-PHP-5.4-linux-glibc23-x86_64.tar.gz https://soft.vpser.net/web/zend/ZendGuardLoader-70429-PHP-5.4-linux-glibc23-x86_64.tar.gz
-web/zend zend-loader-php5.5-linux-x86_64.tar.gz https://soft.vpser.net/web/zend/zend-loader-php5.5-linux-x86_64.tar.gz
-web/zend zend-loader-php5.6-linux-x86_64.tar.gz https://soft.vpser.net/web/zend/zend-loader-php5.6-linux-x86_64.tar.gz
+# best-effort: soft.lnmp.com(上游 lnmp 官方镜像)从部分网络不可达, CI 拉不到也不影响其余条目
+web/phpfpm php-5.2.17-fpm-0.5.14.diff.gz https://soft.lnmp.com/web/phpfpm/php-5.2.17-fpm-0.5.14.diff.gz
+web/zend ZendOptimizer-3.3.9-linux-glibc23-x86_64.tar.gz https://soft.lnmp.com/web/zend/ZendOptimizer-3.3.9-linux-glibc23-x86_64.tar.gz
+web/zend ZendGuardLoader-php-5.3-linux-glibc23-x86_64.tar.gz https://soft.lnmp.com/web/zend/ZendGuardLoader-php-5.3-linux-glibc23-x86_64.tar.gz
+web/zend ZendGuardLoader-70429-PHP-5.4-linux-glibc23-x86_64.tar.gz https://soft.lnmp.com/web/zend/ZendGuardLoader-70429-PHP-5.4-linux-glibc23-x86_64.tar.gz
+web/zend zend-loader-php5.5-linux-x86_64.tar.gz https://soft.lnmp.com/web/zend/zend-loader-php5.5-linux-x86_64.tar.gz
+web/zend zend-loader-php5.6-linux-x86_64.tar.gz https://soft.lnmp.com/web/zend/zend-loader-php5.6-linux-x86_64.tar.gz
 
 # Nginx Lua 全家(Enable_Nginx_Lua='y' 必需, 此前镜像整目录缺失)
 lib/lua luajit2-2.1-20230119.tar.gz https://github.com/openresty/luajit2/archive/refs/tags/v2.1-20230119.tar.gz
