@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.10.2-blue.svg)
+![Version](https://img.shields.io/badge/version-1.11.0-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
@@ -95,13 +95,13 @@ bash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/main/install
 **方式二：从镜像站下载安装（国内快）**
 
 ```bash
-wget https://mirror.nextlnmp.cn/nextlnmp-1.10.2.tar.gz && tar zxf nextlnmp-1.10.2.tar.gz && cd nextlnmp-1.10.2 && bash install.sh
+wget https://mirror.nextlnmp.cn/nextlnmp-1.11.0.tar.gz && tar zxf nextlnmp-1.11.0.tar.gz && cd nextlnmp-1.11.0 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
 
 ```bash
-wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.10.2/nextlnmp-1.10.2.tar.gz && tar zxf nextlnmp-1.10.2.tar.gz && cd nextlnmp-1.10.2 && bash install.sh
+wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.11.0/nextlnmp-1.11.0.tar.gz && tar zxf nextlnmp-1.11.0.tar.gz && cd nextlnmp-1.11.0 && bash install.sh
 ```
 
 三种方式装出来的东西完全一样，选哪个都行。
@@ -291,7 +291,7 @@ NextLNMP 的安全不是一句口号，是一条闭合的信任链：
 ## 📂 目录结构
 
 ```
-nextlnmp-1.10.2/
+nextlnmp-1.11.0/
 ├── install.sh          # 安装入口
 ├── nextlnmp.conf       # 配置文件（镜像源地址等）
 ├── upgrade.sh          # 升级脚本
