@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.10.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.10.1-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
@@ -95,13 +95,13 @@ bash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/main/install
 **方式二：从镜像站下载安装（国内快）**
 
 ```bash
-wget https://mirror.nextlnmp.cn/nextlnmp-1.10.0.tar.gz && tar zxf nextlnmp-1.10.0.tar.gz && cd nextlnmp-1.10.0 && bash install.sh
+wget https://mirror.nextlnmp.cn/nextlnmp-1.10.1.tar.gz && tar zxf nextlnmp-1.10.1.tar.gz && cd nextlnmp-1.10.1 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
 
 ```bash
-wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.10.0/nextlnmp-1.10.0.tar.gz && tar zxf nextlnmp-1.10.0.tar.gz && cd nextlnmp-1.10.0 && bash install.sh
+wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.10.1/nextlnmp-1.10.1.tar.gz && tar zxf nextlnmp-1.10.1.tar.gz && cd nextlnmp-1.10.1 && bash install.sh
 ```
 
 三种方式装出来的东西完全一样，选哪个都行。
@@ -291,7 +291,7 @@ NextLNMP 的安全不是一句口号，是一条闭合的信任链：
 ## 📂 目录结构
 
 ```
-nextlnmp-1.10.0/
+nextlnmp-1.10.1/
 ├── install.sh          # 安装入口
 ├── nextlnmp.conf       # 配置文件（镜像源地址等）
 ├── upgrade.sh          # 升级脚本
@@ -371,6 +371,18 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 </details>
 
 ## 🔄 更新日志
+
+### v1.10.1 (2026-08-24)
+### v1.10.1 —— 上游域名跟进（2026-08-24）
+
+- lnmp 官方镜像域名 `soft.vpser.net` 已停止解析（NXDOMAIN），全部引用切换到现行官方域名 `soft.lnmp.com`（acme.sh 引导 ×3 CLI、PHP 5.2 fpm 补丁兜底、上游声明清单）
+- 镜像站补齐 Zend loader 全套（PHP 5.2–5.6）与 php-5.2.17-fpm 补丁共 6 件，校验清单同步收编——老版本 PHP 安装链路完整闭环
+- 说明：v1.10.0 用户不受影响（acme.sh 有 GitHub 兜底、Zend loader 为软失败可跳过），本版为体验修正
+
+<details><summary>v1.10.0 完整更新内容（全量审计修复版）</summary>
+
+基于全量审计（14 路并行代码审查 + 镜像 175 个下载地址逐一实测）修复 84 条已确认缺陷：数据安全四件套（假备份真删库、卸载误删 MariaDB 数据、升级先拆后验）、下载兜底链全面复活、MariaDB 11.8/12.3 真实安装、MySQL 8.4 管理面、Apache/Caddy/LAMP 修复、PHP 8.4 全线支持、SSL 链路修复、镜像补货 39 项（含 PHP 8.2.28 全部 8 个 bin 变体）、每周镜像覆盖体检 CI。详见 v1.10.0 Release。
+</details>
 
 ### v1.10.0 (2026-08-24)
 ### v1.10.0 —— 全量审计修复版（2026-08-24）
