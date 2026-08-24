@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.11.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.11.1-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
@@ -95,13 +95,13 @@ bash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/main/install
 **方式二：从镜像站下载安装（国内快）**
 
 ```bash
-wget https://mirror.nextlnmp.cn/nextlnmp-1.11.0.tar.gz && tar zxf nextlnmp-1.11.0.tar.gz && cd nextlnmp-1.11.0 && bash install.sh
+wget https://mirror.nextlnmp.cn/nextlnmp-1.11.1.tar.gz && tar zxf nextlnmp-1.11.1.tar.gz && cd nextlnmp-1.11.1 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
 
 ```bash
-wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.11.0/nextlnmp-1.11.0.tar.gz && tar zxf nextlnmp-1.11.0.tar.gz && cd nextlnmp-1.11.0 && bash install.sh
+wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.11.1/nextlnmp-1.11.1.tar.gz && tar zxf nextlnmp-1.11.1.tar.gz && cd nextlnmp-1.11.1 && bash install.sh
 ```
 
 三种方式装出来的东西完全一样，选哪个都行。
@@ -291,7 +291,7 @@ NextLNMP 的安全不是一句口号，是一条闭合的信任链：
 ## 📂 目录结构
 
 ```
-nextlnmp-1.11.0/
+nextlnmp-1.11.1/
 ├── install.sh          # 安装入口
 ├── nextlnmp.conf       # 配置文件（镜像源地址等）
 ├── upgrade.sh          # 升级脚本
@@ -371,6 +371,13 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 </details>
 
 ## 🔄 更新日志
+
+### v1.11.1 (2026-08-24)
+### v1.11.1 —— imap 扩展 EL9 补链（2026-08-24）
+
+- uw-imap el9 双 RPM 找到正经上游：Remi 仓库的 EL9 构建（libc-client / uw-imap-devel 2007f-30.el9.remi，x86_64 + aarch64 全有）——此前被判为“无公网上游需人工补原件”，现已入补货清单自动同步
+- php.sh / php_imap.sh 的 RPM 文件名引用同步更新；校验清单扫描纳入 .rpm 文件；镜像覆盖体检将这四件从 warn 层转为正式条目
+- 至此覆盖体检的 warn 层清零：所有安装器会请求的文件都有可自动补货的上游
 
 ### v1.11.0 (2026-08-24)
 ### v1.11.0 —— 魔搭副镜像双保险（2026-08-24）
