@@ -210,7 +210,7 @@ Install_Composer()
 {
     if [ "${CheckMirror}" != "n" ]; then
         echo "Downloading Composer..."
-        if echo "${PHPSelect}" | grep -Eqi '^[1-8]' || echo "${php_version}" | grep -Eqi '^5.[2-6].*|7.[0-2].*' || echo "${Php_Ver}" | grep -Eqi "php-5.[2-6].*|php-7.[0-2].*"; then
+        if echo "${PHPSelect}" | grep -Eqi '^[1-8]$' || echo "${php_version}" | grep -Eqi '^5\.[2-6]\.|^7\.[0-2]\.' || echo "${Php_Ver}" | grep -Eqi "^php-5\.[2-6]\.|^php-7\.[0-2]\."; then
             wget --progress=dot:giga --prefer-family=IPv4 --no-check-certificate -T 120 -t3 ${Download_Mirror}/web/php/composer/composer-2.2.phar -O /usr/local/bin/composer
             if [ $? -eq 0 ]; then
                 echo "Composer install successfully."
@@ -430,7 +430,9 @@ Install_PHP_52()
     cd ${cur_dir}/src
     if [ "${Is_ARM}" != "y" ]; then
         echo "Install ZendGuardLoader for PHP 5.2..."
-        Download_Files ${Download_Mirror}/web/zend/ZendOptimizer-3.3.9-linux-glibc23-${ARCH}.tar.gz ZendOptimizer-3.3.9-linux-glibc23-${ARCH}.tar.gz
+        if ! Try_Download ${Download_Mirror}/web/zend/ZendOptimizer-3.3.9-linux-glibc23-${ARCH}.tar.gz ZendOptimizer-3.3.9-linux-glibc23-${ARCH}.tar.gz; then
+            Echo_Yellow "Zend loader 组件不可用，跳过安装（仅影响运行 Zend 加密程序，PHP 本体不受影响）"
+        else
         Tar_Cd ZendOptimizer-3.3.9-linux-glibc23-${ARCH}.tar.gz
         mkdir -p /usr/local/zend/
         \cp ZendOptimizer-3.3.9-linux-glibc23-${ARCH}/data/5_2_x_comp/ZendOptimizer.so /usr/local/zend/
@@ -440,6 +442,7 @@ Install_PHP_52()
 zend_optimizer.optimization_level=1
 zend_extension="/usr/local/zend/ZendOptimizer.so"
 EOF
+        fi
     fi
 
     if [ "${Stack}" = "nextlnmp" ]; then
@@ -487,7 +490,9 @@ Install_PHP_53()
     cd ${cur_dir}/src
     if [ "${Is_ARM}" != "y" ]; then
         echo "Install ZendGuardLoader for PHP 5.3..."
-        Download_Files ${Download_Mirror}/web/zend/ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}.tar.gz ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}.tar.gz
+        if ! Try_Download ${Download_Mirror}/web/zend/ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}.tar.gz ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}.tar.gz; then
+            Echo_Yellow "Zend loader 组件不可用，跳过安装（仅影响运行 Zend 加密程序，PHP 本体不受影响）"
+        else
         Tar_Cd ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}.tar.gz
         mkdir -p /usr/local/zend/
         \cp ZendGuardLoader-php-5.3-linux-glibc23-${ARCH}/php-5.3.x/ZendGuardLoader.so /usr/local/zend/
@@ -504,6 +509,7 @@ EOF
 
         if grep -q '^LoadModule mpm_event_module' /usr/local/apache/conf/httpd.conf && [ "${ApacheSelect}" = "2" ]; then
             mv /usr/local/php/conf.d/002-zendguardloader.ini /usr/local/php/conf.d/002-zendguardloader.ini.disable
+        fi
         fi
     fi
 
@@ -537,7 +543,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -576,7 +587,9 @@ Install_PHP_54()
     cd ${cur_dir}/src
     if [ "${Is_ARM}" != "y" ]; then
         echo "Install ZendGuardLoader for PHP 5.4..."
-        Download_Files ${Download_Mirror}/web/zend/ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}.tar.gz ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}.tar.gz
+        if ! Try_Download ${Download_Mirror}/web/zend/ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}.tar.gz ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}.tar.gz; then
+            Echo_Yellow "Zend loader 组件不可用，跳过安装（仅影响运行 Zend 加密程序，PHP 本体不受影响）"
+        else
         Tar_Cd ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}.tar.gz
         mkdir -p /usr/local/zend/
         \cp ZendGuardLoader-70429-PHP-5.4-linux-glibc23-${ARCH}/php-5.4.x/ZendGuardLoader.so /usr/local/zend/
@@ -593,6 +606,7 @@ EOF
 
         if grep -q '^LoadModule mpm_event_module' /usr/local/apache/conf/httpd.conf && [ "${ApacheSelect}" = "2" ]; then
             mv /usr/local/php/conf.d/002-zendguardloader.ini /usr/local/php/conf.d/002-zendguardloader.ini.disable
+        fi
         fi
     fi
 
@@ -626,7 +640,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
     chmod +x /etc/systemd/system/php-fpm.service
@@ -669,7 +688,9 @@ Install_PHP_55()
     cd ${cur_dir}/src
     if [ "${Is_ARM}" != "y" ]; then
         echo "Install ZendGuardLoader for PHP 5.5..."
-        Download_Files ${Download_Mirror}/web/zend/zend-loader-php5.5-linux-${ARCH}.tar.gz zend-loader-php5.5-linux-${ARCH}.tar.gz
+        if ! Try_Download ${Download_Mirror}/web/zend/zend-loader-php5.5-linux-${ARCH}.tar.gz zend-loader-php5.5-linux-${ARCH}.tar.gz; then
+            Echo_Yellow "Zend loader 组件不可用，跳过安装（仅影响运行 Zend 加密程序，PHP 本体不受影响）"
+        else
         Tar_Cd zend-loader-php5.5-linux-${ARCH}.tar.gz
         mkdir -p /usr/local/zend/
         \cp zend-loader-php5.5-linux-${ARCH}/ZendGuardLoader.so /usr/local/zend/
@@ -686,6 +707,7 @@ EOF
 
         if grep -q '^LoadModule mpm_event_module' /usr/local/apache/conf/httpd.conf && [ "${ApacheSelect}" = "2" ]; then
             mv /usr/local/php/conf.d/002-zendguardloader.ini /usr/local/php/conf.d/002-zendguardloader.ini.disable
+        fi
         fi
     fi
 
@@ -719,7 +741,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
     chmod +x /etc/systemd/system/php-fpm.service
@@ -765,7 +792,9 @@ Install_PHP_56()
     cd ${cur_dir}/src
     if [ "${Is_ARM}" != "y" ]; then
         echo "Install ZendGuardLoader for PHP 5.6..."
-        Download_Files ${Download_Mirror}/web/zend/zend-loader-php5.6-linux-${ARCH}.tar.gz zend-loader-php5.6-linux-${ARCH}.tar.gz
+        if ! Try_Download ${Download_Mirror}/web/zend/zend-loader-php5.6-linux-${ARCH}.tar.gz zend-loader-php5.6-linux-${ARCH}.tar.gz; then
+            Echo_Yellow "Zend loader 组件不可用，跳过安装（仅影响运行 Zend 加密程序，PHP 本体不受影响）"
+        else
         Tar_Cd zend-loader-php5.6-linux-${ARCH}.tar.gz
         mkdir -p /usr/local/zend/
         \cp zend-loader-php5.6-linux-${ARCH}/ZendGuardLoader.so /usr/local/zend/
@@ -782,6 +811,7 @@ EOF
 
         if grep -q '^LoadModule mpm_event_module' /usr/local/apache/conf/httpd.conf && [ "${ApacheSelect}" = "2" ]; then
             mv /usr/local/php/conf.d/002-zendguardloader.ini /usr/local/php/conf.d/002-zendguardloader.ini.disable
+        fi
         fi
     fi
 
@@ -815,7 +845,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -888,7 +923,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -960,7 +1000,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -1032,7 +1077,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -1104,7 +1154,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -1176,7 +1231,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -1248,7 +1308,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -1319,7 +1384,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -1327,7 +1397,7 @@ fi
 
 Install_PHP_82()
 {
-    if PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then
+    if [ "${Stack}" = "nextlnmp" ] && PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then  # bin 包仅含 FPM，LAMP/LNMPA 需 mod_php 必须走源码
         Install_PHP_Bin
     else
         Install_Libzip
@@ -1397,7 +1467,7 @@ fi
 
 Install_PHP_83()
 {
-    if PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then
+    if [ "${Stack}" = "nextlnmp" ] && PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then  # bin 包仅含 FPM，LAMP/LNMPA 需 mod_php 必须走源码
         Install_PHP_Bin
     else
     Install_Libzip
@@ -1464,7 +1534,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -1472,7 +1547,7 @@ fi
 
 Install_PHP_84()
 {
-    if PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then
+    if [ "${Stack}" = "nextlnmp" ] && PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then  # bin 包仅含 FPM，LAMP/LNMPA 需 mod_php 必须走源码
         Install_PHP_Bin
     else
     Install_Libzip
@@ -1539,7 +1614,12 @@ slowlog = var/log/slow.log
 EOF
 
     echo "Copy php-fpm init.d file..."
-    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    if [ -f "${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm" ]; then
+        \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    else
+        # 急速安装模式没有源码树，用仓库自带的 init.d 模板
+        \cp ${cur_dir}/init.d/php-fpm /etc/init.d/php-fpm
+    fi
     \cp ${cur_dir}/init.d/php-fpm.service /etc/systemd/system/php-fpm.service
     chmod +x /etc/init.d/php-fpm
 fi
@@ -1585,7 +1665,7 @@ eof
     \cp p.php ${Default_Website_Dir}/p.php
 
     \cp ${cur_dir}/conf/index.html ${Default_Website_Dir}/index.html
-    \cp ${cur_dir}/conf/nextlnmp.gif ${Default_Website_Dir}/nextlnmp.gif
+    [ -f ${cur_dir}/conf/nextlnmp.gif ] && \cp ${cur_dir}/conf/nextlnmp.gif ${Default_Website_Dir}/nextlnmp.gif
 
     if [ ${PHPSelect} -ge 4 ]; then
         echo "Copy Opcache Control Panel..."

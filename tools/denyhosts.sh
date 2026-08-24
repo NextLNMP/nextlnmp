@@ -34,10 +34,14 @@ fi
 
 echo "Downloading..."
 cd ../src
-Download_Files ${Download_Mirror}/security/denyhosts/denyhosts-3.1.tar.gz denyhosts-3.1.tar.gz
+if ! command -v python2 >/dev/null 2>&1 && ! command -v python >/dev/null 2>&1; then
+    Echo_Red "DenyHosts 依赖 python2，当前系统没有 python2，无法安装。建议改用 fail2ban（tools/fail2ban.sh）。"
+    exit 1
+fi
+Try_Download ${Download_Mirror}/security/denyhosts/denyhosts-3.1.tar.gz denyhosts-3.1.tar.gz || Download_Files https://github.com/denyhosts/denyhosts/archive/refs/tags/v3.1.tar.gz denyhosts-3.1.tar.gz
 Tar_Cd denyhosts-3.1.tar.gz denyhosts-3.1
 echo "Installing..."
-python setup.py install
+python2 setup.py install 2>/dev/null || python setup.py install
 
 echo "Copy files..."
 \cp denyhosts.conf /etc

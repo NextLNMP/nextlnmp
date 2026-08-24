@@ -35,7 +35,7 @@ EOF
         Echo_Green "PHP Fileinfo installed successfully, enjoy it!"
         exit 0
     else
-        rm -f ${PHP_Path}/conf.d/009-exif.ini
+        rm -f ${PHP_Path}/conf.d/009-fileinfo.ini
         Echo_Red "PHP Fileinfo install failed!"
         exit 1
     fi

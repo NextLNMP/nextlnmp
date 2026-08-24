@@ -31,8 +31,9 @@ fi
 
 echo "Downloading..."
 cd ../src
-Download_Files ${Download_Mirror}/security/fail2ban/fail2ban-1.0.3.tar.gz fail2ban-1.0.3.tar.gz
-tar zxf fail2ban-1.0.3.tar.gz && cd fail2ban-1.0.3
+# 1.0.3 是不存在的幻影版本号（上游从未发布过）；1.1.0 才兼容 python3.11+
+Try_Download ${Download_Mirror}/security/fail2ban/fail2ban-1.1.0.tar.gz fail2ban-1.1.0.tar.gz || Download_Files https://github.com/fail2ban/fail2ban/archive/refs/tags/1.1.0.tar.gz fail2ban-1.1.0.tar.gz
+tar zxf fail2ban-1.1.0.tar.gz && cd fail2ban-1.1.0
 echo "Installing fail2ban..."
 python3 setup.py install
 

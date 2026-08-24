@@ -25,8 +25,8 @@ Install_Apache_22()
         \cp ${cur_dir}/conf/httpd22-ssl.conf /usr/local/apache/conf/extra/httpd-ssl.conf
         \cp ${cur_dir}/conf/example/enable-apache-ssl-vhost-example.conf /usr/local/apache/conf/enable-apache-ssl-vhost-example.conf
     elif [ "${Stack}" = "nextlnmpa" ]; then
-        \cp ${cur_dir}/conf/httpd22-nextlnmpa.conf /usr/local/apache/conf/httpd.conf
-        \cp ${cur_dir}/conf/httpd-vhosts-nextlnmpa.conf /usr/local/apache/conf/extra/httpd-vhosts.conf
+        \cp ${cur_dir}/conf/httpd22-lnmpa.conf /usr/local/apache/conf/httpd.conf
+        \cp ${cur_dir}/conf/httpd-vhosts-lnmpa.conf /usr/local/apache/conf/extra/httpd-vhosts.conf
     fi
     \cp ${cur_dir}/conf/httpd-default.conf /usr/local/apache/conf/extra/httpd-default.conf
     \cp ${cur_dir}/conf/mod_remoteip.conf /usr/local/apache/conf/extra/mod_remoteip.conf
@@ -49,7 +49,7 @@ Install_Apache_22()
         sed -i "s#/home/wwwroot/default#${Default_Website_Dir}#g" /usr/local/apache/conf/extra/httpd-vhosts.conf
     fi
 
-    if [[ "${PHPSelect}" =~ ^[6789]|1[0-3]$ ]]; then
+    if [[ "${PHPSelect}" =~ ^([6-9]|1[0-5])$ ]]; then
         sed -i '/^LoadModule php5_module/d' /usr/local/apache/conf/httpd.conf
     fi
 
@@ -107,8 +107,8 @@ Install_Apache_24()
         \cp ${cur_dir}/conf/httpd24-ssl.conf /usr/local/apache/conf/extra/httpd-ssl.conf
         \cp ${cur_dir}/conf/example/enable-apache-ssl-vhost-example.conf /usr/local/apache/conf/enable-apache-ssl-vhost-example.conf
     elif [ "${Stack}" = "nextlnmpa" ]; then
-        \cp ${cur_dir}/conf/httpd24-nextlnmpa.conf /usr/local/apache/conf/httpd.conf
-        \cp ${cur_dir}/conf/httpd-vhosts-nextlnmpa.conf /usr/local/apache/conf/extra/httpd-vhosts.conf
+        \cp ${cur_dir}/conf/httpd24-lnmpa.conf /usr/local/apache/conf/httpd.conf
+        \cp ${cur_dir}/conf/httpd-vhosts-lnmpa.conf /usr/local/apache/conf/extra/httpd-vhosts.conf
     fi
     \cp ${cur_dir}/conf/httpd-default.conf /usr/local/apache/conf/extra/httpd-default.conf
     \cp ${cur_dir}/conf/mod_remoteip.conf /usr/local/apache/conf/extra/mod_remoteip.conf
@@ -123,7 +123,7 @@ Install_Apache_24()
         sed -i "s#/home/wwwroot/default#${Default_Website_Dir}#g" /usr/local/apache/conf/extra/httpd-vhosts.conf
     fi
 
-    if [[ "${PHPSelect}" =~ ^[6789]|1[0-3]$ ]]; then
+    if [[ "${PHPSelect}" =~ ^([6-9]|1[0-5])$ ]]; then
         sed -i '/^LoadModule php5_module/d' /usr/local/apache/conf/httpd.conf
     fi
 

@@ -143,7 +143,8 @@ Install_Database()
                 exit 1
             fi
         elif [[ "${Bin}" = "y" && "${DBSelect}" = "5" ]]; then
-            mysql8_glibc_ver="2.17" # 8.0.33 起 x86 亦提供 2.17，2.12 线已停发（与 init.sh 对齐）
+            # x86 走 2.17（2.12 线已停发）；aarch64 官方只发 glibc2.28 命名（与 init.sh 对齐）
+            [ "${DB_ARCH}" = "aarch64" ] && mysql8_glibc_ver="2.28" || mysql8_glibc_ver="2.17"
             Try_Download ${Download_Mirror}/datebase/mysql/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz || \
             Try_Download https://cdn.mysql.com/Downloads/MySQL-8.0/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz || \
             Try_Download https://cdn.mysql.com/archives/mysql-8.0/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz
@@ -153,10 +154,11 @@ Install_Database()
                 exit 1
             fi
         elif [[ "${Bin}" = "y" && "${DBSelect}" = "11" ]]; then
-            Try_Download ${Download_Mirror}/datebase/mysql/${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz || \
-            Try_Download https://cdn.mysql.com/Downloads/MySQL-8.4/${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz || \
-            Try_Download https://cdn.mysql.com/archives/mysql-8.4/${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz
-            if [ ! -s ${Mysql_Ver}-linux-glibc2.17-${DB_ARCH}.tar.xz ]; then
+            [ "${DB_ARCH}" = "aarch64" ] && mysql8_glibc_ver="2.28" || mysql8_glibc_ver="2.17"
+            Try_Download ${Download_Mirror}/datebase/mysql/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz || \
+            Try_Download https://cdn.mysql.com/Downloads/MySQL-8.4/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz || \
+            Try_Download https://cdn.mysql.com/archives/mysql-8.4/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz
+            if [ ! -s ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.tar.xz ]; then
                 Echo_Red "Error! Unable to download MySQL 8.4 Generic Binaries, please download it to src directory manually."
                 sleep 5
                 exit 1

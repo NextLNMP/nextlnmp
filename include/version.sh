@@ -87,7 +87,8 @@ elif [ "${PHPSelect}" = "15" ]; then
 fi
 if [[ "${PHPSelect}" =~ ^[123]$ ]]; then
     PhpMyAdmin_Ver='phpMyAdmin-4.0.10.20-all-languages'
-elif [[ "${PHPSelect}" =~ ^[456]$ ]]; then
+elif [[ "${PHPSelect}" =~ ^[4-7]$ ]]; then
+    # phpMyAdmin 5.2.x 要求 PHP>=7.2.5，PHP 7.1（PHPSelect=7）必须归入 4.9.11
     PhpMyAdmin_Ver='phpMyAdmin-4.9.11-all-languages'
 else
     PhpMyAdmin_Ver='phpMyAdmin-5.2.2-all-languages'
@@ -120,3 +121,4 @@ PHPNewApcu_Ver='apcu-5.1.22'
 PHPApcu_Bc_Ver='apcu_bc-1.0.5'
 PHPSodium_Ver='libsodium-2.0.23'
 PHPSwoole_Ver='swoole-5.1.1'
+PHP84Swoole_Ver='swoole-5.1.8' # 5.1.6 起支持 PHP 8.4

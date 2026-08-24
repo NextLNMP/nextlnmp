@@ -15,7 +15,16 @@ Install_PHP_Swoole()
         exit 1
     fi
 
-    if echo "${Cur_PHP_Version}" | grep -Eqi '^8.[0-3].'; then
+    if echo "${Cur_PHP_Version}" | grep -Eqi '^8.4.'; then
+        Try_Download ${Download_Mirror}/web/swoole/${PHP84Swoole_Ver}.tgz ${PHP84Swoole_Ver}.tgz || \
+        Download_Files https://pecl.php.net/get/${PHP84Swoole_Ver}.tgz ${PHP84Swoole_Ver}.tgz
+        Tar_Cd ${PHP84Swoole_Ver}.tgz ${PHP84Swoole_Ver}
+        ${PHP_Path}/bin/phpize
+        ./configure --with-php-config=${PHP_Path}/bin/php-config --enable-openssl --enable-http2 --enable-swoole-json
+        make && make install
+        cd -
+        rm -rf ${PHP84Swoole_Ver}
+    elif echo "${Cur_PHP_Version}" | grep -Eqi '^8.[0-3].'; then
         Download_Files ${Download_Mirror}/web/swoole/${PHPSwoole_Ver}.tgz ${PHPSwoole_Ver}.tgz
         Tar_Cd ${PHPSwoole_Ver}.tgz ${PHPSwoole_Ver}
         ${PHP_Path}/bin/phpize

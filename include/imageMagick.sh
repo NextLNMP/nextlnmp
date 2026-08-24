@@ -40,8 +40,10 @@ Install_ImageMagic()
         echo "ImageMagick already exists."
     else
         if echo "${Cur_PHP_Version}" | grep -Eqi '^5.2.';then
-            Download_Files ${Download_Mirror}/web/imagemagick/ImageMagick-6.9.9-27.tar.gz ImageMagick-6.9.9-27.tar.gz
-            Tar_Cd ImageMagick-6.9.9-27.tar.gz ImageMagick-6.9.9-27
+            Try_Download ${Download_Mirror}/web/imagemagick/ImageMagick-6.9.9-27.tar.gz ImageMagick-6.9.9-27.tar.gz ||             Download_Files https://github.com/ImageMagick/ImageMagick6/archive/refs/tags/6.9.9-27.tar.gz ImageMagick-6.9.9-27.tar.gz
+            Tar_Cd ImageMagick-6.9.9-27.tar.gz
+            # 官方源解包目录叫 ImageMagick-6.9.9-27，GitHub 归档叫 ImageMagick6-6.9.9-27
+            cd ImageMagick-6.9.9-27 2>/dev/null || cd ImageMagick6-6.9.9-27
         else
             Download_Files ${Download_Mirror}/web/imagemagick/${ImageMagick_Ver}.tar.xz ${ImageMagick_Ver}.tar.xz
             Tar_Cd ${ImageMagick_Ver}.tar.xz ${ImageMagick_Ver}

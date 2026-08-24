@@ -40,8 +40,13 @@ Add_nextLNMP_Startup()
     echo "Add Startup and Starting nextLNMP..."
     \cp ${cur_dir}/conf/nextlnmp /bin/nextlnmp
     chmod +x /bin/nextlnmp
-    StartUp nginx
-    StartOrStop start nginx
+    if [ "${WebServer}" = "caddy" ]; then
+        # caddy.sh 已 enable+start 自己的 systemd 单元；CLI 里的 nginx 操作对 Caddy 不适用
+        sed -i 's#/etc/init.d/nginx#/bin/true#g' /bin/nextlnmp
+    else
+        StartUp nginx
+        StartOrStop start nginx
+    fi
     if [[ "${DBSelect}" =~ ^(6|7|8|9|10|12|13)$ ]]; then
         StartUp mariadb
         StartOrStop start mariadb
@@ -83,7 +88,7 @@ Add_nextLNMPA_Startup()
 Add_LAMP_Startup()
 {
     echo "Add Startup and Starting NextLAMP..."
-    \cp ${cur_dir}/conf/lamp /bin/nextlnmp
+    \cp ${cur_dir}/conf/nextlamp /bin/nextlnmp
     chmod +x /bin/nextlnmp
     StartUp httpd
     StartOrStop start httpd
@@ -109,6 +114,19 @@ Check_Nginx_Files()
         isNginx="ok"
     else
         Echo_Red "Error: Nginx install failed."
+    fi
+}
+
+Check_Caddy_Files()
+{
+    isNginx=""
+    echo "============================== Check install =============================="
+    echo "Checking ..."
+    if [ -s /usr/local/bin/caddy ] && [ -s /etc/caddy/Caddyfile ] && systemctl is-active --quiet caddy; then
+        Echo_Green "Caddy: OK"
+        isNginx="ok"
+    else
+        Echo_Red "Error: Caddy install failed."
     fi
 }
 
@@ -328,7 +346,11 @@ Print_Failed_Info()
 
 Check_nextLNMP_Install()
 {
-    Check_Nginx_Files
+    if [ "${WebServer}" = "caddy" ]; then
+        Check_Caddy_Files
+    else
+        Check_Nginx_Files
+    fi
     Check_DB_Files
     Check_PHP_Files
     if [[ "${isNginx}" = "ok" && "${isDB}" = "ok" && "${isPHP}" = "ok" ]]; then
