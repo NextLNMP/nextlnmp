@@ -236,7 +236,12 @@ Ubuntu_Modify_Source()
         Ubuntu_Deadline plucky
     fi
     if [ "${CodeName}" != "" ]; then
-        \cp /etc/apt/sources.list /etc/apt/sources.list.$(date +"%Y%m%d")
+        # 不覆盖已有备份。这段接下来会改写 sources.list；如果安装中途断了
+        # （Ctrl-C、SSH 掉线、OOM），用户重跑一次就会把【已经被改写过的】
+        # sources.list 盖到当天的备份上，他原来的自定义镜像/PPA 就永久没了。
+        if [ ! -e "/etc/apt/sources.list.$(date +"%Y%m%d")" ]; then
+            \cp /etc/apt/sources.list /etc/apt/sources.list.$(date +"%Y%m%d")
+        fi
         cat > /etc/apt/sources.list<<EOF
 deb ${OldReleasesURL} ${CodeName} main restricted universe multiverse
 deb ${OldReleasesURL} ${CodeName}-security main restricted universe multiverse
@@ -444,7 +449,13 @@ Report_Missing_Pkg()
 CentOS_Dependent()
 {
     if [ -s /etc/yum.conf ]; then
-        \cp /etc/yum.conf /etc/yum.conf.nextlnmp
+        # 同上：这里紧接着要把 exclude= 清空，结尾再 mv 回来。中途中断后重跑，
+        # 原写法会把"exclude 已被清空"的版本盖到备份上——用户刻意锁的内核
+        # （exclude=kernel* 在云厂商镜像里很常见）从此不可恢复，而且没有任何提示，
+        # 直到下次 yum update 把锁住的包升上去才发作。
+        if [ ! -e /etc/yum.conf.nextlnmp ]; then
+            \cp /etc/yum.conf /etc/yum.conf.nextlnmp
+        fi
         sed -i 's:exclude=.*:exclude=:g' /etc/yum.conf
     fi
 
@@ -1070,11 +1081,33 @@ Tune_File_Max()
     fi
 }
 
+# 只在通配符真的匹配到文件时才建链接。原写法直接 `ln -sf 目录/libpng* /usr/lib/`，
+# 目录不存在时 bash 会把没展开的 `libpng*` 原样传给 ln，于是建出一个字面名带
+# 星号的悬空软链接。
+Deb_Ln_MultiArch()
+{
+    local dir="$1" f
+    [ -d "${dir}" ] || return 0
+    for f in "${dir}"/libpng* "${dir}"/libjpeg*; do
+        [ -e "${f}" ] || continue
+        ln -sf "${f}" /usr/lib/
+    done
+}
+
 Deb_Lib_Opt()
 {
-    if [ "${Is_64bit}" = "y" ]; then
-        ln -sf /usr/lib/x86_64-linux-gnu/libpng* /usr/lib/
-        ln -sf /usr/lib/x86_64-linux-gnu/libjpeg* /usr/lib/
+    # 原来只按位宽分 x86_64 / i386。arm64 机器（Oracle Ampere、AWS Graviton）
+    # 的 Is_64bit 同样是 y，于是走 x86_64 分支；而 /usr/lib/x86_64-linux-gnu
+    # 在那儿并不存在，通配符展不开就按 bash 默认原样传参，ln -sf 于是在
+    # /usr/lib 下建出两个字面名叫 libpng* 和 libjpeg* 的悬空软链接，
+    # ldconfig 会对它们报错，卸载也不会清理。
+    # 改为按实际存在的多架构目录来建，并且只在通配符真的匹配到文件时才建。
+    if [ "${Is_64bit}" = "y" ] && [ -d /usr/lib/aarch64-linux-gnu ]; then
+        Deb_Ln_MultiArch /usr/lib/aarch64-linux-gnu
+    elif [ "${Is_64bit}" = "y" ] && [ -d /usr/lib/x86_64-linux-gnu ]; then
+        Deb_Ln_MultiArch /usr/lib/x86_64-linux-gnu
+    elif [ "${Is_64bit}" = "y" ]; then
+        : # 未知的 64 位多架构布局，不建链接总好过建出带 * 的悬空链接
     else
         ln -sf /usr/lib/i386-linux-gnu/libpng* /usr/lib/
         ln -sf /usr/lib/i386-linux-gnu/libjpeg* /usr/lib/
