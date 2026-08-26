@@ -96,8 +96,8 @@ Install_Ngx_FancyIndex()
 Install_Nginx()
 {
     Echo_Blue "[+] Installing ${Nginx_Ver}... "
-    groupadd www
-    useradd -s /sbin/nologin -g www www
+    getent group www >/dev/null 2>&1 || groupadd www
+    id -u www >/dev/null 2>&1 || useradd -s /sbin/nologin -g www www
 
     cd ${cur_dir}/src
     Install_Nginx_Openssl

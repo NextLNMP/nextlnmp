@@ -25,8 +25,8 @@ Install_Caddy()
 
     # php-fpm 以 www 用户跑 socket；WebServer=caddy 时 nginx.sh 不执行，这里补建
     if ! id www >/dev/null 2>&1; then
-        groupadd www
-        useradd -s /sbin/nologin -M -g www www
+        getent group www >/dev/null 2>&1 || groupadd www
+        id -u www >/dev/null 2>&1 || useradd -s /sbin/nologin -M -g www www
     fi
 
     # WebServer=caddy 时 nginx.sh/apache.sh 都不执行，站点根目录在这里建（对齐 nginx.sh 行为）

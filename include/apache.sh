@@ -4,8 +4,8 @@ Install_Apache_22()
 {
     Echo_Blue "[+] Installing ${Apache_Ver}..."
     if [ "${Stack}" = "lamp" ]; then
-        groupadd www
-        useradd -s /sbin/nologin -g www www
+        getent group www >/dev/null 2>&1 || groupadd www
+        id -u www >/dev/null 2>&1 || useradd -s /sbin/nologin -g www www
         mkdir -p ${Default_Website_Dir}
         chmod +w ${Default_Website_Dir}
         mkdir -p /home/wwwlogs
@@ -62,8 +62,8 @@ Install_Apache_24()
 {
     Echo_Blue "[+] Installing ${Apache_Ver}..."
     if [ "${Stack}" = "lamp" ]; then
-        groupadd www
-        useradd -s /sbin/nologin -g www www
+        getent group www >/dev/null 2>&1 || groupadd www
+        id -u www >/dev/null 2>&1 || useradd -s /sbin/nologin -g www www
         mkdir -p ${Default_Website_Dir}
         chmod +w ${Default_Website_Dir}
         mkdir -p /home/wwwlogs
