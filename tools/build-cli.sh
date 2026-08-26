@@ -32,6 +32,11 @@ for key in "${STACK_KEYS[@]}"; do
         emit "${SRC}/${key}.head.sh"
         printf '\n'
         emit "${SRC}/common.sh"
+        # 多版本 PHP 仅 LNMP 栈支持，单一事实源片段只内嵌进 lnmp CLI
+        if [ "${key}" = "lnmp" ]; then
+            printf '\n'
+            emit "${SRC}/php-select.sh"
+        fi
         printf '\n'
         emit "${SRC}/${key}.funcs.sh"
         printf '\n'
@@ -56,4 +61,19 @@ for key in "${STACK_KEYS[@]}"; do
         echo "✓ 生成 ${target}（$(wc -l < "$target") 行）"
     fi
 done
+# 同一份片段生成给运行期消费者（addons.sh 等 source include/php-select.sh）
+GEN=include/php-select.sh
+{
+    echo '#!/usr/bin/env bash'
+    echo '# 【生成物】由 tools/build-cli.sh 从 conf/cli/php-select.sh 生成，请勿直接编辑。'
+    emit "${SRC}/php-select.sh"
+} > "${GEN}.tmp"
+if [ "${MODE}" = "--check" ]; then
+    diff -q "${GEN}.tmp" "${GEN}" >/dev/null 2>&1 && echo "✓ ${GEN} 与源码一致" || { echo "❌ drift：${GEN} 与 conf/cli/php-select.sh 不一致"; rc=1; }
+    rm -f "${GEN}.tmp"
+else
+    mv "${GEN}.tmp" "${GEN}"
+    echo "✓ 生成 ${GEN}"
+fi
+
 exit $rc

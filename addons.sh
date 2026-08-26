@@ -13,6 +13,7 @@ action2=$2
 
 . nextlnmp.conf
 . include/main.sh
+. include/php-select.sh
 . include/init.sh
 . include/version.sh
 . include/memcached.sh
@@ -81,148 +82,14 @@ Select_PHP()
     if [ "${action2}" == "exit" ]; then
         exit 1
     fi
-    if [[ ! -s /usr/local/php5.2/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php5.2.conf ]] && [[ ! -s /usr/local/php5.3/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php5.3.conf ]] && [[ ! -s /usr/local/php5.4/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php5.4.conf ]] && [[ ! -s /usr/local/php5.5/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php5.5.conf ]] && [[ ! -s /usr/local/php5.6/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php5.6.conf ]] && [[ ! -s /usr/local/php7.0/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php7.0.conf ]] && [[ ! -s /usr/local/php7.1/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php7.1.conf ]] && [[ ! -s /usr/local/php7.2/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php7.2.conf ]] && [[ ! -s /usr/local/php7.3/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php7.3.conf ]] && [[ ! -s /usr/local/php7.4/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php7.4.conf ]] && [[ ! -s /usr/local/php8.0/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php8.0.conf ]] && [[ ! -s /usr/local/php8.1/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php8.1.conf ]] && [[ ! -s /usr/local/php8.2/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php8.2.conf ]] && [[ ! -s /usr/local/php8.3/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php8.3.conf ]] && [[ ! -s /usr/local/php8.4/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php8.4.conf ]]; then
-        PHP_Path='/usr/local/php'
-        PHPFPM_Initd='/etc/init.d/php-fpm'
+    # 探测与选择逻辑与 /bin/nextlnmp 共用 conf/cli/php-select.sh（单一事实源）
+    PHP_Multi_Select
+    if [ -n "${PHP_Select_Ver}" ]; then
+        PHP_Path="${MPHP_ROOT}/php${PHP_Select_Ver}"
+        PHPFPM_Initd="${MPHP_INITD}/php-fpm${PHP_Select_Ver}"
     else
-        echo "Multiple PHP version found, Please select the PHP version."
-        Cur_PHP_Version="`/usr/local/php/bin/php-config --version`"
-        Echo_Green "1: Default Main PHP ${Cur_PHP_Version}"
-        if [[ -s /usr/local/php5.2/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php5.2.conf && -s /etc/init.d/php-fpm5.2 ]]; then
-            Echo_Green "2: PHP 5.2 [found]"
-        fi
-        if [[ -s /usr/local/php5.3/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php5.3.conf && -s /etc/init.d/php-fpm5.3 ]]; then
-            Echo_Green "3: PHP 5.3 [found]"
-        fi
-        if [[ -s /usr/local/php5.4/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php5.4.conf && -s /etc/init.d/php-fpm5.4 ]]; then
-            Echo_Green "4: PHP 5.4 [found]"
-        fi
-        if [[ -s /usr/local/php5.5/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php5.5.conf && -s /etc/init.d/php-fpm5.5 ]]; then
-            Echo_Green "5: PHP 5.5 [found]"
-        fi
-        if [[ -s /usr/local/php5.6/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php5.6.conf && -s /etc/init.d/php-fpm5.6 ]]; then
-            Echo_Green "6: PHP 5.6 [found]"
-        fi
-        if [[ -s /usr/local/php7.0/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php7.0.conf && -s /etc/init.d/php-fpm7.0 ]]; then
-            Echo_Green "7: PHP 7.0 [found]"
-        fi
-        if [[ -s /usr/local/php7.1/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php7.1.conf && -s /etc/init.d/php-fpm7.1 ]]; then
-            Echo_Green "8: PHP 7.1 [found]"
-        fi
-        if [[ -s /usr/local/php7.2/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php7.2.conf && -s /etc/init.d/php-fpm7.2 ]]; then
-            Echo_Green "9: PHP 7.2 [found]"
-        fi
-        if [[ -s /usr/local/php7.3/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php7.3.conf && -s /etc/init.d/php-fpm7.3 ]]; then
-            Echo_Green "10: PHP 7.3 [found]"
-        fi
-        if [[ -s /usr/local/php7.4/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php7.4.conf && -s /etc/init.d/php-fpm7.4 ]]; then
-            Echo_Green "11: PHP 7.4 [found]"
-        fi
-        if [[ -s /usr/local/php8.0/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php8.0.conf && -s /etc/init.d/php-fpm8.0 ]]; then
-            Echo_Green "12: PHP 8.0 [found]"
-        fi
-        if [[ -s /usr/local/php8.1/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php8.1.conf && -s /etc/init.d/php-fpm8.1 ]]; then
-            Echo_Green "13: PHP 8.1 [found]"
-        fi
-        if [[ -s /usr/local/php8.2/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php8.2.conf && -s /etc/init.d/php-fpm8.2 ]]; then
-            Echo_Green "14: PHP 8.2 [found]"
-        fi
-        if [[ -s /usr/local/php8.3/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php8.3.conf && -s /etc/init.d/php-fpm8.3 ]]; then
-            Echo_Green "15: PHP 8.3 [found]"
-        fi
-        if [[ -s /usr/local/php8.4/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php8.4.conf && -s /etc/init.d/php-fpm8.4 ]]; then
-            Echo_Green "16: PHP 8.4 [found]"
-        fi
-        Echo_Yellow "Enter your choice (1-16): "
-        read php_select
-        case "${php_select}" in
-            1)
-                echo "Current selection: PHP ${Cur_PHP_Version}"
-                PHP_Path='/usr/local/php'
-                PHPFPM_Initd='/etc/init.d/php-fpm'
-                ;;
-            2)
-                echo "Current selection: PHP `/usr/local/php5.2/bin/php-config --version`"
-                PHP_Path='/usr/local/php5.2'
-                PHPFPM_Initd='/etc/init.d/php-fpm5.2'
-                ;;
-            3)
-                echo "Current selection: PHP `/usr/local/php5.3/bin/php-config --version`"
-                PHP_Path='/usr/local/php5.3'
-                PHPFPM_Initd='/etc/init.d/php-fpm5.3'
-                ;;
-            4)
-                echo "Current selection: PHP `/usr/local/php5.4/bin/php-config --version`"
-                PHP_Path='/usr/local/php5.4'
-                PHPFPM_Initd='/etc/init.d/php-fpm5.4'
-                ;;
-            5)
-                echo "Current selection: PHP `/usr/local/php5.5/bin/php-config --version`"
-                PHP_Path='/usr/local/php5.5'
-                PHPFPM_Initd='/etc/init.d/php-fpm5.5'
-                ;;
-            6)
-                echo "Current selection: PHP `/usr/local/php5.6/bin/php-config --version`"
-                PHP_Path='/usr/local/php5.6'
-                PHPFPM_Initd='/etc/init.d/php-fpm5.6'
-                ;;
-            7)
-                echo "Current selection: PHP `/usr/local/php7.0/bin/php-config --version`"
-                PHP_Path='/usr/local/php7.0'
-                PHPFPM_Initd='/etc/init.d/php-fpm7.0'
-                ;;
-            8)
-                echo "Current selection: PHP `/usr/local/php7.1/bin/php-config --version`"
-                PHP_Path='/usr/local/php7.1'
-                PHPFPM_Initd='/etc/init.d/php-fpm7.1'
-                ;;
-            9)
-                echo "Current selection: PHP `/usr/local/php7.2/bin/php-config --version`"
-                PHP_Path='/usr/local/php7.2'
-                PHPFPM_Initd='/etc/init.d/php-fpm7.2'
-                ;;
-            10)
-                echo "Current selection: PHP `/usr/local/php7.3/bin/php-config --version`"
-                PHP_Path='/usr/local/php7.3'
-                PHPFPM_Initd='/etc/init.d/php-fpm7.3'
-                ;;
-            11)
-                echo "Current selection: PHP `/usr/local/php7.4/bin/php-config --version`"
-                PHP_Path='/usr/local/php7.4'
-                PHPFPM_Initd='/etc/init.d/php-fpm7.4'
-                ;;
-            12)
-                echo "Current selection: PHP `/usr/local/php8.0/bin/php-config --version`"
-                PHP_Path='/usr/local/php8.0'
-                PHPFPM_Initd='/etc/init.d/php-fpm8.0'
-                ;;
-            13)
-                echo "Current selection: PHP `/usr/local/php8.1/bin/php-config --version`"
-                PHP_Path='/usr/local/php8.1'
-                PHPFPM_Initd='/etc/init.d/php-fpm8.1'
-                ;;
-            14)
-                echo "Current selection: PHP `/usr/local/php8.2/bin/php-config --version`"
-                PHP_Path='/usr/local/php8.2'
-                PHPFPM_Initd='/etc/init.d/php-fpm8.2'
-                ;;
-            15)
-                echo "Current selection: PHP `/usr/local/php8.3/bin/php-config --version`"
-                PHP_Path='/usr/local/php8.3'
-                PHPFPM_Initd='/etc/init.d/php-fpm8.3'
-                ;;
-            16)
-                echo "Current selection: PHP `/usr/local/php8.4/bin/php-config --version`"
-                PHP_Path='/usr/local/php8.4'
-                PHPFPM_Initd='/etc/init.d/php-fpm8.4'
-                ;;
-            *)
-                echo "Default,Current selection: PHP ${Cur_PHP_Version}"
-                php_select="1"
-                PHP_Path='/usr/local/php'
-                PHPFPM_Initd='/etc/init.d/php-fpm'
-                ;;
-        esac
+        PHP_Path="${MPHP_ROOT}/php"
+        PHPFPM_Initd="${MPHP_INITD}/php-fpm"
     fi
 }
 
