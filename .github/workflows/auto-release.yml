@@ -1,0 +1,84 @@
+name: Auto Release
+
+# 按日攒批自动发版：main 上有新提交就自动打 patch tag，由 release.yml 接管发版。
+# 目的是让自愈补货、清单刷新这类日常变更自动流到用户手里，无需人工值守。
+#
+# 安全闸（缺一不可）：
+#   1. 只有 CI 全绿的提交才发版 —— 红的提交绝不出厂
+#   2. 最新提交带 [skip release] 则跳过
+#   3. 只自动升 patch 位；minor/major 一律人工打 tag
+on:
+  schedule:
+    - cron: '30 3 * * *'   # 每日 03:30 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '只演练不打 tag'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  checks: read
+  actions: read
+
+jobs:
+  auto-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: 判断是否有待发版的变更
+        id: gate
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
+          if [ -z "${LAST_TAG}" ]; then
+              echo "没有任何 tag，跳过（首版请人工打）"; echo "go=0" >> $GITHUB_OUTPUT; exit 0
+          fi
+          N=$(git rev-list "${LAST_TAG}..HEAD" --count)
+          echo "自 ${LAST_TAG} 以来有 ${N} 个提交"
+          if [ "${N}" -eq 0 ]; then
+              echo "无变更，跳过"; echo "go=0" >> $GITHUB_OUTPUT; exit 0
+          fi
+          if git log -1 --pretty=%B | grep -qF '[skip release]'; then
+              echo "最新提交声明跳过发版"; echo "go=0" >> $GITHUB_OUTPUT; exit 0
+          fi
+          NEXT=$(echo "${LAST_TAG#v}" | awk -F. '{printf "%d.%d.%d", $1, $2, $3 + 1}')
+          echo "last=${LAST_TAG}" >> $GITHUB_OUTPUT
+          echo "next=v${NEXT}" >> $GITHUB_OUTPUT
+          echo "go=1" >> $GITHUB_OUTPUT
+
+      - name: 安全闸 —— HEAD 的 CI 必须全绿
+        if: steps.gate.outputs.go == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA=$(git rev-parse HEAD)
+          # 取该提交的全部 check-run 结论；任一失败/取消即拒绝发版
+          BAD=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" \
+                --jq '[.check_runs[] | select(.conclusion != null and .conclusion != "success" and .conclusion != "skipped" and .conclusion != "neutral")] | length')
+          TOTAL=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" --jq '.total_count')
+          echo "该提交 check-runs 共 ${TOTAL} 个，非成功 ${BAD} 个"
+          if [ "${TOTAL}" -eq 0 ]; then
+              echo "::error::HEAD 没有任何 CI 结论，拒绝自动发版（人工确认后手动打 tag）"; exit 1
+          fi
+          if [ "${BAD}" -ne 0 ]; then
+              echo "::error::HEAD 的 CI 未全绿，拒绝自动发版"; exit 1
+          fi
+          echo "✓ CI 全绿，放行"
+
+      - name: 打 tag（触发 release.yml）
+        if: steps.gate.outputs.go == '1' && inputs.dry_run != true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.gate.outputs.next }}"
+          git push origin "${{ steps.gate.outputs.next }}"
+          echo "✓ 已打 ${{ steps.gate.outputs.next }}（自 ${{ steps.gate.outputs.last }} 起攒批），release.yml 接管"
+
+      - name: 演练结果
+        if: steps.gate.outputs.go == '1' && inputs.dry_run == true
+        run: echo "演练：将从 ${{ steps.gate.outputs.last }} 发版到 ${{ steps.gate.outputs.next }}"

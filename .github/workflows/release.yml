@@ -91,6 +91,21 @@ jobs:
           body_path: /tmp/release-body.md
           files: nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz
 
+      - name: Sync to CN repo (cnb.cool)
+        # 国内引导走 cnb.cool 的 raw install.sh，发版后把 main 与 tag 推过去保持同代。
+        # 未配置 CNB_TOKEN 时自动跳过，不阻断发版。
+        continue-on-error: true
+        env:
+          CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+        run: |
+          if [ -z "${CNB_TOKEN}" ]; then
+            echo "未配置 CNB_TOKEN，跳过国内仓库同步"; exit 0
+          fi
+          git remote add cnb "https://oauth2:${CNB_TOKEN}@cnb.cool/NextLNMP/NextLNMP.git" 2>/dev/null || true
+          git push cnb HEAD:main
+          git push cnb "v${{ steps.version.outputs.VERSION }}"
+          echo "✓ 已同步到 cnb.cool"
+
       - name: Sync to mirror server
         uses: appleboy/ssh-action@v1.0.3
         with:
