@@ -1015,7 +1015,43 @@ eof
 eof
     fi
 
-    echo "fs.file-max=65535" >> /etc/sysctl.conf
+# fs.file-max 是【系统级】文件句柄总数。原来是无条件
+#   echo "fs.file-max=65535" >> /etc/sysctl.conf
+# 两个问题：
+#  ① 现代内核这个值默认就是 9223372036854775807（Rocky 9 真机实测），写 65535
+#     等于把全系统的句柄总数硬压到六万五；而同一段配置又给单进程发了
+#     nofile 65535 —— 一个进程就能把整台机器的句柄吃光。更麻烦的是它只写文件、
+#     不 sysctl -p，装完当下一切正常，【重启之后】才开始冒 too many open files，
+#     几乎没人会联想到是安装器改的。
+#  ② 每跑一次追加一行。真机上 /etc/sysctl.conf 里已经堆了 2 行。
+# 现在：只在当前值确实更低时才抬高，并且改写而不是追加；若内核默认已经更高，
+# 把我们以前写进去的那种精确行注释掉（只认 fs.file-max=65535 这一种写法，
+# 不碰用户自己调过的值）。
+Tune_File_Max()
+{
+    local cur target=65535
+    cur=$(sysctl -n fs.file-max 2>/dev/null)
+    case "${cur}" in
+        ''|*[!0-9]*) return 0 ;;
+    esac
+
+    if [ "${cur}" -ge "${target}" ]; then
+        if grep -q "^fs\.file-max=${target}$" /etc/sysctl.conf 2>/dev/null; then
+            sed -i "s|^fs\.file-max=${target}$|# fs.file-max=${target}  # 由 NextLNMP 注释：内核默认值(${cur})更高，写死反而是降级|" /etc/sysctl.conf
+            echo "已注释 /etc/sysctl.conf 里的 fs.file-max=${target}（内核默认 ${cur} 更高）"
+        fi
+        return 0
+    fi
+
+    if grep -q "^fs\.file-max=" /etc/sysctl.conf 2>/dev/null; then
+        sed -i "s|^fs\.file-max=.*|fs.file-max=${target}|" /etc/sysctl.conf
+    else
+        echo "fs.file-max=${target}" >> /etc/sysctl.conf
+    fi
+    sysctl -w fs.file-max=${target} >/dev/null 2>&1
+}
+
+    Tune_File_Max
 
     if echo "${Fedora_Version}" | grep -Eqi "3[0-9]" && [ ! -d "/etc/init.d" ]; then
         ln -sf /etc/rc.d/init.d /etc/init.d
@@ -1092,7 +1128,7 @@ Deb_Lib_Opt()
 * hard nofile 65535
 eof
 
-    echo "fs.file-max=65535" >> /etc/sysctl.conf
+    Tune_File_Max
 }
 
 Remove_Error_Libcurl()

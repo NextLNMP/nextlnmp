@@ -663,15 +663,24 @@ Apache_Selection()
     fi
 }
 
+# 原来用 `ps aux | grep -E "yum|dnf"` 和 `grep -E "apt-get|apt|dpkg"` 做子串匹配，
+# 命中的是【整条命令行】：`vim /etc/apt/sources.list`、`tail -f /var/log/apt/history.log`、
+# `aptitude`、任何路径里带 apt/yum 字样的进程，统统会被 kill -9。
+# 紧接着还会删掉 dpkg 的锁再 dpkg --configure -a —— 那是在别人的事务跑到一半时
+# 把它打断，包数据库可能就此损坏。
+# 改成只按【进程名】精确匹配（pgrep -x），命令行里提到这些词的进程不受影响。
 Kill_PM()
 {
-    if ps aux | grep -E "yum|dnf" | grep -qv "grep"; then
-        kill -9 $(ps -ef|grep -E "yum|dnf"|grep -v grep|awk '{print $2}')
-        if [ -s /var/run/yum.pid ]; then
-            rm -f /var/run/yum.pid
-        fi
-    elif ps aux | grep -E "apt-get|dpkg|apt" | grep -qv "grep"; then
-        kill -9 $(ps -ef|grep -E "apt-get|apt|dpkg"|grep -v grep|awk '{print $2}')
+    local pids
+    pids=$(pgrep -x 'yum|dnf' 2>/dev/null)
+    if [ -n "${pids}" ]; then
+        kill -9 ${pids} 2>/dev/null
+        [ -s /var/run/yum.pid ] && rm -f /var/run/yum.pid
+        return 0
+    fi
+    pids=$(pgrep -x 'apt|apt-get|dpkg' 2>/dev/null)
+    if [ -n "${pids}" ]; then
+        kill -9 ${pids} 2>/dev/null
         if [[ -s /var/lib/dpkg/lock-frontend || -s /var/lib/dpkg/lock ]]; then
             rm -f /var/lib/dpkg/lock-frontend
             rm -f /var/lib/dpkg/lock
