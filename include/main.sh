@@ -31,11 +31,14 @@ Smart_Recommend()
     else
         REC_BUILD_NOTE="数据库用预编译包；本系统没有 PHP 预编译包，PHP 需源码编译"
         if [ "${REC_MEM}" -le 768 ] && [ "${REC_CPU}" -le 1 ]; then
-            # 真机实测（Rocky 9 / 1 核 512M）：编到 Zend/zend_execute.c 那一步，
-            # cc1 的 RSS 会顶到 300~400MB，加上换页，SSH 会有几分钟到十几分钟
-            # 完全连不上。机器没死，但用户很容易以为装挂了去强行重启，
-            # 那才是真的会把安装搞坏。所以这句必须说在前面。
-            REC_BUILD_NOTE="${REC_BUILD_NOTE}；本机 1 核 ${REC_MEM}M，预计 1 小时以上，编译最重的一步时 SSH 可能暂时连不上（属正常，请勿重启）"
+            # 真机实测（Rocky 9 / 1 核 512M / 搬瓦工）：源码编译 PHP 8.3 持续几小时
+            # 把单核跑满之后，机器会整个失去响应——SSH 连不上、ICMP 也不通，
+            # 但服务商 API 查 ve_status 仍是 running。查下来是【CPU 被限速】
+            # （BandwagonHost 的 is_cpu_throttled=throttled），不是内存不够，
+            # 也不是机器死了；重启也不解决，要等限速自己解除。
+            # 用户看到的现象就是"装着装着断了"，很容易以为装挂了去强行重启或重装，
+            # 那才是真的会把事情搞坏。所以这句必须提前说。
+            REC_BUILD_NOTE="${REC_BUILD_NOTE}；本机 1 核 ${REC_MEM}M，预计 1 小时以上。长时间满载可能被服务商限速，期间 SSH 会连不上——那不是装挂了，请勿重启或重装，等它自行恢复即可"
         else
             REC_BUILD_NOTE="${REC_BUILD_NOTE}（单核小内存机通常 1 小时以上）"
         fi
