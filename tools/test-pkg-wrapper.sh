@@ -64,8 +64,31 @@ Report_Missing_Pkg >/dev/null
 # 空名单时不该吭声
 [ -z "$(Report_Missing_Pkg)" ] && pass=$((pass + 1)) || { fail=$((fail + 1)); echo "  ✗ 空名单仍有输出"; }
 
+
+# ── 静态断言：用到 Try_Install_Pkg 的文件，其入口必须先 source include/init.sh ──
+# 否则运行到那一行才会 "command not found"，而依赖安装往往在安装流程深处。
+users=$(grep -rl "Try_Install_Pkg" "${cur_dir}/include" 2>/dev/null | grep -v "init.sh$" | xargs -r -n1 basename)
+for u in ${users}; do
+    entry=$(grep -rl "\. include/${u}" "${cur_dir}"/*.sh 2>/dev/null)
+    if [ -z "${entry}" ]; then
+        fail=$((fail + 1)); echo "  ✗ include/${u} 用了 Try_Install_Pkg 却没有入口 source 它"
+        continue
+    fi
+    for e in ${entry}; do
+        init_ln=$(grep -n "^\. include/init\.sh" "${e}" | head -1 | cut -d: -f1)
+        use_ln=$(grep -n "^\. include/${u}" "${e}" | head -1 | cut -d: -f1)
+        if [ -z "${init_ln}" ]; then
+            fail=$((fail + 1)); echo "  ✗ $(basename ${e}) source 了 ${u} 却没 source init.sh"
+        elif [ "${init_ln}" -gt "${use_ln}" ]; then
+            fail=$((fail + 1)); echo "  ✗ $(basename ${e}) 先 source ${u}（第${use_ln}行）后 source init.sh（第${init_ln}行），顺序反了"
+        else
+            pass=$((pass + 1))
+        fi
+    done
+done
+
 if [ ${fail} -eq 0 ]; then
-    echo "✓ 依赖安装容错外壳测试全部通过（查无此包 4 例 / 成功 1 例 / 真失败 2 例 / 汇总 2 例）"
+    echo "✓ 依赖安装容错外壳测试全部通过（查无此包 4 / 成功 1 / 真失败 2 / 汇总 2 / source 顺序 ${pass} 项断言）"
     exit 0
 fi
 echo "✗ 失败 ${fail} 项，通过 ${pass} 项"

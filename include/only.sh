@@ -6,7 +6,8 @@ Nginx_Dependent()
         rpm -e httpd httpd-tools --nodeps
         yum -y remove httpd*
         for packages in make gcc gcc-c++ gcc-g77 wget crontabs zlib zlib-devel openssl openssl-devel perl patch bzip2 initscripts xz gzip;
-        do yum -y install $packages; done
+        do Try_Install_Pkg "$packages" yum -y install; done
+        Report_Missing_Pkg
         if [ "${DISTRO}" = "Fedora" ] || echo "${CentOS_Version}" | grep -Eqi "^9"; then
             dnf install chkconfig -y
         fi
@@ -18,7 +19,8 @@ Nginx_Dependent()
         for removepackages in apache2 apache2-doc apache2-utils apache2.2-common apache2.2-bin apache2-mpm-prefork apache2-doc apache2-mpm-worker;
         do apt-get purge -y $removepackages; done
         for packages in debian-keyring debian-archive-keyring build-essential gcc g++ make autoconf automake wget cron openssl libssl-dev zlib1g zlib1g-dev bzip2 xz-utils gzip;
-        do apt-get --no-install-recommends install -y $packages; done
+        do Try_Install_Pkg "$packages" apt-get --no-install-recommends install -y; done
+        Report_Missing_Pkg
     fi
 }
 
@@ -68,7 +70,8 @@ DB_Dependent()
             rpm -e mariadb mariadb-libs --nodeps
         fi
         for packages in make cmake gcc gcc-c++ gcc-g77 flex bison wget zlib zlib-devel openssl openssl-devel ncurses ncurses-devel libaio-devel rpcgen libtirpc-devel patch cyrus-sasl-devel pkg-config pcre-devel libxml2-devel hostname ncurses-libs numactl-devel libxcrypt gnutls-devel initscripts libxcrypt-compat perl xz gzip;
-        do yum -y install $packages; done
+        do Try_Install_Pkg "$packages" yum -y install; done
+        Report_Missing_Pkg
         if echo "${CentOS_Version}" | grep -Eqi "^8" || echo "${RHEL_Version}" | grep -Eqi "^8" || echo "${Rocky_Version}" | grep -Eqi "^8" || echo "${Alma_Version}" | grep -Eqi "^8"; then
             Check_PowerTools
             dnf --enablerepo=${repo_id} install rpcgen -y
@@ -123,7 +126,8 @@ DB_Dependent()
         dpkg -P mysql-server mysql-common libmysqlclient15off libmysqlclient15-dev
         dpkg -P mariadb-client mariadb-server mariadb-common
         for packages in debian-keyring debian-archive-keyring build-essential gcc g++ make cmake autoconf automake wget openssl libssl-dev zlib1g zlib1g-dev libncurses5 libncurses5-dev bison libaio-dev libtirpc-dev libsasl2-dev pkg-config libpcre2-dev libxml2-dev libtinfo-dev libnuma-dev gnutls-dev xz-utils gzip;
-        do apt-get --no-install-recommends install -y $packages; done
+        do Try_Install_Pkg "$packages" apt-get --no-install-recommends install -y; done
+        Report_Missing_Pkg
     fi
 }
 
