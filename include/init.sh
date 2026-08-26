@@ -720,10 +720,30 @@ Install_Libiconv()
     rm -rf ${cur_dir}/src/${Libiconv_Ver}
 }
 
+# libmcrypt(2007) / mcrypt / mhash 都是 C89 时代的代码，大量依赖「隐式函数声明」
+# （用 printf 前不 include <stdio.h> 之类）。GCC 14 起把这类问题从警告升级成
+# 硬错误，于是它们在 Debian 13 / Ubuntu 24.04+ 上直接编不过：
+#   3-way.c:321: error: implicit declaration of function 'strcmp'
+#   make: *** [Makefile:290: install-recursive] Error 1
+# 接着 mcrypt 因为找不到 libmcrypt-config 也跟着失败（第 8 轮真机实测）。
+# 这里把相关诊断降回警告。只对这三个上古包生效，不影响 nginx/PHP/数据库的编译。
+Legacy_CFLAGS()
+{
+    local f=""
+    for opt in -Wno-implicit-function-declaration -Wno-implicit-int                -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-return-mismatch; do
+        # 老 GCC 不认识 -Wno-return-mismatch 这类新选项，逐个试探再用
+        if echo 'int main(void){return 0;}' | gcc -xc - ${opt} -o /dev/null >/dev/null 2>&1; then
+            f="${f} ${opt}"
+        fi
+    done
+    echo "${f# }"
+}
+
 Install_Libmcrypt()
 {
     Echo_Blue "[+] Installing ${LibMcrypt_Ver}"
     Tar_Cd ${LibMcrypt_Ver}.tar.gz ${LibMcrypt_Ver}
+    export CFLAGS="${CFLAGS} $(Legacy_CFLAGS)"
     ./configure
     Make_Install
     /sbin/ldconfig
@@ -737,22 +757,28 @@ Install_Libmcrypt()
     ldconfig
     cd ${cur_dir}/src/
     rm -rf ${cur_dir}/src/${LibMcrypt_Ver}
+    # 还原，别把这些放宽的开关带到后面 nginx/PHP/数据库的编译里
+    unset CFLAGS
 }
 
 Install_Mcrypt()
 {
     Echo_Blue "[+] Installing ${Mcypt_Ver}"
     Tar_Cd ${Mcypt_Ver}.tar.gz ${Mcypt_Ver}
+    export CFLAGS="${CFLAGS} $(Legacy_CFLAGS)"
     ./configure
     Make_Install
     cd ${cur_dir}/src/
     rm -rf ${cur_dir}/src/${Mcypt_Ver}
+    # 还原，别把这些放宽的开关带到后面 nginx/PHP/数据库的编译里
+    unset CFLAGS
 }
 
 Install_Mhash()
 {
     Echo_Blue "[+] Installing ${Mhash_Ver}"
     Tar_Cd ${Mhash_Ver}.tar.bz2 ${Mhash_Ver}
+    export CFLAGS="${CFLAGS} $(Legacy_CFLAGS)"
     ./configure
     Make_Install
     ln -sf /usr/local/lib/libmhash.a /usr/lib/libmhash.a
@@ -763,6 +789,8 @@ Install_Mhash()
     ldconfig
     cd ${cur_dir}/src/
     rm -rf ${cur_dir}/src/${Mhash_Ver}
+    # 还原，别把这些放宽的开关带到后面 nginx/PHP/数据库的编译里
+    unset CFLAGS
 }
 
 Install_Freetype()
