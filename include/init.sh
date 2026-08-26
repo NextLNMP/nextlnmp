@@ -1076,6 +1076,27 @@ Tune_File_Max()
     sysctl -w fs.file-max=${target} >/dev/null 2>&1
 }
 
+# MySQL 5.x / MariaDB 5.x 的预编译包链的是 ncurses 5，而现代发行版只带 6。
+# 原来这段兼容软链只写在 CentOS_Lib_Opt 里（Debian 走的是 Deb_Lib_Opt，根本不会执行），
+# 而且只看 /usr/lib64 和 /usr/lib —— Debian 的多架构布局把库放在
+# /usr/lib/x86_64-linux-gnu，两边都对不上。
+# Debian 13 真机实测后果：mysql 客户端起不来，报
+#   libncurses.so.5 / libtinfo.so.5: cannot open shared object file
+# 而 libncurses5 / libtinfo5 这两个兼容包在 Debian 13 已经【没有】了，装不上。
+Ncurses5_Compat_Link()
+{
+    local d lib
+    for d in /usr/lib64 /usr/lib /usr/lib/x86_64-linux-gnu /usr/lib/aarch64-linux-gnu; do
+        [ -d "${d}" ] || continue
+        for lib in libtinfo libncurses libncursesw; do
+            if [ -e "${d}/${lib}.so.6" ] && [ ! -e "${d}/${lib}.so.5" ]; then
+                ln -sf "${d}/${lib}.so.6" "${d}/${lib}.so.5"
+            fi
+        done
+    done
+    ldconfig 2>/dev/null
+}
+
 CentOS_Lib_Opt()
 {
     if [ "${Is_64bit}" = "y" ] ; then
@@ -1126,17 +1147,7 @@ eof
         ln -sf /etc/rc.d/init.d /etc/init.d
     fi
 
-    if [ -s /usr/lib64/libtinfo.so.6 ]; then
-        ln -sf /usr/lib64/libtinfo.so.6 /usr/lib64/libtinfo.so.5
-    elif [ -s /usr/lib/libtinfo.so.6 ]; then
-        ln -sf /usr/lib/libtinfo.so.6 /usr/lib/libtinfo.so.5
-    fi
-
-    if [ -s /usr/lib64/libncurses.so.6 ]; then
-        ln -sf /usr/lib64/libncurses.so.6 /usr/lib64/libncurses.so.5
-    elif [ -s /usr/lib/libncurses.so.6 ]; then
-        ln -sf /usr/lib/libncurses.so.6 /usr/lib/libncurses.so.5
-    fi
+    Ncurses5_Compat_Link
 }
 
 # 只在通配符真的匹配到文件时才建链接。原写法直接 `ln -sf 目录/libpng* /usr/lib/`，
@@ -1224,6 +1235,8 @@ Deb_Lib_Opt()
 eof
 
     Tune_File_Max
+    # Debian 侧同样需要（MySQL/MariaDB 5.x 预编译包链的是 ncurses 5）
+    Ncurses5_Compat_Link
 }
 
 Remove_Error_Libcurl()

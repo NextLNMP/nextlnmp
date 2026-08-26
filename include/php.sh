@@ -311,13 +311,44 @@ Apt_Lib_Resolve()
 PHP_Bin_Runtime_Deps()
 {
     command -v apt-get >/dev/null 2>&1 || return 0
-    local icu=$(Apt_Lib_Resolve '^libicu[0-9]+$')
-    local jpeg=$(Apt_Lib_Resolve '^libjpeg[0-9a-z]*-turbo[0-9]*$|^libjpeg-turbo[0-9]+$')
-    apt-get install -y --no-install-recommends \
-        libxml2 libsqlite3-0 libcurl4 zlib1g libonig5 libzip4 \
-        libpng16-16 libwebp7 libfreetype6 libxslt1.1 libsodium23 \
-        libreadline8 ${icu} ${jpeg} > /dev/null 2>&1 || \
-        Echo_Yellow "部分运行时依赖安装失败，如 PHP 启动报缺库请手动 apt 安装"
+
+    # 这里以前是把一串写死的包名塞进【同一条】apt-get install。两个问题叠在一起：
+    #  ① 包名会随发行版改。Debian 13 真机实测：libcurl4 / libzip4 / libpng16-16 /
+    #     libreadline8 四个都已改名（t64 迁移等），只有 libsodium23 等还在；
+    #  ② apt-get install 只要有一个包名不存在，【整条命令就失败】（实测退出码 100），
+    #     于是本来存在的那些也一个都装不上。
+    # 结果：PHP 预编译包解压完，php -v 直接报
+    # "libsodium.so.23: cannot open shared object file"，而屏幕上只有一句黄字提示，
+    # 最后照样打印安装成功。
+    # 现在：差异大的包名按正则从当前仓库解析，逐个安装、互不牵连。
+    local pkgs="libxml2 libsqlite3-0 zlib1g libonig5 libwebp7 libfreetype6 libxslt1.1 libsodium23"
+    local pat p
+    for pat in '^libcurl[0-9]+t?[0-9]*$' '^libzip[0-9]+$' '^libpng[0-9]+-[0-9]+t?[0-9]*$' \
+             '^libreadline[0-9]+t?[0-9]*$' '^libicu[0-9]+$' \
+             '^libjpeg[0-9a-z]*-turbo[0-9]*$|^libjpeg-turbo[0-9]+$'; do
+        pkgs="${pkgs} $(Apt_Lib_Resolve "${pat}")"
+    done
+    for p in ${pkgs}; do
+        [ -n "${p}" ] || continue
+        apt-get install -y --no-install-recommends "${p}" >/dev/null 2>&1
+    done
+}
+
+# 装完 PHP 二进制后实测它能不能跑。原来只有一句"如启动报缺库请手动安装"的黄字
+# 提示，然后一路走到收尾自检打印安装成功——用户拿到的是一个 php -v 都执行不了的 PHP。
+PHP_Bin_Verify()
+{
+    local missing
+    if /usr/local/php/bin/php -v >/dev/null 2>&1; then
+        return 0
+    fi
+    missing=$(ldd /usr/local/php/bin/php 2>/dev/null | grep 'not found' | awk '{print $1}' | tr '\n' ' ')
+    Echo_Red "❌ PHP 预编译包在本系统上无法运行"
+    [ -n "${missing}" ] && Echo_Red "   缺少共享库：${missing}"
+    Echo_Yellow "   本系统的运行时库版本与预编译包不匹配。解决办法："
+    Echo_Yellow "     1) 重跑安装，对「使用预编译二进制包」选 n，改用源码编译"
+    Echo_Yellow "     2) 或手工安装上面缺少的库后再重试"
+    return 1
 }
 
 Install_PHP_Bin()
@@ -1399,6 +1430,7 @@ Install_PHP_82()
 {
     if [ "${Stack}" = "nextlnmp" ] && PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then  # bin 包仅含 FPM，LAMP/LNMPA 需 mod_php 必须走源码
         Install_PHP_Bin
+        PHP_Bin_Verify || exit 1
     else
         Install_Libzip
         Echo_Blue "[+] Installing ${Php_Ver}"
@@ -1469,6 +1501,7 @@ Install_PHP_83()
 {
     if [ "${Stack}" = "nextlnmp" ] && PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then  # bin 包仅含 FPM，LAMP/LNMPA 需 mod_php 必须走源码
         Install_PHP_Bin
+        PHP_Bin_Verify || exit 1
     else
     Install_Libzip
     Echo_Blue "[+] Installing ${Php_Ver}"
@@ -1549,6 +1582,7 @@ Install_PHP_84()
 {
     if [ "${Stack}" = "nextlnmp" ] && PHP_Bin_Available && [ -f "${cur_dir}/src/$(PHP_Bin_Pkg)" ]; then  # bin 包仅含 FPM，LAMP/LNMPA 需 mod_php 必须走源码
         Install_PHP_Bin
+        PHP_Bin_Verify || exit 1
     else
     Install_Libzip
     Echo_Blue "[+] Installing ${Php_Ver}"
