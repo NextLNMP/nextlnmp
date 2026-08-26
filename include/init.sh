@@ -715,7 +715,11 @@ Install_Curl()
         cd ${cur_dir}/src
         Download_Files ${Download_Mirror}/lib/curl/${Curl_Ver}.tar.bz2 ${Curl_Ver}.tar.bz2
         Tar_Cd ${Curl_Ver}.tar.bz2 ${Curl_Ver}
-        if [ -s /usr/local/openssl/bin/openssl ] || /usr/local/openssl/bin/openssl version | grep -Eqi 'OpenSSL 1.0.2'; then
+        # 只看自建 openssl 在不在。原写法是 [ -s ] || openssl version|grep 1.0.2，
+        # 文件在就短路、右边永不执行；文件不在则去执行一个不存在的二进制，
+        # 白往日志里丢一条 "No such file or directory"（会被 AI 救援当成故障）。
+        # 结果完全一致，去掉死代码即可。
+        if [ -s /usr/local/openssl/bin/openssl ]; then
             ./configure --prefix=/usr/local/curl --enable-ares --without-nss --with-zlib --with-ssl=/usr/local/openssl
         else
             ./configure --prefix=/usr/local/curl --enable-ares --without-nss --with-zlib --with-ssl
@@ -855,7 +859,7 @@ Install_Boost()
 
 Install_Openssl()
 {
-    if [ ! -s /usr/local/openssl/bin/openssl ] || /usr/local/openssl/bin/openssl version | grep -v 'OpenSSL 1.0.2'; then
+    if [ ! -s /usr/local/openssl/bin/openssl ] || /usr/local/openssl/bin/openssl version | grep -qv 'OpenSSL 1.0.2'; then
         Echo_Blue "[+] Installing ${Openssl_Ver}"
         cd ${cur_dir}/src
         Download_Files ${Download_Mirror}/lib/openssl/${Openssl_Ver}.tar.gz ${Openssl_Ver}.tar.gz
@@ -872,7 +876,7 @@ Install_Openssl()
 Install_Openssl_New()
 {
     if openssl version | grep -vEqi "OpenSSL 1.1.1*"; then
-        if [ ! -s /usr/local/openssl1.1.1/bin/openssl ] || /usr/local/openssl1.1.1/bin/openssl version | grep -v 'OpenSSL 1.1.1'; then
+        if [ ! -s /usr/local/openssl1.1.1/bin/openssl ] || /usr/local/openssl1.1.1/bin/openssl version | grep -qv 'OpenSSL 1.1.1'; then
             Echo_Blue "[+] Installing ${Openssl_New_Ver}"
             cd ${cur_dir}/src
             Download_Files ${Download_Mirror}/lib/openssl/${Openssl_New_Ver}.tar.gz ${Openssl_New_Ver}.tar.gz
