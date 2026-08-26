@@ -369,6 +369,11 @@ Print_Failed_Info()
     Echo_Red "  反馈地址：https://nextlnmp.com"
     Echo_Red "  QQ群：615298"
     command -v AI_Rescue >/dev/null 2>&1 && AI_Rescue "安装收尾自检未通过（组件缺失或服务未起来）"
+    # 必须显式返回非 0：这个返回值一路经 Check_*_Install → 栈函数 → PIPESTATUS[0]
+    # 传到 nextlnmp.sh 的 exit，是"装挂了对外也报失败"的唯一来源。
+    # （顺带说明：上面那行 `command -v ... && AI_Rescue` 的返回值本身不可靠，
+    #   AI_Rescue 没定义时短路返回 1、定义了则返回 0，正好是反的。）
+    return 1
 }
 
 Check_nextLNMP_Install()

@@ -231,18 +231,37 @@ LAMP_Stack()
 case "${Stack}" in
     nextlnmp)
         Display_Selection
+# 注意取 PIPESTATUS[0]：整条命令的 $? 是 tee 的（恒为 0），
+        # 安装链路里所有 exit 1（下载失败、SHA256 不符、系统不兼容）都只杀掉
+        # 管道左侧的子 shell，对外一律报成功——CI、自动化脚本、以及"装完再判断"
+        # 的调用方全被骗过去。这里不用 set -o pipefail，因为脚本里还有
+        # `cmd | grep -q` 这类条件判断，全局开 pipefail 会改掉它们的语义。
         nextLNMP_Stack 2>&1 | tee /root/nextlnmp-install.log
+        Install_Rc=${PIPESTATUS[0]}
         ;;
     nextlnmpa)
         Display_Selection
+# 注意取 PIPESTATUS[0]：整条命令的 $? 是 tee 的（恒为 0），
+        # 安装链路里所有 exit 1（下载失败、SHA256 不符、系统不兼容）都只杀掉
+        # 管道左侧的子 shell，对外一律报成功——CI、自动化脚本、以及"装完再判断"
+        # 的调用方全被骗过去。这里不用 set -o pipefail，因为脚本里还有
+        # `cmd | grep -q` 这类条件判断，全局开 pipefail 会改掉它们的语义。
         nextLNMPA_Stack 2>&1 | tee /root/nextlnmp-install.log
+        Install_Rc=${PIPESTATUS[0]}
         ;;
     lamp)
         Display_Selection
+# 注意取 PIPESTATUS[0]：整条命令的 $? 是 tee 的（恒为 0），
+        # 安装链路里所有 exit 1（下载失败、SHA256 不符、系统不兼容）都只杀掉
+        # 管道左侧的子 shell，对外一律报成功——CI、自动化脚本、以及"装完再判断"
+        # 的调用方全被骗过去。这里不用 set -o pipefail，因为脚本里还有
+        # `cmd | grep -q` 这类条件判断，全局开 pipefail 会改掉它们的语义。
         LAMP_Stack 2>&1 | tee /root/nextlnmp-install.log
+        Install_Rc=${PIPESTATUS[0]}
         ;;
     nginx)
         Install_Only_Nginx 2>&1 | tee /root/nginx-install.log
+        Install_Rc=${PIPESTATUS[0]}
         ;;
     db)
         Install_Only_Database
@@ -256,4 +275,6 @@ case "${Stack}" in
         ;;
 esac
 
-exit
+# 装挂了就必须以非 0 退出，否则 `bash install.sh && echo 成功` 之类的
+# 调用方永远看不到失败。
+exit ${Install_Rc:-0}
