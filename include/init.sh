@@ -366,6 +366,41 @@ Check_Codeready()
     [ -z "${repo_id}" ] && repo_id="ol8_codeready_builder"
 }
 
+# ── 逐包安装的容错外壳 ────────────────────────────────────────────────
+# 依赖清单里混着不少上古包名（EL9 没有 libpng10-devel/gcc-g77/libtool-libs，
+# Debian 12+ 没有 zlibc/libpng12-dev/libc-client2007e-dev）。它们本来就是可选件，
+# 装不上不影响安装，可 yum/apt 会照吐 "Error: Unable to find a match"。用户看见
+# 一屏 Error 会以为装挂了，AI 救援读日志尾时也会被这些假错误带偏。
+# 所以只把「这个发行版里根本没这个包」这一种情况收起来最后统一说明；
+# 其他失败（源坏了、网断了、依赖冲突）必须原样吐出来，绝不能吞。
+Pkg_Missing=""
+
+Try_Install_Pkg()
+{
+    local pkg="$1" out rc
+    shift
+    out=$("$@" "${pkg}" 2>&1); rc=$?
+    if [ ${rc} -eq 0 ]; then
+        echo "${out}"
+        return 0
+    fi
+    if echo "${out}" | grep -Eqi "Unable to find a match|No package .* available|Unable to locate package|has no installation candidate"; then
+        Pkg_Missing="${Pkg_Missing} ${pkg}"
+        return 0
+    fi
+    echo "${out}"
+    Echo_Red "依赖包 ${pkg} 安装失败（以上为原始输出）"
+    return 1
+}
+
+Report_Missing_Pkg()
+{
+    [ -z "${Pkg_Missing}" ] && return 0
+    Echo_Yellow "本系统没有下列可选依赖，已跳过（多为其他发行版的旧包名，不影响安装）："
+    echo "   ${Pkg_Missing# }"
+    Pkg_Missing=""
+}
+
 CentOS_Dependent()
 {
     if [ -s /etc/yum.conf ]; then
@@ -375,7 +410,8 @@ CentOS_Dependent()
 
     Echo_Blue "[+] Yum installing dependent packages..."
     for packages in make cmake gcc gcc-c++ gcc-g77 kernel-headers glibc-headers flex bison file libtool libtool-libs autoconf patch wget crontabs libjpeg libjpeg-devel libjpeg-turbo-devel libpng libpng-devel libpng10 libpng10-devel gd gd-devel libxml2 libxml2-devel zlib zlib-devel glib2 glib2-devel unzip tar bzip2 bzip2-devel libzip-devel libevent libevent-devel ncurses ncurses-devel curl curl-devel libcurl libcurl-devel e2fsprogs e2fsprogs-devel krb5 krb5-devel libidn libidn-devel openssl openssl-devel pcre-devel gettext gettext-devel ncurses-devel gmp-devel pspell-devel unzip libcap diffutils ca-certificates net-tools libc-client-devel psmisc libXpm-devel git-core c-ares-devel libicu-devel libxslt libxslt-devel xz expat-devel libaio-devel rpcgen libtirpc-devel perl cyrus-sasl-devel sqlite-devel oniguruma-devel lsof re2c pkg-config libarchive hostname ncurses-libs numactl-devel libxcrypt libwebp-devel gnutls-devel initscripts iproute libxcrypt-compat;
-    do yum -y install $packages; done
+    do Try_Install_Pkg "$packages" yum -y install; done
+    Report_Missing_Pkg
 
     yum -y update nss
 
@@ -477,7 +513,8 @@ Deb_Dependent()
     export DEBIAN_FRONTEND=noninteractive
     apt-get --no-install-recommends install -y build-essential gcc g++ make
     for packages in debian-keyring debian-archive-keyring build-essential gcc g++ make cmake autoconf automake re2c wget cron bzip2 libzip-dev libc6-dev bison file rcconf flex bison m4 gawk less cpp binutils diffutils unzip tar bzip2 libbz2-dev libncurses5 libncurses5-dev libtool libevent-dev openssl libssl-dev zlibc libsasl2-dev libltdl3-dev libltdl-dev zlib1g zlib1g-dev libbz2-1.0 libbz2-dev libglib2.0-0 libglib2.0-dev libpng3 libjpeg-dev libpng-dev libpng12-0 libpng12-dev libkrb5-dev curl libcurl3-gnutls libcurl4-gnutls-dev libcurl4-openssl-dev libpcre3-dev libpq-dev libpq5 gettext libpng12-dev libxml2-dev libcap-dev ca-certificates libc-client2007e-dev psmisc patch git libc-ares-dev libicu-dev e2fsprogs libxslt1.1 libxslt1-dev libc-client-dev xz-utils libexpat1-dev libaio-dev libtirpc-dev libsqlite3-dev libonig-dev lsof pkg-config libtinfo-dev libnuma-dev libwebp-dev gnutls-dev iproute2 xz-utils gzip;
-    do apt-get --no-install-recommends install -y $packages; done
+    do Try_Install_Pkg "$packages" apt-get --no-install-recommends install -y; done
+    Report_Missing_Pkg
 }
 
 Check_Download()
