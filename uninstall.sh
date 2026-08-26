@@ -75,13 +75,19 @@ case "$action" in
     [[ "$confirm" != "y" && "$confirm" != "Y" ]] && echo "已取消" && exit 0
 
     echo "正在停止服务..."
-    for svc in nginx mysql mysqld mariadb; do
+    # httpd 和 caddy 以前不在这个清单里，于是 LAMP/LNMPA/Caddy 栈是在服务还活着的
+    # 状态下被 rm -rf 掉的；而 /etc/init.d/httpd 同时被删，用户连停都没法停。
+    # 没有 systemd 时（WSL、容器、sysvinit）Cleanup_Systemd_Units 直接 return，
+    # 更没人管它们。
+    for svc in nginx httpd caddy mysql mysqld mariadb; do
         [ -f /etc/init.d/$svc ] && /etc/init.d/$svc stop 2>/dev/null
     done
     for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[578].[0-9]; do
         [ -f "$phpfpm" ] && $phpfpm stop 2>/dev/null
     done
     pkill -f nginx 2>/dev/null
+    pkill -x httpd 2>/dev/null
+    pkill -x caddy 2>/dev/null
     pkill -f php-fpm 2>/dev/null
     pkill -f mysqld 2>/dev/null
 
@@ -122,13 +128,19 @@ case "$action" in
     [[ "$confirm" != "YES" ]] && echo "已取消" && exit 0
 
     echo "正在停止服务..."
-    for svc in nginx mysql mysqld mariadb; do
+    # httpd 和 caddy 以前不在这个清单里，于是 LAMP/LNMPA/Caddy 栈是在服务还活着的
+    # 状态下被 rm -rf 掉的；而 /etc/init.d/httpd 同时被删，用户连停都没法停。
+    # 没有 systemd 时（WSL、容器、sysvinit）Cleanup_Systemd_Units 直接 return，
+    # 更没人管它们。
+    for svc in nginx httpd caddy mysql mysqld mariadb; do
         [ -f /etc/init.d/$svc ] && /etc/init.d/$svc stop 2>/dev/null
     done
     for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[578].[0-9]; do
         [ -f "$phpfpm" ] && $phpfpm stop 2>/dev/null
     done
     pkill -f nginx 2>/dev/null
+    pkill -x httpd 2>/dev/null
+    pkill -x caddy 2>/dev/null
     pkill -f php-fpm 2>/dev/null
     pkill -f mysqld 2>/dev/null
 
@@ -141,6 +153,11 @@ case "$action" in
 
     echo "删除所有文件..."
     rm -rf /usr/local/nginx /usr/local/apache /usr/local/php /usr/local/php[0-9].[0-9]* /usr/local/mysql /usr/local/mariadb /usr/local/zend
+    # Caddy 以前完全没被清理：/usr/local/bin/caddy、/etc/caddy、/var/lib/caddy
+    # 全部留在盘上。最要命的是 /var/lib/caddy 里放着自动签发的 TLS 私钥，
+    # "恢复出厂"之后还躺在那儿；重装时 Caddyfile 只在文件不存在时才写，
+    # 于是新装的站点会沿用旧配置。
+    rm -rf /usr/local/bin/caddy /etc/caddy /var/lib/caddy
     # 安装时给 .user.ini 加了 chattr +i，不先解锁 rm -rf 会静默失败、目录残留，
     # 而脚本仍宣称"已恢复至初始状态"（真机装测实测）
     if command -v chattr >/dev/null 2>&1; then

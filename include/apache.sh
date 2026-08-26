@@ -9,7 +9,12 @@ Install_Apache_22()
         mkdir -p ${Default_Website_Dir}
         chmod +w ${Default_Website_Dir}
         mkdir -p /home/wwwlogs
-        chmod 777 /home/wwwlogs
+        # 曾经是 777。日志文件是 nginx/httpd 的 master（root）打开的，www 根本不需要
+    # 写权限；而一个【非 sticky】的 777 目录不受 fs.protected_symlinks 保护
+    # （该保护只覆盖 sticky 的世界可写目录，比如 /tmp）。真机实测：www 在这里
+    # 预先建一个指向任意路径的符号链接，root 追加日志时会原样跟随过去——
+    # 这是一条 www → root 的任意文件写入。755 即可，读日志不受影响。
+        chmod 755 /home/wwwlogs
         chown -R www:www ${Default_Website_Dir}
     fi
     Tar_Cd ${Apache_Ver}.tar.bz2 ${Apache_Ver}
@@ -67,7 +72,12 @@ Install_Apache_24()
         mkdir -p ${Default_Website_Dir}
         chmod +w ${Default_Website_Dir}
         mkdir -p /home/wwwlogs
-        chmod 777 /home/wwwlogs
+        # 曾经是 777。日志文件是 nginx/httpd 的 master（root）打开的，www 根本不需要
+    # 写权限；而一个【非 sticky】的 777 目录不受 fs.protected_symlinks 保护
+    # （该保护只覆盖 sticky 的世界可写目录，比如 /tmp）。真机实测：www 在这里
+    # 预先建一个指向任意路径的符号链接，root 追加日志时会原样跟随过去——
+    # 这是一条 www → root 的任意文件写入。755 即可，读日志不受影响。
+        chmod 755 /home/wwwlogs
         chown -R www:www ${Default_Website_Dir}
         Install_Openssl_New
         Install_Nghttp2
