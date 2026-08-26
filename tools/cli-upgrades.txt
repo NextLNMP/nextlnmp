@@ -65,3 +65,12 @@ lamp:Install_Check_Acme.sh
 # ② while read 无 EOF 守卫 → 管道/脚本调用时空转烧 CPU（真机实测 35% 停不下来）；
 #    现 read 失败即退出循环。三个栈共用此函数，故三栈渲染均与基线不同。
 lnmp:Add_Database_Menu
+
+# ---- 全栈：两处菜单输入校验的交替式补上括号（真机审计发现）----
+# 原写法 [[ $choice =~ ^1|2$ ]] 被 bash 解析成 (^1)|(2$)，于是任何以 1 开头的输入
+# 都过关：提示写着「Enter 1 or 2」，输入 12 / 13 照样放行，随后按不存在的分支继续。
+# ^2|3|4$ 更松，(3) 那支完全没锚，任何含 3 的输入都算数。
+# 改为 ^(1|2)$ / ^(2|3|4)$，只接受菜单里真实存在的选项。
+lnmp:Add_DNS_SSL_Select_Menu
+lnmpa:Add_DNS_SSL_Select_Menu
+lamp:Add_DNS_SSL_Select_Menu

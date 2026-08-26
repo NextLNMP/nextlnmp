@@ -148,7 +148,7 @@ Add_DNS_SSL_Select_Menu()
         while :;do
         Echo_Yellow "Enter 1 or 2: "
         read dns_ssl_choice
-        if [[ "${dns_ssl_choice}" =~ ^1|2$ ]]; then
+        if [[ "${dns_ssl_choice}" =~ ^(1|2)$ ]]; then
             Check_Acme_EMail
             break
         else
@@ -861,7 +861,7 @@ Add_SSL_Menu()
                 fi
             fi
             break
-        elif [[ "${ssl_choice}" =~ ^2|3|4$ ]]; then
+        elif [[ "${ssl_choice}" =~ ^(2|3|4)$ ]]; then
             Check_Acme_EMail
             break
         else
