@@ -1,0 +1,39 @@
+name: CLI Guard
+
+# v2 重构的防复发闸门：源码树与生成物必须同步，公共函数必须保真，
+# 菜单/版本表/安装函数必须三方对齐，全部 shell 必须语法通过。
+on:
+  push:
+    branches: [main, v2]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 生成物漂移检查（改了 conf/cli/ 却忘了重新生成？）
+        run: bash tools/build-cli.sh --check
+
+      - name: 等价性校验（栈专属函数与顶层未申报变更？）
+        run: python3 tools/cli-fingerprint.py check tools/cli-baseline.json --allow tools/cli-allow.txt
+
+      - name: 参数化保真校验（公共函数渲染回各栈是否仍与基线一致？）
+        run: python3 tools/cli-render-check.py tools/cli-baseline.json --upgrades tools/cli-upgrades.txt
+
+      - name: 一致性断言（菜单收了单，代码发货了吗？）
+        run: python3 tools/check-consistency.py
+
+      - name: 多版本 PHP 选择单元测试
+        run: bash tools/test-php-select.sh
+
+      - name: 全仓 shell 语法矩阵
+        run: |
+          fail=0
+          for f in $(git ls-files '*.sh') conf/nextlnmp conf/nextlnmpa conf/nextlamp; do
+              bash -n "$f" || { echo "❌ 语法错误：$f"; fail=1; }
+          done
+          [ $fail -eq 0 ] && echo "✓ 全部 shell 语法通过"
+          exit $fail
