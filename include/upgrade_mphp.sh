@@ -54,7 +54,7 @@ Upgrade_Multiplephp()
 
     while :;do
         MPHP_Select=""
-        read -p "Please select which multiple php version to upgrade: " MPHP_Select
+        read -p "Please select which multiple php version to upgrade: " MPHP_Select || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [[ "${MPHP_Select}" =~ ^([1-9]|1[01])$ ]]; then
             break
         else

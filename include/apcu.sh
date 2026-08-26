@@ -5,7 +5,7 @@ Install_Apcu()
     echo "You will install apcu..."
     apcu_pass=""
     while :;do
-        read -p "Please enter admin password of apcu: " apcu_pass
+        read -p "Please enter admin password of apcu: " apcu_pass || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${apcu_pass}" != "" ]; then
             echo "================================================="
             echo "Your admin password of apcu was: ${apcu_pass}"
