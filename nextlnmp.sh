@@ -228,6 +228,16 @@ LAMP_Stack()
     Check_LAMP_Install
 }
 
+# 安装日志里会出现自动生成的数据库 root 密码（成功面板会把它打出来），
+# 而 tee 是按 umask 建文件的，默认就是 0644 —— 同机任何用户都能读。
+# 先以 600 建好再让 tee 往里写。
+Install_Log_Init()
+{
+    local f="$1"
+    rm -f "${f}"
+    (umask 077; : > "${f}")
+}
+
 case "${Stack}" in
     nextlnmp)
         Display_Selection
@@ -236,6 +246,7 @@ case "${Stack}" in
         # 管道左侧的子 shell，对外一律报成功——CI、自动化脚本、以及"装完再判断"
         # 的调用方全被骗过去。这里不用 set -o pipefail，因为脚本里还有
         # `cmd | grep -q` 这类条件判断，全局开 pipefail 会改掉它们的语义。
+        Install_Log_Init /root/nextlnmp-install.log
         nextLNMP_Stack 2>&1 | tee /root/nextlnmp-install.log
         Install_Rc=${PIPESTATUS[0]}
         ;;
@@ -246,6 +257,7 @@ case "${Stack}" in
         # 管道左侧的子 shell，对外一律报成功——CI、自动化脚本、以及"装完再判断"
         # 的调用方全被骗过去。这里不用 set -o pipefail，因为脚本里还有
         # `cmd | grep -q` 这类条件判断，全局开 pipefail 会改掉它们的语义。
+        Install_Log_Init /root/nextlnmp-install.log
         nextLNMPA_Stack 2>&1 | tee /root/nextlnmp-install.log
         Install_Rc=${PIPESTATUS[0]}
         ;;
@@ -256,10 +268,12 @@ case "${Stack}" in
         # 管道左侧的子 shell，对外一律报成功——CI、自动化脚本、以及"装完再判断"
         # 的调用方全被骗过去。这里不用 set -o pipefail，因为脚本里还有
         # `cmd | grep -q` 这类条件判断，全局开 pipefail 会改掉它们的语义。
+        Install_Log_Init /root/nextlnmp-install.log
         LAMP_Stack 2>&1 | tee /root/nextlnmp-install.log
         Install_Rc=${PIPESTATUS[0]}
         ;;
     nginx)
+        Install_Log_Init /root/nginx-install.log
         Install_Only_Nginx 2>&1 | tee /root/nginx-install.log
         Install_Rc=${PIPESTATUS[0]}
         ;;

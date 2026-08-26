@@ -737,7 +737,12 @@ Restore_Start_MySQL()
         sleep 180
         /usr/local/mysql/bin/mysqladmin --defaults-file=~/.my.cnf shutdown
     else
-        /usr/local/mysql/bin/mysql_upgrade -u root -p${DB_Root_Password}
+        # 不把密码放到命令行上：ps 是全机可见的，同机任何用户在这条命令跑着的
+        # 几秒里 ps aux 一眼就能看到 root 密码；而且 -p${var} 没加引号，密码含
+        # 空格或 * ? [ ] 时还会被分词/通配掉，报"密码错误"却查不出原因。
+        # 同一批脚本里其它调用早就在用 --defaults-file=~/.my.cnf（Make_TempMycnf
+        # 已经生成好），这里跟上。
+        /usr/local/mysql/bin/mysql_upgrade --defaults-file=~/.my.cnf
     fi
 
     /etc/init.d/mysql stop
