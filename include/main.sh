@@ -22,6 +22,16 @@ Smart_Recommend()
     REC_PHP=13      # PHP 8.2
     REC_BIN="y"     # 预编译二进制
 
+    # 「免编译」这句话只在有 PHP 预编译包的系统上成立。PHP_Bin_OSTag 目前只认
+    # ubuntu22/24 和 debian12/13，RHEL 系一律返回空 → PHP 必定源码编译。
+    # 面板过去不分系统都写「免编译，省时间」，用户在 Rocky/CentOS 上照着推荐装，
+    # 等来的是一两个小时的编译（Rocky 9 单核 512M 实测 PHP 8.3 编了一个多小时）。
+    if [ -n "$(PHP_Bin_OSTag 2>/dev/null)" ]; then
+        REC_BUILD_NOTE="预编译二进制包（免编译，省时间）"
+    else
+        REC_BUILD_NOTE="数据库用预编译包；本系统没有 PHP 预编译包，PHP 需源码编译（单核小内存机通常 1 小时以上）"
+    fi
+
     # 内存分配器按内存分级
     if [ ${REC_MEM} -le 2048 ]; then
         REC_MALLOC=1; REC_MALLOC_NAME="不安装（节省资源）"
@@ -53,7 +63,7 @@ Smart_Recommend()
     echo "│  📋 推荐方案（${REC_MEM_LEVEL}）："
     echo "│     数据库 → MySQL 5.7（全配置通用，迁移无痛）"
     echo "│     PHP    → PHP 8.2（兼容性最好）"
-    echo "│     编译   → 预编译二进制包（免编译，省时间）"
+    echo "│     编译   → ${REC_BUILD_NOTE}"
     echo "│     分配器 → ${REC_MALLOC_NAME}"
     echo "│"
     echo "│  ⚙  安装后自动优化数据库配置："
