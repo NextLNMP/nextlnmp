@@ -25,6 +25,8 @@ jobs:
           ssh -i ~/.ssh/id_mirror -o StrictHostKeyChecking=accept-new root@47.122.115.39 \
             'cd /data/mirror && find . -type f \( -name "*.tar.gz" -o -name "*.tar.bz2" -o -name "*.tar.xz" -o -name "*.tgz" -o -name "*.zip" -o -name "*.rpm" -o -name "php.ini-production-*" \) -print0 | xargs -0 -r sha256sum' > raw_sums.txt
           echo "镜像站扫描到 $(wc -l < raw_sums.txt) 个包"
+          # 留一份当前仓库里的清单，供下面比对"已有条目的哈希有没有被改动"
+          [ -f sha256sums.txt ] && cp sha256sums.txt sha256sums.txt.prev || true
           awk '{h=$1; $1=""; sub(/^ +/,""); n=split($0,a,"/"); print h "  " a[n]}' raw_sums.txt | sort -u > body.txt
           dup=$(awk '{print $2}' body.txt | sort | uniq -d)
           if [ -n "$dup" ]; then
@@ -41,10 +43,36 @@ jobs:
           } > sha256sums.txt
           echo "清单条目数: $(grep -c '^[0-9a-f]' sha256sums.txt)"
 
+          # ---- 闸：已有条目的哈希变了，一律拒绝自动提交 ----
+          # 这个工作流是从镜像现状【重算】哈希再签发为"权威源"。也就是说，
+          # 任何被写进镜像的文件都会被自动签发成官方校验值——自愈补货一旦出错
+          # 或被诱导，脏文件会顺着这条路被洗成官方哈希，再分发到镜像站和魔搭副镜像。
+          # 已有文件的哈希发生变化，正常情况下【不该发生】（同名同版本的包内容是固定的），
+          # 出现即意味着镜像里的文件被替换过，必须人工介入。
+          if [ -f sha256sums.txt.prev ]; then
+            changed=$(join -j 2 -o 0,1.1,2.1                         <(grep '^[0-9a-f]' sha256sums.txt.prev | sort -k2)                         <(grep '^[0-9a-f]' sha256sums.txt      | sort -k2)                       | awk '$2 != $3 {print $1}')
+            if [ -n "$changed" ]; then
+              echo "❌ 以下文件的哈希发生了变化——同名同版本的包内容不该变，"
+              echo "   这通常意味着镜像里的文件被替换过。已中止自动提交，请人工核查："
+              echo "$changed"
+              exit 1
+            fi
+          fi
+
+          # 新增条目单独列出来，让 commit message 和 diff 里一眼能看见
+          if [ -f sha256sums.txt.prev ]; then
+            added=$(comm -13                       <(grep '^[0-9a-f]' sha256sums.txt.prev | awk '{print $2}' | sort)                       <(grep '^[0-9a-f]' sha256sums.txt      | awk '{print $2}' | sort))
+            if [ -n "$added" ]; then
+              echo "本次【新增】条目（自愈补货或人工上架）："
+              echo "$added"
+            fi
+          fi
+
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          rm -f sha256sums.txt.prev raw_sums.txt body.txt
           git add sha256sums.txt
           if git diff --cached --quiet; then
             echo "清单无变化，跳过提交"
