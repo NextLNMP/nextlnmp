@@ -1076,22 +1076,36 @@ Tune_File_Max()
     sysctl -w fs.file-max=${target} >/dev/null 2>&1
 }
 
-# MySQL 5.x / MariaDB 5.x 的预编译包链的是 ncurses 5，而现代发行版只带 6。
-# 原来这段兼容软链只写在 CentOS_Lib_Opt 里（Debian 走的是 Deb_Lib_Opt，根本不会执行），
-# 而且只看 /usr/lib64 和 /usr/lib —— Debian 的多架构布局把库放在
-# /usr/lib/x86_64-linux-gnu，两边都对不上。
-# Debian 13 真机实测后果：mysql 客户端起不来，报
-#   libncurses.so.5 / libtinfo.so.5: cannot open shared object file
-# 而 libncurses5 / libtinfo5 这两个兼容包在 Debian 13 已经【没有】了，装不上。
-Ncurses5_Compat_Link()
+# 预编译的数据库/PHP 二进制链的是老 soname，而现代发行版换了名字。两类：
+#  ① ncurses/tinfo：MySQL 5.x、MariaDB 5.x 的客户端链 libncurses.so.5，
+#     现代发行版只带 .so.6，而 libncurses5 / libtinfo5 兼容包在 Debian 13 已经没有了。
+#  ② t64 迁移：Debian 13 / Ubuntu 24.04 为了 64 位 time_t 把一批库改了名，
+#     连 so 文件本身都改了 —— libaio1t64 装上了，文件却叫 libaio.so.1t64，
+#     而 mysqld 链的是 libaio.so.1。
+# 第 8 轮真机实测：mysqld 因为 libaio.so.1 找不到直接起不来，数据库初始化整个没做，
+# 数据目录是空的；mysql 客户端则因为 libncurses.so.5 起不来。
+#
+# 原来这段只处理 ①，而且只写在 CentOS_Lib_Opt 里（Debian 走 Deb_Lib_Opt，根本不执行），
+# 还只看 /usr/lib64 和 /usr/lib —— Debian 的多架构布局把库放在
+# /usr/lib/x86_64-linux-gnu，三条都对不上。
+Legacy_Soname_Links()
 {
-    local d lib
+    local d f base
     for d in /usr/lib64 /usr/lib /usr/lib/x86_64-linux-gnu /usr/lib/aarch64-linux-gnu; do
         [ -d "${d}" ] || continue
-        for lib in libtinfo libncurses libncursesw; do
-            if [ -e "${d}/${lib}.so.6" ] && [ ! -e "${d}/${lib}.so.5" ]; then
-                ln -sf "${d}/${lib}.so.6" "${d}/${lib}.so.5"
+
+        # ① ncurses 6 -> 5
+        for base in libtinfo libncurses libncursesw; do
+            if [ -e "${d}/${base}.so.6" ] && [ ! -e "${d}/${base}.so.5" ]; then
+                ln -sf "${d}/${base}.so.6" "${d}/${base}.so.5"
             fi
+        done
+
+        # ② t64 迁移：libfoo.so.N t64 -> libfoo.so.N
+        for f in "${d}"/*.so.*t64; do
+            [ -e "${f}" ] || continue
+            base="${f%t64}"                       # 去掉结尾的 t64
+            [ -e "${base}" ] || ln -sf "${f}" "${base}"
         done
     done
     ldconfig 2>/dev/null
@@ -1147,7 +1161,7 @@ eof
         ln -sf /etc/rc.d/init.d /etc/init.d
     fi
 
-    Ncurses5_Compat_Link
+    Legacy_Soname_Links
 }
 
 # 只在通配符真的匹配到文件时才建链接。原写法直接 `ln -sf 目录/libpng* /usr/lib/`，
@@ -1236,7 +1250,7 @@ eof
 
     Tune_File_Max
     # Debian 侧同样需要（MySQL/MariaDB 5.x 预编译包链的是 ncurses 5）
-    Ncurses5_Compat_Link
+    Legacy_Soname_Links
 }
 
 Remove_Error_Libcurl()
