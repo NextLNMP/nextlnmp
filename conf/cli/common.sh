@@ -46,7 +46,7 @@ Enter_Database_Name()
 {
     while :;do
         Echo_Yellow "Enter database name: "
-        read database_name
+        read database_name || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${database_name}" == "" ]; then
             Echo_Red "Database Name can't be empty!"
         else
@@ -59,7 +59,7 @@ Enter_Ftp_Name()
 {
     while :;do
         Echo_Yellow "Enter ftp account name: "
-        read ftp_account_name
+        read ftp_account_name || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${ftp_account_name}" == "" ]; then
             Echo_Red "FTP account name can't be empty!"
         else
@@ -73,7 +73,7 @@ Add_Ftp_Menu()
     Enter_Ftp_Name
     while :;do
         Echo_Yellow "Enter password for ftp account ${ftp_account_name}: "
-        read ftp_account_password
+        read ftp_account_password || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${ftp_account_password}" == "" ]; then
             Echo_Red "FTP password can't be empty!"
         else
@@ -83,7 +83,7 @@ Add_Ftp_Menu()
     if [ "${vhostdir}" == "" ]; then
         while :;do
             Echo_Yellow "Enter directory for ftp account ${ftp_account_name}: "
-            read vhostdir
+            read vhostdir || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
             if [ "${vhostdir}" == "" ]; then
                 Echo_Red "Directory can't be empty!"
             else
@@ -116,7 +116,7 @@ Add_DNS_SSL_Select_Menu()
     echo "2: Use ZeroSSL to create SSL Certificate and Key"
         while :;do
         Echo_Yellow "Enter 1 or 2: "
-        read dns_ssl_choice
+        read dns_ssl_choice || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [[ "${dns_ssl_choice}" =~ ^(1|2)$ ]]; then
             Check_Acme_EMail
             break
@@ -133,7 +133,7 @@ Add_DNS_SSL_Only_Info_Menu()
     domain=""
     while :;do
         Echo_Yellow "Please enter domain(example: nextlnmp.com): "
-        read domain
+        read domain || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${domain}" != "" ] && [[ "$domain" = "${domain%[[:space:]]*}" ]]; then
             echo " Your domain: ${domain}"
             break
@@ -240,7 +240,7 @@ Edit_Database()
 {
     while :;do
         Echo_Yellow "Enter database username: "
-        read database_username
+        read database_username || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${database_username}" == "" ]; then
             Echo_Red "Database Username can't be empty!"
         else
@@ -249,7 +249,7 @@ Edit_Database()
     done
     while :;do
         Echo_Yellow "Enter NEW Password: "
-        read database_username_passwd
+        read database_username_passwd || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${database_username_passwd}" == "" ]; then
             Echo_Red "Database Password can't be empty!"
         else
@@ -445,7 +445,7 @@ Check_Acme_EMail()
                 break
             else
                 Echo_Red "邮箱格式不正确，请重新输入："
-                read -e email_address
+                read -e email_address || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
             fi
         done
     fi
@@ -799,11 +799,11 @@ Add_SSL_Menu()
     echo "4: Use ZeroSSL to create SSL Certificate and Key"
     while :;do
         Echo_Yellow "Enter 1, 2, 3 or 4: "
-        read ssl_choice
+        read ssl_choice || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${ssl_choice}" == "1" ]; then
             while :;do
                 Echo_Yellow "Please enter full path to SSL Certificate file: "
-                read ssl_certificate
+                read ssl_certificate || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
                 if [ "${ssl_certificate}" == "" ]; then
                     Echo_Red "SSL Certificate file cannot be empty!"
                 else
@@ -812,7 +812,7 @@ Add_SSL_Menu()
             done
             while :;do
                 Echo_Yellow "Please enter full path to SSL Certificate Key file: "
-                read ssl_certificate_key
+                read ssl_certificate_key || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
                 if [ "${ssl_certificate_key}" == "" ]; then
                     Echo_Red "SSL Certificate Key file cannot be empty!"
                 else

@@ -82,3 +82,23 @@ lamp:Add_DNS_SSL_Select_Menu
 lnmp:Check_Acme_EMail
 lnmpa:Check_Acme_EMail
 lamp:Check_Acme_EMail
+
+# ---- 全栈：12 处交互循环补 EOF 护栏 ----
+# 这些 while :;do ... read ... 循环判「不能为空」，但 read 读到 EOF 时变量仍为空、
+# 循环不会退出。非交互调用（脚本、cron、</dev/null）下就是无限空转刷屏——
+# 本机实测 3 秒刷 28 万行，足以把日志和磁盘撑爆。加护栏后同场景只剩 2 行。
+# 正常交互路径不受影响（空回车照旧提示重输）。
+lnmp:Enter_Database_Name
+lnmpa:Enter_Database_Name
+lamp:Enter_Database_Name
+lnmp:Enter_Ftp_Name
+lnmpa:Enter_Ftp_Name
+lamp:Enter_Ftp_Name
+lnmp:Add_Ftp_Menu
+lnmpa:Add_Ftp_Menu
+lamp:Add_Ftp_Menu
+lnmp:Add_DNS_SSL_Only_Info_Menu
+lnmpa:Add_DNS_SSL_Only_Info_Menu
+lamp:Add_DNS_SSL_Only_Info_Menu
+lnmp:Edit_Database
+lamp:Edit_Database
