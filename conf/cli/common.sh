@@ -23,12 +23,25 @@ EOF
     chmod 600 ~/.my.cnf
 }
 
+# 这些临时文件里带明文数据库密码，绝不能放 /tmp：
+#   ① /tmp 世界可写，固定文件名可被普通用户抢先建成符号链接，root 一写就被劫持；
+#   ② 每个站点的 open_basedir 恰好放行了 /tmp/，任何一个被挂马的 PHP 站点
+#      都能在建站/删站的窗口里读到新数据库的账号密码。
+# 改用 root 私有目录（/root 本身 700，不存在抢建问题）。
+NLX_TMPDIR="/root/.nextlnmp-tmp"
+Nlx_Tmp_Init()
+{
+    [ -d "${NLX_TMPDIR}" ] || mkdir -p "${NLX_TMPDIR}"
+    chmod 700 "${NLX_TMPDIR}"
+}
+
 Do_Query()
 {
-    echo "$1" >/tmp/.mysql.tmp
-    chmod 600 /tmp/.mysql.tmp
+    Nlx_Tmp_Init
+    echo "$1" >${NLX_TMPDIR}/.mysql.tmp
+    chmod 600 ${NLX_TMPDIR}/.mysql.tmp
     Check_DB
-    ${MySQL_Bin} --defaults-file=~/.my.cnf </tmp/.mysql.tmp
+    ${MySQL_Bin} --defaults-file=~/.my.cnf <${NLX_TMPDIR}/.mysql.tmp
     return $?
 }
 
@@ -37,8 +50,8 @@ TempMycnf_Clean()
     if [ -s ~/.my.cnf ]; then
         rm -f ~/.my.cnf
     fi
-    if [ -s /tmp/.mysql.tmp ]; then
-        rm -f /tmp/.mysql.tmp
+    if [ -s ${NLX_TMPDIR}/.mysql.tmp ]; then
+        rm -f ${NLX_TMPDIR}/.mysql.tmp
     fi
 }
 
@@ -190,7 +203,8 @@ Add_Database()
 {
     # MySQL 8.x（含 8.4）已删除 GRANT ... IDENTIFIED BY 旧语法；MariaDB 版本号不以 8 开头，不受影响
     if echo "${MySQL_Ver}" | grep -Eqi '^8\.';then
-        cat >/tmp/.add_mysql.sql<<EOF
+        Nlx_Tmp_Init
+        cat >${NLX_TMPDIR}/.add_mysql.sql<<EOF
 CREATE USER '${database_name}'@'localhost' IDENTIFIED BY '${mysql_password}';
 CREATE USER '${database_name}'@'127.0.0.1' IDENTIFIED BY '${mysql_password}';
 GRANT USAGE ON *.* TO '${database_name}'@'localhost';
@@ -202,7 +216,8 @@ FLUSH PRIVILEGES;
 EOF
 
     else
-        cat >/tmp/.add_mysql.sql<<EOF
+        Nlx_Tmp_Init
+        cat >${NLX_TMPDIR}/.add_mysql.sql<<EOF
 CREATE USER '${database_name}'@'localhost' IDENTIFIED BY '${mysql_password}';
 CREATE USER '${database_name}'@'127.0.0.1' IDENTIFIED BY '${mysql_password}';
 GRANT USAGE ON *.* TO '${database_name}'@'localhost' IDENTIFIED BY '${mysql_password}';
@@ -214,9 +229,9 @@ FLUSH PRIVILEGES;
 EOF
 
     fi
-    ${MySQL_Bin} --defaults-file=~/.my.cnf < /tmp/.add_mysql.sql
+    ${MySQL_Bin} --defaults-file=~/.my.cnf < ${NLX_TMPDIR}/.add_mysql.sql
     [ $? -eq 0 ] && echo "Add database Successfully." || echo "Add database failed!"
-    rm -f /tmp/.add_mysql.sql
+    rm -f ${NLX_TMPDIR}/.add_mysql.sql
 }
 
 Add_Ftp()
@@ -296,15 +311,16 @@ Del_Database()
     echo "Your will delete database and MySQL user with same name: ${database_name}"
     echo "Sleep 10s, Press ctrl+c to cancel..."
     Sleep_Sec 10
-    cat >/tmp/.del.mysql.sql<<EOF
+    Nlx_Tmp_Init
+    cat >${NLX_TMPDIR}/.del.mysql.sql<<EOF
 DROP USER '${database_name}'@'127.0.0.1';
 DROP USER '${database_name}'@'localhost';
 DROP DATABASE \`${database_name}\`;
 FLUSH PRIVILEGES;
 EOF
-    ${MySQL_Bin} --defaults-file=~/.my.cnf < /tmp/.del.mysql.sql
+    ${MySQL_Bin} --defaults-file=~/.my.cnf < ${NLX_TMPDIR}/.del.mysql.sql
     [ $? -eq 0 ] && echo "Delete database: ${database_name} Successfully." || echo "Delete database: ${database_name} failed!"
-    rm -f /tmp/.del.mysql.sql
+    rm -f ${NLX_TMPDIR}/.del.mysql.sql
 }
 
 Edit_Ftp()

@@ -102,3 +102,19 @@ lnmpa:Add_DNS_SSL_Only_Info_Menu
 lamp:Add_DNS_SSL_Only_Info_Menu
 lnmp:Edit_Database
 lamp:Edit_Database
+
+# ---- 全栈：带明文密码的临时 SQL 从 /tmp 迁到 root 私有目录 ----
+# 原来写死 /tmp/.mysql.tmp、/tmp/.add_mysql.sql、/tmp/.del.mysql.sql。两个问题：
+#   ① 默认 umask 下是 0644，真机实测普通用户 www 能直接 cat 出
+#      CREATE USER ... IDENTIFIED BY '<明文密码>'；
+#   ② 每个站点的 open_basedir 恰好放行了 /tmp/，任何一个被挂马的 PHP 站点
+#      都能在建站/删站的窗口里读到它。
+# 改用 /root/.nextlnmp-tmp（700）。真机复验：www 读取与建链接均 Permission denied。
+lnmp:Do_Query
+lnmpa:Do_Query
+lamp:Do_Query
+lnmp:TempMycnf_Clean
+lnmpa:TempMycnf_Clean
+lamp:TempMycnf_Clean
+lnmp:Add_Database
+lnmp:Del_Database

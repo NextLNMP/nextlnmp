@@ -1278,11 +1278,24 @@ Check_DB()
     fi
 }
 
+# 这些临时文件里带明文数据库密码，绝不能放 /tmp：
+#   ① /tmp 世界可写，固定文件名可被普通用户抢先建成符号链接，root 一写就被劫持；
+#   ② 每个站点的 open_basedir 恰好放行了 /tmp/，任何一个被挂马的 PHP 站点
+#      都能在建站/删站的窗口里读到新数据库的账号密码。
+# 改用 root 私有目录（/root 本身 700，不存在抢建问题）。
+NLX_TMPDIR="/root/.nextlnmp-tmp"
+Nlx_Tmp_Init()
+{
+    [ -d "${NLX_TMPDIR}" ] || mkdir -p "${NLX_TMPDIR}"
+    chmod 700 "${NLX_TMPDIR}"
+}
+
 Do_Query()
 {
-    echo "$1" >/tmp/.mysql.tmp
+    Nlx_Tmp_Init
+    echo "$1" >${NLX_TMPDIR}/.mysql.tmp
     Check_DB
-    ${MySQL_Bin} --defaults-file=~/.my.cnf </tmp/.mysql.tmp
+    ${MySQL_Bin} --defaults-file=~/.my.cnf <${NLX_TMPDIR}/.mysql.tmp
     return $?
 }
 
@@ -1314,8 +1327,8 @@ TempMycnf_Clean()
     if [ -s ~/.my.cnf ]; then
         rm -f ~/.my.cnf
     fi
-    if [ -s /tmp/.mysql.tmp ]; then
-        rm -f /tmp/.mysql.tmp
+    if [ -s ${NLX_TMPDIR}/.mysql.tmp ]; then
+        rm -f ${NLX_TMPDIR}/.mysql.tmp
     fi
 }
 
