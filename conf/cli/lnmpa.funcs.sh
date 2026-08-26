@@ -131,7 +131,7 @@ Add_VHost()
     domain=""
     while :;do
         Echo_Yellow "Please enter domain(example: www.nextlnmp.com): "
-        read domain
+        read domain || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${domain}" != "" ] && [[ "$domain" = "${domain%[[:space:]]*}" ]]; then
             if [[ -f "/usr/local/nginx/conf/vhost/${domain}.conf" || -f "/usr/local/apache/conf/vhost/${domain}.conf" ]]; then
                 Echo_Red " ${domain} is exist,please check!"
@@ -303,7 +303,7 @@ Del_VHost()
     domain=""
     while :;do
         Echo_Yellow "Please enter domain you want to delete: "
-        read domain
+        read domain || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${domain}" == "" ]; then
             Echo_Red "Domain name can't be empty."
         else
@@ -335,7 +335,7 @@ Add_SSL_Info_Menu()
     domain=""
     while :;do
         Echo_Yellow "Please enter domain(example: www.nextlnmp.com): "
-        read domain
+        read domain || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         if [ "${domain}" != "" ] && [[ "$domain" = "${domain%[[:space:]]*}" ]]; then
             echo " Your domain: ${domain}"
             break

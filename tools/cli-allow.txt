@@ -25,3 +25,17 @@ conf/nextlnmp:PHP_Multi_Detect     # 新增：探测函数（片段内嵌进 lnm
 conf/nextlnmp:PHP_Multi_Select     # 新增：选择函数
 addons.sh:Select_PHP               # 147 行 -> 13 行薄包装
 addons.sh:__toplevel__             # 新增 . include/php-select.sh 这一行 source
+
+# ---- 栈专属：建站/删站/SSL 三处域名输入循环补 EOF 护栏 ----
+# 与 common.sh 那 12 处同源：while :;do ... read domain ... 判「不能为空」，
+# read 读到 EOF 时变量仍为空、循环不退出。本机实测删站那处在 </dev/null 下
+# 3 秒刷 29 万行；加护栏后同场景 2 行。正常交互不受影响。
+conf/nextlnmp:Add_VHost
+conf/nextlnmp:Del_VHost
+conf/nextlnmp:Add_SSL_Info_Menu
+conf/nextlnmpa:Add_VHost
+conf/nextlnmpa:Del_VHost
+conf/nextlnmpa:Add_SSL_Info_Menu
+conf/nextlamp:Add_VHost
+conf/nextlamp:Del_VHost
+conf/nextlamp:Add_SSL_Info_Menu
