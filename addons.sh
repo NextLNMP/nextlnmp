@@ -132,9 +132,21 @@ Download_PHP_Src()
 }
 
 if [[ "${action}" == "" || "${action2}" == "" ]]; then
-    action='install'
+    # 只有连动作都没给时才默认 install。原来是无条件 action='install'，
+    # 于是 `./addons.sh uninstall`（给了动作没给组件名）会被改写成 install：
+    # 用户想卸载扩展，实际是重新编译安装一遍。
+    [ -z "${action}" ] && action='install'
     Display_Addons_Menu
 fi
+
+case "${action}" in
+    install|uninstall) ;;
+    *)
+        Echo_Red "未知动作：${action}"
+        Echo_Red "用法：$0 {install|uninstall} [组件名]"
+        exit 1
+        ;;
+esac
 Get_Dist_Name
 Select_PHP
 

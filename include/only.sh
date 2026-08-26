@@ -57,6 +57,10 @@ Install_Only_Nginx()
     Add_Iptables_Rules
     \cp ${cur_dir}/conf/index.html ${Default_Website_Dir}/index.html
     \cp ${cur_dir}/conf/nextlnmp /bin/nextlnmp
+    # conf/nextlnmp 在仓库里就是 100644，发布包用 git archive 打、模式原样保留，
+    # 而 cp 会把 644 一起带过去（真机实测），于是 /bin/nextlnmp 敲下去是
+    # Permission denied。end.sh:42 一直有这行 chmod，单装 nginx 这条路漏了。
+    chmod +x /bin/nextlnmp
     Check_Nginx_Files
 }
 
