@@ -18,6 +18,7 @@ fi
 NEXTLNMP_Ver='1.11.1'
 . nextlnmp.conf
 . include/main.sh
+. include/ai-assist.sh
 . include/init.sh
 . include/mysql.sh
 . include/mariadb.sh

@@ -928,6 +928,7 @@ Download_Files()
 {
     if ! Try_Download "$1" "$2"; then
         echo "❌ 下载失败且无备用源：$2"
+        command -v AI_Rescue >/dev/null 2>&1 && AI_Rescue "下载组件 $2 失败（镜像与官方源均不可达）"
         exit 1
     fi
 }

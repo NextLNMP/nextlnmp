@@ -29,6 +29,9 @@ jobs:
       - name: 多版本 PHP 选择单元测试
         run: bash tools/test-php-select.sh
 
+      - name: AI 救援客户端安全闸门测试
+        run: bash tools/test-ai-assist.sh
+
       - name: 全仓 shell 语法矩阵
         run: |
           fail=0

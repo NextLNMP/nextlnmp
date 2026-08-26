@@ -342,6 +342,7 @@ Print_Failed_Info()
     Echo_Red "  日志文件：/root/nextlnmp-install.log"
     Echo_Red "  反馈地址：https://nextlnmp.com"
     Echo_Red "  QQ群：615298"
+    command -v AI_Rescue >/dev/null 2>&1 && AI_Rescue "安装收尾自检未通过（组件缺失或服务未起来）"
 }
 
 Check_nextLNMP_Install()
