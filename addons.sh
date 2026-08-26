@@ -131,6 +131,19 @@ Download_PHP_Src()
     fi
 }
 
+# 动作先校验再问菜单。放在菜单之后的话，用户会先被完整问一遍、输完选择，
+# 才被告知"未知动作"然后退出——白问一遍。
+if [ -n "${action}" ]; then
+    case "${action}" in
+        install|uninstall) ;;
+        *)
+            Echo_Red "未知动作：${action}"
+            Echo_Red "用法：$0 {install|uninstall} [组件名]"
+            exit 1
+            ;;
+    esac
+fi
+
 if [[ "${action}" == "" || "${action2}" == "" ]]; then
     # 只有连动作都没给时才默认 install。原来是无条件 action='install'，
     # 于是 `./addons.sh uninstall`（给了动作没给组件名）会被改写成 install：
@@ -138,15 +151,6 @@ if [[ "${action}" == "" || "${action2}" == "" ]]; then
     [ -z "${action}" ] && action='install'
     Display_Addons_Menu
 fi
-
-case "${action}" in
-    install|uninstall) ;;
-    *)
-        Echo_Red "未知动作：${action}"
-        Echo_Red "用法：$0 {install|uninstall} [组件名]"
-        exit 1
-        ;;
-esac
 Get_Dist_Name
 Select_PHP
 

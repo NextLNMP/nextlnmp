@@ -391,7 +391,10 @@ Try_Install_Pkg()
 {
     local pkg="$1" out rc
     shift
-    out=$("$@" "${pkg}" 2>&1); rc=$?
+    # 强制英文输出再匹配。下面认的是 "Unable to find a match" 这类英文原文，
+    # 而 apt/dnf 在中文/其它 locale 下会把这些话翻译掉——判定就整个失效，
+    # 所有上古包名都会掉进"真失败"分支刷一屏红字，比原来的噪音还糟。
+    out=$(LC_ALL=C LANGUAGE=C "$@" "${pkg}" 2>&1); rc=$?
     if [ ${rc} -eq 0 ]; then
         echo "${out}"
         return 0
@@ -435,6 +438,12 @@ Assert_Toolchain()
     Echo_Red " 请先修好软件源（能正常 apt-get install gcc 或 yum install gcc）再重跑安装。"
     Echo_Red " 现在继续下去只会在二十分钟后的编译环节报 'no acceptable C compiler'。"
     Echo_Red "════════════════════════════════════════════════════"
+    # 从这里 exit 会跳过 CentOS_Dependent 结尾把 /etc/yum.conf 搬回来的那一步，
+    # 用户的 exclude= 就被我们清空着留在系统上了。退出前先还原。
+    if [ -s /etc/yum.conf.nextlnmp ]; then
+        \mv -f /etc/yum.conf.nextlnmp /etc/yum.conf
+        echo "已还原 /etc/yum.conf"
+    fi
     exit 1
 }
 
@@ -983,6 +992,42 @@ Install_Libzip()
     fi
 }
 
+# fs.file-max 是【系统级】文件句柄总数。原来是无条件
+#   echo "fs.file-max=65535" >> /etc/sysctl.conf
+# 两个问题：
+#  ① 现代内核这个值默认就是 9223372036854775807（Rocky 9 真机实测），写 65535
+#     等于把全系统的句柄总数硬压到六万五；而同一段配置又给单进程发了
+#     nofile 65535 —— 一个进程就能把整台机器的句柄吃光。更麻烦的是它只写文件、
+#     不 sysctl -p，装完当下一切正常，【重启之后】才开始冒 too many open files，
+#     几乎没人会联想到是安装器改的。
+#  ② 每跑一次追加一行。真机上 /etc/sysctl.conf 里已经堆了 2 行。
+# 现在：只在当前值确实更低时才抬高，并且改写而不是追加；若内核默认已经更高，
+# 把我们以前写进去的那种精确行注释掉（只认 fs.file-max=65535 这一种写法，
+# 不碰用户自己调过的值）。
+Tune_File_Max()
+{
+    local cur target=65535
+    cur=$(sysctl -n fs.file-max 2>/dev/null)
+    case "${cur}" in
+        ''|*[!0-9]*) return 0 ;;
+    esac
+
+    if [ "${cur}" -ge "${target}" ]; then
+        if grep -q "^fs\.file-max=${target}$" /etc/sysctl.conf 2>/dev/null; then
+            sed -i "s|^fs\.file-max=${target}$|# fs.file-max=${target}  # 由 NextLNMP 注释：内核默认值(${cur})更高，写死反而是降级|" /etc/sysctl.conf
+            echo "已注释 /etc/sysctl.conf 里的 fs.file-max=${target}（内核默认 ${cur} 更高）"
+        fi
+        return 0
+    fi
+
+    if grep -q "^fs\.file-max=" /etc/sysctl.conf 2>/dev/null; then
+        sed -i "s|^fs\.file-max=.*|fs.file-max=${target}|" /etc/sysctl.conf
+    else
+        echo "fs.file-max=${target}" >> /etc/sysctl.conf
+    fi
+    sysctl -w fs.file-max=${target} >/dev/null 2>&1
+}
+
 CentOS_Lib_Opt()
 {
     if [ "${Is_64bit}" = "y" ] ; then
@@ -1026,41 +1071,6 @@ eof
 eof
     fi
 
-# fs.file-max 是【系统级】文件句柄总数。原来是无条件
-#   echo "fs.file-max=65535" >> /etc/sysctl.conf
-# 两个问题：
-#  ① 现代内核这个值默认就是 9223372036854775807（Rocky 9 真机实测），写 65535
-#     等于把全系统的句柄总数硬压到六万五；而同一段配置又给单进程发了
-#     nofile 65535 —— 一个进程就能把整台机器的句柄吃光。更麻烦的是它只写文件、
-#     不 sysctl -p，装完当下一切正常，【重启之后】才开始冒 too many open files，
-#     几乎没人会联想到是安装器改的。
-#  ② 每跑一次追加一行。真机上 /etc/sysctl.conf 里已经堆了 2 行。
-# 现在：只在当前值确实更低时才抬高，并且改写而不是追加；若内核默认已经更高，
-# 把我们以前写进去的那种精确行注释掉（只认 fs.file-max=65535 这一种写法，
-# 不碰用户自己调过的值）。
-Tune_File_Max()
-{
-    local cur target=65535
-    cur=$(sysctl -n fs.file-max 2>/dev/null)
-    case "${cur}" in
-        ''|*[!0-9]*) return 0 ;;
-    esac
-
-    if [ "${cur}" -ge "${target}" ]; then
-        if grep -q "^fs\.file-max=${target}$" /etc/sysctl.conf 2>/dev/null; then
-            sed -i "s|^fs\.file-max=${target}$|# fs.file-max=${target}  # 由 NextLNMP 注释：内核默认值(${cur})更高，写死反而是降级|" /etc/sysctl.conf
-            echo "已注释 /etc/sysctl.conf 里的 fs.file-max=${target}（内核默认 ${cur} 更高）"
-        fi
-        return 0
-    fi
-
-    if grep -q "^fs\.file-max=" /etc/sysctl.conf 2>/dev/null; then
-        sed -i "s|^fs\.file-max=.*|fs.file-max=${target}|" /etc/sysctl.conf
-    else
-        echo "fs.file-max=${target}" >> /etc/sysctl.conf
-    fi
-    sysctl -w fs.file-max=${target} >/dev/null 2>&1
-}
 
     Tune_File_Max
 
@@ -1102,12 +1112,16 @@ Deb_Lib_Opt()
     # /usr/lib 下建出两个字面名叫 libpng* 和 libjpeg* 的悬空软链接，
     # ldconfig 会对它们报错，卸载也不会清理。
     # 改为按实际存在的多架构目录来建，并且只在通配符真的匹配到文件时才建。
-    if [ "${Is_64bit}" = "y" ] && [ -d /usr/lib/aarch64-linux-gnu ]; then
-        Deb_Ln_MultiArch /usr/lib/aarch64-linux-gnu
-    elif [ "${Is_64bit}" = "y" ] && [ -d /usr/lib/x86_64-linux-gnu ]; then
-        Deb_Ln_MultiArch /usr/lib/x86_64-linux-gnu
-    elif [ "${Is_64bit}" = "y" ]; then
-        : # 未知的 64 位多架构布局，不建链接总好过建出带 * 的悬空链接
+    # 按【本机真实架构】选目录，不能"哪个目录存在就用哪个"——amd64 机器只要
+    # 开过 arm64 multiarch（dpkg --add-architecture arm64，做交叉编译时很常见），
+    # /usr/lib/aarch64-linux-gnu 就存在，那样会把异架构的 libpng/libjpeg 链进
+    # /usr/lib，ldconfig 报错、后续编译链接到错架构的库。
+    if [ "${Is_64bit}" = "y" ]; then
+        case "$(uname -m)" in
+            aarch64|arm64) Deb_Ln_MultiArch /usr/lib/aarch64-linux-gnu ;;
+            x86_64|amd64)  Deb_Ln_MultiArch /usr/lib/x86_64-linux-gnu ;;
+            *)             : ;;   # 未知布局，不建链接总好过建错
+        esac
     else
         ln -sf /usr/lib/i386-linux-gnu/libpng* /usr/lib/
         ln -sf /usr/lib/i386-linux-gnu/libjpeg* /usr/lib/

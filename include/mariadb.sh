@@ -96,8 +96,22 @@ MariaDB_Bin_Smoke_Test()
     # 服务端二进制的廉价预检：连 --version 都跑不起来说明包和本机 CPU 完全不兼容。
     # 注意：客户端工具的不兼容【测不出来】——真机实测 mariadb --version 正常，
     # 但真正连上服务端做协议交互时才 SIGILL。那条路由 MariaDB_Client_Usable 兜。
-    /usr/local/mariadb/bin/mariadbd --version >/dev/null 2>&1 && return 0
-    MariaDB_CPU_Hint "mariadbd"
+    #
+    # ⚠ 二进制名分版本：mariadbd 是 10.5 才引入的，5.5 / 10.3 / 10.4 的包里
+    # 只有 mysqld。所以必须先看哪个存在再测哪个；两个都不存在说明解包本身出了问题，
+    # 那是另一回事，不能报成「CPU 不兼容」误导用户。
+    local srv=""
+    for c in /usr/local/mariadb/bin/mariadbd /usr/local/mariadb/bin/mysqld; do
+        [ -x "${c}" ] && { srv="${c}"; break; }
+    done
+    if [ -z "${srv}" ]; then
+        Echo_Red "❌ 解包后没找到 MariaDB 服务端二进制（mariadbd / mysqld 都不在）"
+        Echo_Yellow "   这通常是下载或解包出了问题，不是 CPU 兼容性问题。"
+        Echo_Yellow "   请检查 /usr/local/mariadb/bin/ 下的内容后重试。"
+        return 1
+    fi
+    "${srv}" --version >/dev/null 2>&1 && return 0
+    MariaDB_CPU_Hint "$(basename "${srv}")"
     return 1
 }
 
@@ -115,7 +129,13 @@ MariaDB_Client_Usable()
 {
     # 客户端能否真干活，只有连上服务端才知道。被信号打死时退出码是 128+N，
     # SIGILL=4 → 132。普通的"连不上"是 1，不会误判。
-    /usr/local/mariadb/bin/mysqladmin ping >/dev/null 2>&1
+    # 同样分版本：mariadb-admin 是新名，老版本只有 mysqladmin。挑存在的那个。
+    local adm=""
+    for c in /usr/local/mariadb/bin/mysqladmin /usr/local/mariadb/bin/mariadb-admin; do
+        [ -x "${c}" ] && { adm="${c}"; break; }
+    done
+    [ -z "${adm}" ] && return 0   # 没有客户端工具就没法判，别拦安装
+    "${adm}" ping >/dev/null 2>&1
     local rc=$?
     if [ ${rc} -ge 128 ]; then
         MariaDB_CPU_Hint "mysqladmin/mariadb-admin（信号 $((rc - 128))）"

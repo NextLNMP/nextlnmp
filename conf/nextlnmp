@@ -1204,10 +1204,13 @@ Add_VHost()
     echo ""
     echo "请输入网站根目录（直接回车使用默认）："
     echo "默认目录：${vhostdir}"
-    read -e input_vhostdir || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
+    # 这个提示【回车就是采用默认值】，所以读到 EOF 等价于回车，不能像必填项
+    # 那样直接 exit ——否则用管道/重定向喂答案的自动化建站会死在这里。
+    # （EOF 护栏只该加在"空值无法继续"的必填项上。）
+    read -e input_vhostdir || input_vhostdir=""
     while [ "${input_vhostdir}" != "" ] && ! Check_VHost_Dir "${input_vhostdir}"; do
         echo "请重新输入网站根目录（直接回车使用默认 /home/wwwroot/${domain}）："
-        read -e input_vhostdir || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
+        read -e input_vhostdir || { input_vhostdir=""; break; }
     done
     if [ "${input_vhostdir}" != "" ]; then
         vhostdir="${input_vhostdir}"

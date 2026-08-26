@@ -1333,7 +1333,10 @@ EOF
 Verify_DB_Password()
 {
     Check_DB
-    if [ "${MySQL_Bin}" = "None" ]; then
+    # 注意：main.sh 版的 Check_DB 在"没找到"分支里设的是 Is_MySQL / DB_Name，
+    # 不设 MySQL_Bin（CLI 版才设）。之前照抄 CLI 的写法判 MySQL_Bin="None"，
+    # 那个条件永远不成立，护栏是死的。
+    if [ "${DB_Name}" = "None" ] || [ "${Is_MySQL}" = "None" ]; then
         Echo_Red "没有检测到已安装的 MySQL/MariaDB，无法验证密码。"
         exit 1
     fi

@@ -162,10 +162,10 @@ Add_VHost()
     stty ${OLDCONFIG}
 
     echo "Create Virtul Host directory......"
-    mkdir -p ${vhostdir}
+    mkdir -p "${vhostdir}"
     echo "set permissions of Virtual Host directory......"
-    chmod -R 755 ${vhostdir}
-    chown -R www:www ${vhostdir}
+    chmod -R 755 "${vhostdir}"
+    chown -R www:www "${vhostdir}"
 
     Add_VHost_Config
 
@@ -191,9 +191,15 @@ Add_VHost()
         echo "Enable log: yes"
     fi
     if [ "${create_database}" == "y" ]; then
-        echo "Database username: ${database_name}"
-        echo "Database userpassword: ${mysql_password}"
-        echo "Database Name: ${database_name}"
+        # 按真实结果打印：Add_Database 失败时不能再吐出一套不存在的凭据
+        if [ "${Add_DB_Result}" = "ok" ]; then
+            echo "Database username: ${database_name}"
+            echo "Database userpassword: ${mysql_password}"
+            echo "Database Name: ${database_name}"
+        else
+            Echo_Red "Database: creation FAILED, the credentials below are NOT usable."
+            Echo_Red "Retry with: nextlnmp database add"
+        fi
     else
         echo "Create database: no"
     fi

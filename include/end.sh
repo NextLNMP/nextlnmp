@@ -109,7 +109,14 @@ Add_LAMP_Startup()
 Svc_Alive()
 {
     local proc="$1" unit="$2"
-    pgrep -x "${proc}" >/dev/null 2>&1 && return 0
+    # pgrep 来自 procps，绝大多数发行版都有，但最小化镜像/容器里可能没装。
+    # 探测不到就走 Print_Failed_Info，而那条路第一件事是 rm -f /bin/nextlnmp ——
+    # 拿不准的时候把装好的 CLI 删掉，比不判还糟。所以没有 pgrep 时回退到 ps。
+    if command -v pgrep >/dev/null 2>&1; then
+        pgrep -x "${proc}" >/dev/null 2>&1 && return 0
+    else
+        ps -eo comm= 2>/dev/null | grep -qx "${proc}" && return 0
+    fi
     if [ -n "${unit}" ] && command -v systemctl >/dev/null 2>&1; then
         systemctl is-active --quiet "${unit}" && return 0
     fi
@@ -129,6 +136,9 @@ Check_Nginx_Files()
         Echo_Green "Nginx: OK"
         isNginx="ok"
     fi
+    # 明确返回成败。Install_Only_Nginx 以本函数结尾，nextlnmp.sh 取的
+    # PIPESTATUS[0] 就是它的返回值——不显式 return，单装 nginx 装挂了也报 0。
+    [ "${isNginx}" = "ok" ]
 }
 
 Check_Caddy_Files()
@@ -177,7 +187,10 @@ Check_PHP_Files()
     if [ "${Stack}" = "nextlnmp" ]; then
         if [[ ! -s /usr/local/php/sbin/php-fpm || ! -s /usr/local/php/etc/php.ini || ! -s /usr/local/php/bin/php ]]; then
             Echo_Red "Error: PHP install failed."
-        elif ! Svc_Alive php-fpm php-fpm; then
+        elif ! Svc_Alive php-fpm php-fpm && ! Svc_Alive php-cgi php-fpm; then
+            # PHP 5.2 的 FPM 是给 php-cgi 打补丁实现的，守护进程名叫 php-cgi
+            # 而不是 php-fpm，也没有 php-fpm.service 可供 systemctl 兜底。
+            # 只认 php-fpm 会把装好的 5.2 机器报成安装失败。
             Echo_Red "Error: PHP-FPM installed but not running."
         else
             Echo_Green "PHP: OK"
