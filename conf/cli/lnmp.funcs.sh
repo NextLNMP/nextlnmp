@@ -335,16 +335,27 @@ EOF
     else
         echo "访问日志：/home/wwwlogs/${al_name}.log"
     fi
+    # 按【真实结果】打印，不按用户当初的 y/n。原来失败也照样吐出一套
+    # 不存在的凭据，用户拿去装 WordPress 才发现连不上，完全想不到问题出在建站阶段。
     if [ "${create_database}" == "y" ]; then
-        echo "数据库名：${database_name}"
-        echo "数据库用户：${database_name}"
-        echo "数据库密码：${mysql_password}"
+        if [ "${Add_DB_Result}" = "ok" ]; then
+            echo "数据库名：${database_name}"
+            echo "数据库用户：${database_name}"
+            echo "数据库密码：${mysql_password}"
+        else
+            Echo_Red "数据库：创建失败（上面有具体报错），以下凭据【不可用】"
+            Echo_Red "  想重试：nextlnmp database add"
+        fi
     else
         echo "创建数据库：否"
     fi
     if [ "${create_ftp}" == "y" ]; then
-        echo "FTP 用户：${ftp_account_name}"
-        echo "FTP 密码：${ftp_account_password}"
+        if [ "${Add_FTP_Result}" = "ok" ]; then
+            echo "FTP 用户：${ftp_account_name}"
+            echo "FTP 密码：${ftp_account_password}"
+        else
+            Echo_Red "FTP：创建失败（账号可能已存在），以下凭据【不可用】"
+        fi
     fi
     if [ "${create_ssl}" == "y" ]; then
         echo "SSL 证书：已申请"

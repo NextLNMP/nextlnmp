@@ -241,6 +241,7 @@ Sleep_Sec()
 
 Add_Database()
 {
+    Add_DB_Result=""      # 每次调用先清空，别让上一次的结果残留下来
     # MySQL 8.x（含 8.4）已删除 GRANT ... IDENTIFIED BY 旧语法；MariaDB 版本号不以 8 开头，不受影响
     if echo "${MySQL_Ver}" | grep -Eqi '^8\.';then
         Nlx_Tmp_Init
@@ -270,12 +271,23 @@ EOF
 
     fi
     ${MySQL_Bin} --defaults-file=~/.my.cnf < ${NLX_TMPDIR}/.add_mysql.sql
-    [ $? -eq 0 ] && echo "Add database Successfully." || echo "Add database failed!"
+    # 把结果记下来。原来只 echo 一行就完事，收尾面板照样按用户当初的 y/n
+    # 打印"数据库名/用户/密码"三行——库根本没建，用户却拿着这套凭据去装 WordPress。
+    # 最典型的触发：两个长域名截断后自动库名同名，第二次建站 CREATE USER 报错，
+    # mysql 客户端没带 --force 会在第一条错误处整体中止。
+    if [ $? -eq 0 ]; then
+        echo "Add database Successfully."
+        Add_DB_Result="ok"
+    else
+        Echo_Red "Add database failed!"
+        Add_DB_Result="fail"
+    fi
     rm -f ${NLX_TMPDIR}/.add_mysql.sql
 }
 
 Add_Ftp()
 {
+    Add_FTP_Result=""      # 每次调用先清空，别让上一次的结果残留下来
     www_uid=`id -u www`
     www_gid=`id -g www`
     if [ ! -d "${vhostdir}" ]; then
@@ -287,7 +299,13 @@ ${ftp_account_password}
 ${ftp_account_password}
 EOF
     /usr/local/pureftpd/bin/pure-pw useradd ${ftp_account_name} -f /usr/local/pureftpd/etc/pureftpd.passwd -u ${www_uid} -g ${www_gid} -d ${vhostdir} -m < /tmp/pass${ftp_account_name}
-    [ $? -eq 0 ] && echo "Created FTP User: ${ftp_account_name} Successfully." || echo "FTP User: ${ftp_account_name} already exists!"
+    if [ $? -eq 0 ]; then
+        echo "Created FTP User: ${ftp_account_name} Successfully."
+        Add_FTP_Result="ok"
+    else
+        Echo_Red "FTP User: ${ftp_account_name} already exists!"
+        Add_FTP_Result="fail"
+    fi
     rm -f /tmp/pass${ftp_account_name}
 }
 
@@ -607,6 +625,23 @@ List_VHost()
 Add_SSL()
 {
     if [ "${ssl_choice}" == "1" ]; then
+        # 「自有证书」这条分支原来直接调 Create_SSL_Config，而后者是 `cat >>`
+        # 追加。配置文件不存在时（LNMPA/LAMP 的 `nextlnmp ssl add` 是主路径，
+        # 用户手输域名、还没 vhost add 过，或者域名打错一个字母），追加就等于
+        # 新建：整个文件里只有一个 443 server、一个 80 server 都没有。
+        # 接着默认开启的 301 以"文件里第一个 access_log"为锚点插入跳转，
+        # 而那个 access_log 此时就在 443 块里 —— HTTPS 请求被 301 到自己，
+        # 浏览器直接 ERR_TOO_MANY_REDIRECTS，站点整个打不开。
+        # 分支 2-4 早就有这道补建，只有这条漏了。
+        if [ ! -s "${Vhost_Dir}/${domain}.conf" ]; then
+            if [ -z "${vhostdir}" ]; then
+                Echo_Red "还没有 ${domain} 的站点配置，也没有网站根目录信息。"
+                Echo_Red "请先用 nextlnmp vhost add 建站，再来配置 SSL。"
+                exit 1
+            fi
+            Echo_Yellow "未找到 ${domain} 的站点配置，先补建 HTTP 站点再配置 SSL。"
+            Add_VHost_Config
+        fi
         Create_SSL_Config
     elif echo "${ssl_choice}" | grep -Eqi "^[2-4]$"; then
         letsdomain=""

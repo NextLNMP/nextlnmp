@@ -127,3 +127,19 @@ lnmp:Del_Database
 # 现在：先判 MySQL_Bin=None 直接退出；连接类错误明确指出「不是密码问题」并给
 # 出启动命令后退出；只有真的认证失败才重问；read 补 EOF 出口。
 lnmp:Verify_DB_Password
+
+# ---- 建站/SSL：不再假成功，自有证书分支不再造出无限重定向 ----
+# Add_Database / Add_Ftp 现在把成败记进 Add_DB_Result / Add_FTP_Result，
+# 收尾面板按真实结果打印。原来面板只看用户当初的 y/n：库没建成也照样吐出
+# "数据库名/用户/密码"三行，用户拿去装 WordPress 才发现连不上。
+# Add_SSL 的「自有证书」分支补上 :80 vhost 的存在性检查（分支 2-4 早就有）：
+# 配置文件不存在时 Create_SSL_Config 的 `cat >>` 等于新建一个只有 443 的
+# server，叠加默认开启的 301 之后 HTTPS 请求被 301 到自己，
+# 浏览器 ERR_TOO_MANY_REDIRECTS。
+lnmp:Add_Ftp
+lnmpa:Add_Ftp
+lamp:Add_Ftp
+lnmp:Add_SSL
+lnmpa:Add_SSL
+lamp:Add_SSL
+lnmp:Add_Database
