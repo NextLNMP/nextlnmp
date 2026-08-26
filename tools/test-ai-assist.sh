@@ -35,5 +35,29 @@ block "systemctl restart nginx" 放行
 [ "$(AI_JStr 'a"b')" = 'a\"b' ] || { echo "  ✗ 转义：双引号"; fail=1; }
 [ "$(AI_JStr "$(printf 'a\nb')")" = 'a b' ] || { echo "  ✗ 转义：换行"; fail=1; }
 
-[ $fail -eq 0 ] && echo "✓ AI 客户端安全闸门测试全部通过（白名单 15 例 / 阻断 13 例 / 转义 2 例）"
+
+# ---- 审计发现的绕过（2026-08-27 网关专项审计）----
+# 这三条以前都能溜过去：--no-preserve-root 把字符串匹配拆开、引号把 "/" 藏起来、
+# 多目标写法让"目录必须在行尾"的规则落空。
+block "rm -rf --no-preserve-root /" 拦截
+block 'rm -rf "/"' 拦截
+block "rm -rf /etc /usr" 拦截
+block "rm -fr --no-preserve-root /" 拦截
+
+# ---- 控制字符：显示与执行不一致 ----
+# 根源是展示走 Color_Text 的 echo -e，模型在 fix 里塞一个回车符，
+# 终端上的确认行就被覆盖成另一条无害命令，而 eval 跑的是真实内容。
+if AI_Cmd_Printable "$(printf 'touch /tmp/x ;#\r  建议执行：systemctl status nginx')"; then
+    echo "  ✗ 控制字符：带回车符的命令未被拦截"; fail=1
+fi
+if AI_Cmd_Printable "$(printf 'a\nFIX: rm -rf /')"; then
+    echo "  ✗ 控制字符：带换行的命令未被拦截（可伪造协议行）"; fail=1
+fi
+AI_Cmd_Printable "systemctl status nginx" || { echo "  ✗ 控制字符：正常命令被误拦"; fail=1; }
+AI_Cmd_Printable "ls -la /home/wwwroot/中文站点" || { echo "  ✗ 控制字符：含中文的正常命令被误拦"; fail=1; }
+
+# ---- 反斜杠转义（原写法 s/[\]/\\/g 是空操作）----
+[ "$(AI_JStr 'a\\\\b')" = 'a\\\\\\\\b' ] || { echo "  ✗ 转义：反斜杠未被转义"; fail=1; }
+
+[ $fail -eq 0 ] && echo "✓ AI 客户端安全闸门测试全部通过（白名单 15 / 阻断 17 / 控制字符 4 / 转义 3 例）"
 exit $fail

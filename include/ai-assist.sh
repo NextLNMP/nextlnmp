@@ -40,20 +40,39 @@ curl -sI( -m [0-9]+)? https://mirror\.nextlnmp\.cn/[A-Za-z0-9./_-]*\
 )$" <<< "${cmd}"
 }
 
+# 命令里出现控制字符一律不收。根源是显示用的 Echo_Yellow 走 Color_Text 的
+# `echo -e`，会解释反斜杠转义：模型只要在 fix 里塞一个回车符，终端上的确认行
+# 就被覆盖成另一条无害命令，而用户按 y 之后 eval 跑的是真实内容——
+# 「你看到什么就执行什么」这个前提被打破，y/N 确认形同虚设。本机已复现。
+# 同理换行符可以伪造出额外的 FIX:/DIAG:/DONE 协议行，绕过白名单与危险模式过滤。
+AI_Cmd_Printable()
+{
+    # 内嵌换行 grep 是看不见的（它按行切分），必须单独数一次换行符。
+    [ "$(printf '%s' "$1" | wc -l)" -gt 0 ] && return 1
+    printf '%s' "$1" | LC_ALL=C grep -q '[[:cntrl:]]' && return 1
+    return 0
+}
+
 # 灾难命令硬阻断：即使用户按了 y 也不执行（网关幻觉或被篡改时的最后一道闸）
 AI_Cmd_Catastrophic()
 {
-    local c="$1"
-    case "${c}" in
+    local c="$1" n
+    # 先归一化再判：去掉引号、把连续空白压成一个。否则 rm -rf "/" 这种
+    # 只要插一个引号就能从字符串匹配里溜过去。
+    n=$(printf '%s' "${c}" | tr -d "\"'" | tr -s '[:space:]' ' ')
+    case "${n}" in
         *"rm -rf /"|*"rm -rf /"[!a-zA-Z0-9]*|*"rm -fr /"|*"rm -fr /"[!a-zA-Z0-9]*) return 0 ;;
     esac
-    grep -Eq "(^|[[:space:]])(mkfs([.][a-z0-9]+)?|fdisk|sgdisk|parted|shutdown|reboot|halt|userdel|passwd)([[:space:]]|$)" <<< "${c}" && return 0
+    # rm 带递归/强制标志、且参数里出现裸 / 或裸系统目录 —— 不要求它在行尾，
+    # 否则 `rm -rf /etc /usr` 这种多目标写法会漏掉。
+    printf '%s' "${n}" | grep -Eq "(^|[[:space:]|;&])rm([[:space:]]+-[-a-zA-Z]+)*[[:space:]]+([^[:space:]]+[[:space:]]+)*(/|/etc|/usr|/var|/home|/boot|/bin|/sbin|/lib|/lib64|/opt|/root|/srv)(/\*)?([[:space:]]|$)" && return 0
+    grep -Eq "(^|[[:space:]])(mkfs([.][a-z0-9]+)?|fdisk|sgdisk|parted|shutdown|reboot|halt|userdel|passwd)([[:space:]]|$)" <<< "${n}" && return 0
     # 只拦「裸系统目录」本身（/etc、/usr/ 、/root/*），放行更深的合法路径如 /usr/local/php、/root/nextlnmp/src/xxx
-    grep -Eq "rm[[:space:]]+(-[a-zA-Z]+[[:space:]]+)*(/etc|/usr|/var|/home|/boot|/bin|/sbin|/lib|/root)(/\*|/)?[[:space:]]*$" <<< "${c}" && return 0
-    grep -Eq "dd[[:space:]].*of=/dev/" <<< "${c}" && return 0
-    grep -Eq ">[[:space:]]*/dev/(sd|nvme|vd)" <<< "${c}" && return 0
-    grep -Eq "chmod[[:space:]]+-R[[:space:]]+777[[:space:]]+/([[:space:]]|$)" <<< "${c}" && return 0
-    grep -Eq ":\(\)\{.*\};:" <<< "${c}" && return 0
+    grep -Eq "rm[[:space:]]+(-[a-zA-Z]+[[:space:]]+)*(/etc|/usr|/var|/home|/boot|/bin|/sbin|/lib|/root)(/\*|/)?[[:space:]]*$" <<< "${n}" && return 0
+    grep -Eq "dd[[:space:]].*of=/dev/" <<< "${n}" && return 0
+    grep -Eq ">[[:space:]]*/dev/(sd|nvme|vd)" <<< "${n}" && return 0
+    grep -Eq "chmod[[:space:]]+-R[[:space:]]+777[[:space:]]+/([[:space:]]|$)" <<< "${n}" && return 0
+    grep -Eq ":\(\)\{.*\};:" <<< "${n}" && return 0
     return 1
 }
 
@@ -72,7 +91,7 @@ AI_B64() { base64 2>/dev/null | tr -d '\n'; }
 
 # JSON 字符串转义（只用于我们自己产生的短字段）
 AI_JStr() { printf '%s' "$1" | tr -d '\015' | tr '
-	' '  ' | sed -e 's/[\]/\\/g' -e 's/"/\\"/g'; }
+	' '  ' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
 
 AI_Post()
 {
@@ -123,11 +142,17 @@ AI_Rescue()
         while IFS= read -r fix; do
             [ -z "${fix}" ] && continue
             echo ""
+            if ! AI_Cmd_Printable "${fix}"; then
+                Echo_Red "  ⛔ 命令含控制字符，拒绝执行（显示可能与实际执行不一致）"
+                continue
+            fi
             if AI_Cmd_Catastrophic "${fix}"; then
                 Echo_Red "  ⛔ 已拦截高危命令，拒绝执行：${fix}"
                 continue
             fi
-            Echo_Yellow "  建议执行：${fix}"
+            # 用 printf 展示，不走 Echo_Yellow —— 后者经 Color_Text 的 echo -e，
+            # 会解释反斜杠转义，等于把「你看到什么就执行什么」这个前提交出去。
+            printf '  \033[0;33m建议执行：\033[0m%s\n' "${fix}"
             AI_Read yn "  要现在执行吗？[y/N] "
             case "${yn}" in
                 [yY]) eval "${fix}" ;;
@@ -142,6 +167,10 @@ AI_Rescue()
         local cmd out
         while IFS= read -r cmd; do
             [ -z "${cmd}" ] && continue
+            if ! AI_Cmd_Printable "${cmd}"; then
+                Echo_Yellow "  （已拒绝含控制字符的命令）"
+                continue
+            fi
             if ! AI_Cmd_Allowed "${cmd}"; then
                 Echo_Yellow "  （已拒绝不在只读白名单内的命令：${cmd}）"
                 continue
