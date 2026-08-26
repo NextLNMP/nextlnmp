@@ -1,0 +1,60 @@
+# 参数化保真校验的「有意升级」申报（阶段 2）
+# 这些栈的这些函数与重构前不同，因为它们统一到了 lnmp 版——lnmp 早年修过的拼写、
+# 补过的中文交互与自动化功能，nextlnmpa / lamp 从未同步到，属于复制粘贴漂移欠债。
+# 未列在这里的偏差 = CI 红灯。
+
+# ---- 全栈：Add_SSL_Menu 增加 Apache 证书链提示的条件分支 ----
+# lamp 原版在此处是死循环（回车跳过时设了 Conf_SSLChain 却没 break，用户出不来），一并修掉。
+lnmp:Add_SSL_Menu
+lnmpa:Add_SSL_Menu
+lamp:Add_SSL_Menu
+
+# ---- 拼写与文案修正（lnmp 早已修正，另两栈沿用错版）----
+# Sucessfully -> Successfully / diretcory -> directory / Virtul -> Virtual
+# 用法提示：lamp 原写「Usage: lnmp ftp」但实际命令是 nextlnmp；lnmpa 的 database 子命令写成 mysql
+lnmpa:Add_Database
+lnmpa:Add_Ftp
+lnmpa:Edit_Database
+lnmpa:List_Database
+lnmpa:List_Ftp
+lnmpa:Del_Database
+lnmpa:Edit_Ftp
+lnmpa:Del_Ftp
+lnmpa:Function_Ftp
+lnmpa:Function_Vhost
+lnmpa:Function_Database
+lamp:Add_Database
+lamp:Add_Ftp
+lamp:Edit_Database
+lamp:List_Database
+lamp:List_Ftp
+lamp:Del_Database
+lamp:Edit_Ftp
+lamp:Del_Ftp
+lamp:Function_Ftp
+lamp:Function_Vhost
+lamp:Function_Database
+
+# ---- 功能补齐：lnmp 独有的中文交互与自动化，补给 lnmpa / lamp ----
+# Check_Acme_EMail    : 默认邮箱 + 中文提示（原版强制手输）
+# Return_301_Menu     : HTTP->HTTPS 自动跳转询问（中文，默认开）
+# Verify_DB_Password  : 自动读取 /root/.nextlnmp_db_password（由 include/main.sh 写入，全栈通用）
+# Add_Database_Menu   : 按域名自动生成库名/用户名，回车即用
+# List_VHost          : 中文站点列表文案
+lnmpa:Check_Acme_EMail
+lnmpa:Return_301_Menu
+lnmpa:Verify_DB_Password
+lnmpa:Add_Database_Menu
+lnmpa:List_VHost
+lamp:Check_Acme_EMail
+lamp:Return_301_Menu
+lamp:Verify_DB_Password
+lamp:Add_Database_Menu
+lamp:List_VHost
+
+# ---- 路径参数化后的等价渲染差异（证书目录/vhost 目录随栈切换）----
+lnmpa:Add_Dns_SSL
+lamp:Add_SSL
+lamp:Add_Dns_SSL
+lamp:Add_Dns_SSL_Only
+lamp:Install_Check_Acme.sh

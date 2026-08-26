@@ -1,5 +1,4 @@
-
-
+#@ lnmpa 栈：顶层分发（脚本入口）
 Check_DB
 
 case "${arg1}" in

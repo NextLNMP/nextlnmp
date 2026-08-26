@@ -7,3 +7,7 @@
 conf/nextlnmp:__toplevel__
 conf/nextlnmpa:__toplevel__
 conf/nextlamp:__toplevel__
+
+# ---- 阶段 2 起：conf/cli/common.sh 里的公共函数不再由本校验器把关 ----
+# 它们改由 tools/cli-render-check.py 逐栈渲染后与基线逐字节比对（更强的证明），
+# 有意升级在 tools/cli-upgrades.txt 申报。本文件继续把关栈专属函数与顶层代码。

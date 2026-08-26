@@ -74,10 +74,20 @@ def load_allow(path):
     return allow
 
 
+def common_names():
+    """conf/cli/common.sh 里的函数由 cli-render-check.py 逐栈渲染校验，这里不重复把关。"""
+    p = 'conf/cli/common.sh'
+    if not os.path.exists(p):
+        return set()
+    return set(FUNC_RE.findall(io.open(p, encoding='utf-8').read()) and
+               [m.group(1) for m in FUNC_RE.finditer(io.open(p, encoding='utf-8').read())])
+
+
 def check(baseline_path, allow_path=None):
     base = json.load(io.open(baseline_path, encoding='utf-8'))
     cur = fingerprint()
     allow = load_allow(allow_path)
+    delegated = common_names()
     problems = []
     for path, b in base.items():
         c = cur.get(path)
@@ -85,6 +95,8 @@ def check(baseline_path, allow_path=None):
             problems.append('%s: 文件消失' % path)
             continue
         for name, h in b['functions'].items():
+            if name in delegated:
+                continue
             key = '%s:%s' % (path, name)
             ch = c['functions'].get(name)
             if ch is None:
@@ -93,6 +105,8 @@ def check(baseline_path, allow_path=None):
             elif ch != h and key not in allow:
                 problems.append('%s 函数体变化（未申报）' % key)
         for name in c['functions']:
+            if name in delegated:
+                continue
             key = '%s:%s' % (path, name)
             if name not in b['functions'] and key not in allow:
                 problems.append('%s 新增函数（未申报）' % key)
@@ -104,8 +118,8 @@ def check(baseline_path, allow_path=None):
             print('   ' + p)
         return 1
     total = sum(v['func_count'] for v in cur.values())
-    print('✓ 等价性校验通过（%d 个函数 + %d 个顶层块，申报豁免 %d 项）'
-          % (total, len(cur), len(allow)))
+    print('✓ 等价性校验通过（%d 个函数 + %d 个顶层块，申报豁免 %d 项，公共函数 %d 个交由渲染校验器把关）'
+          % (total, len(cur), len(allow), len(delegated)))
     return 0
 
 
