@@ -1,254 +1,38 @@
-#!/bin/bash
-export PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+# ===== lamp 栈专属函数 =====
 
-# Check if user is root
-if [ $(id -u) != "0" ]; then
-    echo "Error: You must be root to run this script!"
-    exit 1
-else
-    if env |grep -q SUDO; then
-        acme_sh_sudo="-f"
-    fi
-fi
-
-echo "+-------------------------------------------+"
-echo "|    nextLNMP 服务器管理工具 by 静水流深    |"
-echo "+-------------------------------------------+"
-echo "|              https://nextlnmp.com             |"
-echo "+-------------------------------------------+"
-
-arg1=$1
-arg2=$2
-
-
-# ===== NextLNMP CLI 公共函数库（由 tools/build-cli.sh 拼装，勿直接编辑生成物）=====
-
-Check_DB()
+lamp_start()
 {
-    if [[ -s /usr/local/mariadb/bin/mysql && -s /usr/local/mariadb/bin/mysqld_safe && -s /etc/my.cnf ]]; then
-        MySQL_Bin="/usr/local/mariadb/bin/mysql"
-        MySQL_Ver=`/usr/local/mariadb/bin/mysql_config --version`
-    elif [[ -s /usr/local/mysql/bin/mysql && -s /usr/local/mysql/bin/mysqld_safe && -s /etc/my.cnf ]]; then
-        MySQL_Bin="/usr/local/mysql/bin/mysql"
-        MySQL_Ver=`/usr/local/mysql/bin/mysql_config --version`
-    else
-        MySQL_Bin="None"
-    fi
-}
-
-Make_TempMycnf()
-{
-    cat >~/.my.cnf<<EOF
-[client]
-user=root
-password='$1'
-EOF
-    chmod 600 ~/.my.cnf
-}
-
-Do_Query()
-{
-    echo "$1" >/tmp/.mysql.tmp
-    chmod 600 /tmp/.mysql.tmp
-    Check_DB
-    ${MySQL_Bin} --defaults-file=~/.my.cnf </tmp/.mysql.tmp
-    return $?
-}
-
-TempMycnf_Clean()
-{
-    if [ -s ~/.my.cnf ]; then
-        rm -f ~/.my.cnf
-    fi
-    if [ -s /tmp/.mysql.tmp ]; then
-        rm -f /tmp/.mysql.tmp
-    fi
-}
-
-Enter_Database_Name()
-{
-    while :;do
-        Echo_Yellow "Enter database name: "
-        read database_name
-        if [ "${database_name}" == "" ]; then
-            Echo_Red "Database Name can't be empty!"
-        else
-            break
-        fi
-    done
-}
-
-Enter_Ftp_Name()
-{
-    while :;do
-        Echo_Yellow "Enter ftp account name: "
-        read ftp_account_name
-        if [ "${ftp_account_name}" == "" ]; then
-            Echo_Red "FTP account name can't be empty!"
-        else
-            break
-        fi
-    done
-}
-
-Add_Ftp_Menu()
-{
-    Enter_Ftp_Name
-    while :;do
-        Echo_Yellow "Enter password for ftp account ${ftp_account_name}: "
-        read ftp_account_password
-        if [ "${ftp_account_password}" == "" ]; then
-            Echo_Red "FTP password can't be empty!"
-        else
-            break
-        fi
-    done
-    if [ "${vhostdir}" == "" ]; then
-        while :;do
-            Echo_Yellow "Enter directory for ftp account ${ftp_account_name}: "
-            read vhostdir
-            if [ "${vhostdir}" == "" ]; then
-                Echo_Red "Directory can't be empty!"
-            else
-                break
-            fi
-        done
-    fi
-}
-
-Check_Pureftpd()
-{
-    if [ ! -f /usr/local/pureftpd/sbin/pure-ftpd ]; then
-        Echo_Red "Pureftpd was not installed!"
-        exit 1
-    fi
-}
-
-Show_Ftp()
-{
-    List_Ftp
-    Enter_Ftp_Name
-    echo "Your ftp account ${ftp_account_name} details:"
-    /usr/local/pureftpd/bin/pure-pw show ${ftp_account_name}
-    [ $? -eq 0 ] && echo "Ok." || echo "failed."
-}
-
-Add_DNS_SSL_Select_Menu()
-{
-    echo "1: Use Let's Encrypt to create SSL Certificate and Key"
-    echo "2: Use ZeroSSL to create SSL Certificate and Key"
-        while :;do
-        Echo_Yellow "Enter 1 or 2: "
-        read dns_ssl_choice
-        if [[ "${dns_ssl_choice}" =~ ^1|2$ ]]; then
-            Check_Acme_EMail
-            break
-        else
-            Echo_Red "Please Enter 1 or 2!"
-        fi
-    done
-}
-
-Add_DNS_SSL_Only_Info_Menu()
-{
-    Add_DNS_SSL_Select_Menu
-
-    domain=""
-    while :;do
-        Echo_Yellow "Please enter domain(example: nextlnmp.com): "
-        read domain
-        if [ "${domain}" != "" ] && [[ "$domain" = "${domain%[[:space:]]*}" ]]; then
-            echo " Your domain: ${domain}"
-            break
-        else
-            Echo_Red "Domain name can't be empty or contain spaces!"
-        fi
-    done
-
-    Echo_Yellow "Enter more domain name(example: *.nextlnmp.com): "
-    read moredomain
-    if [ "${moredomain}" != "" ]; then
-        echo " domain list: ${moredomain}"
-    fi
-}
-
-Color_Text()
-{
-  echo -e " \e[0;$2m$1\e[0m"
-}
-
-Echo_Red()
-{
-  echo $(Color_Text "$1" "31")
-}
-
-Echo_Green()
-{
-  echo $(Color_Text "$1" "32")
-}
-
-Echo_Yellow()
-{
-  echo -n $(Color_Text "$1" "33")
-}
-
-Echo_Blue()
-{
-  echo $(Color_Text "$1" "34")
-}
-
-Sleep_Sec()
-{
-    seconds=$1
-    while [ "${seconds}" -ge "0" ];do
-      echo -ne "\r     \r"
-      echo -n ${seconds}
-      seconds=$(($seconds - 1))
-      sleep 1
-    done
-    echo -ne "\r"
-}
-
-# ===== lnmpa 栈专属函数 =====
-
-lnmpa_start()
-{
-    echo "Starting LNMPA..."
-    /etc/init.d/nginx start
-    /etc/init.d/mysql start
+    echo "Starting LAMP..."
     /etc/init.d/httpd start
+    /etc/init.d/mysql start
 }
 
-lnmpa_stop()
+lamp_stop()
 {
-    echo "Stoping LNMPA..."
-    /etc/init.d/nginx stop
-    /etc/init.d/mysql stop
+    echo "Stoping LAMP..."
     /etc/init.d/httpd stop
+    /etc/init.d/mysql stop
 }
 
-lnmpa_reload()
+lamp_reload()
 {
-    echo "Reload LNMPA..."
-    /etc/init.d/nginx reload
-    /etc/init.d/mysql reload
+    echo "Reload LAMP..."
     /etc/init.d/httpd graceful
+    /etc/init.d/mysql reload
 }
 
-lnmpa_kill()
+lamp_kill()
 {
-    echo "Kill nginx,apache,mysql process..."
-    killall nginx
+    echo "Kill apache,mysql process..."
     killall httpd
     killall mysqld
     echo "done."
 }
 
-lnmpa_status()
+lamp_status()
 {
-    /etc/init.d/nginx status
-    /etc/init.d/mysql status
     /etc/init.d/httpd status
+    /etc/init.d/mysql status
 }
 
 Function_Vhost()
@@ -267,7 +51,7 @@ Function_Vhost()
             exit 1
             ;;
         *)
-            echo "Usage: nextlnmp vhost {add|list|del}"
+            echo "Usage: lnmp vhost {add|list|del}"
             exit 1
             ;;
 esac
@@ -293,7 +77,7 @@ Function_Database()
             exit 1
             ;;
         *)
-            echo "Usage: nextlnmp mysql {add|list|del}"
+            echo "Usage: lnmp mysql {add|list|del}"
             exit 1
             ;;
 esac
@@ -322,7 +106,7 @@ Function_Ftp()
             Show_Ftp
             ;;
         *)
-            echo "Usage: nextlnmp ftp {add|list|del}"
+            echo "Usage: lnmp ftp {add|list|del}"
             exit 1
             ;;
 esac
@@ -330,47 +114,8 @@ esac
 
 Add_VHost_Config()
 {
-    cat >"/usr/local/nginx/conf/vhost/${domain}.conf"<<EOF
-server
-    {
-        listen 80;
-        #listen [::]:80;
-        server_name ${domain} ${moredomain};
-        index index.html index.htm index.php default.html default.htm default.php;
-        root  ${vhostdir};
-
-        #error_page   404   /404.html;
-
-        # Deny access to PHP files in specific directory
-        #location ~ /(wp-content|uploads|wp-includes|images)/.*\.php$ { deny all; }
-
-        include proxy-pass-php.conf;
-
-        location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
-        {
-            expires      30d;
-        }
-
-        location ~ .*\.(js|css)?$
-        {
-            expires      12h;
-        }
-
-        location ~ /.well-known {
-            allow all;
-        }
-
-        location ~ /\.
-        {
-            deny all;
-        }
-
-        ${al}
-    }
-EOF
-
     cat >"/usr/local/apache/conf/vhost/${domain}.conf"<<EOF
-<VirtualHost *:88>
+<VirtualHost *:80>
 ServerAdmin ${email}
 php_admin_value open_basedir "${vhostdir}:/tmp/:/var/tmp/:/proc/"
 DocumentRoot "${vhostdir}"
@@ -398,17 +143,6 @@ EOF
     ServerAlias ${moredomain}" /usr/local/apache/conf/vhost/${domain}.conf
     fi
 
-    if [ "${enable_ipv6}" == "y" ]; then
-        sed -i 's/#listen \[::\]:80;/listen \[::\]:80;/g' /usr/local/nginx/conf/vhost/${domain}.conf
-    fi
-
-    echo "Test Nginx configure file......"
-    /usr/local/nginx/sbin/nginx -t
-    echo ""
-    echo "Reload Nginx......"
-    /usr/local/nginx/sbin/nginx -s reload
-        echo "Reload Apache..."
-        /etc/init.d/httpd reload
     echo "Test Apache configure file..."
     /etc/init.d/httpd configtest
     echo "Restart Apache..."
@@ -422,7 +156,7 @@ Add_VHost()
         Echo_Yellow "Please enter domain(example: www.nextlnmp.com): "
         read domain
         if [ "${domain}" != "" ] && [[ "$domain" = "${domain%[[:space:]]*}" ]]; then
-            if [[ -f "/usr/local/nginx/conf/vhost/${domain}.conf" || -f "/usr/local/apache/conf/vhost/${domain}.conf" ]]; then
+            if [ -f "/usr/local/apache/conf/vhost/${domain}.conf" ]; then
                 Echo_Red " ${domain} is exist,please check!"
                 exit 1
             else
@@ -434,7 +168,7 @@ Add_VHost()
         fi
     done
 
-    Echo_Yellow "Enter more domain name(example: nextlnmp.com sub.nextlnmp.com): "
+    Echo_Yellow "Enter more domain name(example: nextlnmp.com *.nextlnmp.com): "
     read moredomain
     if [ "${moredomain}" != "" ]; then
         echo " domain list: ${moredomain}"
@@ -453,26 +187,14 @@ Add_VHost()
     read access_log
     if [[ "${access_log}" == "n" || "${access_log}" == "" ]]; then
         echo "Disable access log."
-        al="access_log off;"
         al_name="${domain}"
     else
-        Echo_Yellow "Enter access log filename(Default:${domain}.log): "
+        Echo_Yellow "Enter access log filename(Default:${domain}-access_log): "
         read al_name
         if [ "${al_name}" == "" ]; then
             al_name="${domain}"
         fi
-        al="access_log  /home/wwwlogs/${al_name}.log;"
-        echo "You access log filename: ${al_name}.log"
-    fi
-
-    Echo_Yellow "Enable IPv6? (y/n) "
-    read enable_ipv6
-    if [[ "${enable_ipv6}" == "n" || "${enable_ipv6}" == "" ]]; then
-        echo "Disabled IPv6 Support in current Virtualhost."
-        enable_ipv6="n"
-    else
-        echo "Enabled IPv6 Support in current Virtualhost."
-        enable_ipv6="y"
+        echo "You access log filename: ${al_name}-access_log"
     fi
 
     email=""
@@ -495,7 +217,7 @@ Add_VHost()
         fi
     fi
 
-    if [ -f /usr/local/pureftpd/sbin/pure-ftpd ]; then
+    if [ -s /usr/local/pureftpd/sbin/pure-ftpd ]; then
         Echo_Yellow "Create ftp account (y/n) "
         read create_ftp
 
@@ -519,10 +241,6 @@ Add_VHost()
 
     echo "Create Virtul Host directory......"
     mkdir -p ${vhostdir}
-    if [ "${access_log}" == "y" ]; then
-        touch /home/wwwlogs/${al_name}.log
-        touch /home/wwwlogs/${al_name}-access_log
-    fi
     echo "set permissions of Virtual Host directory......"
     chmod -R 755 ${vhostdir}
     chown -R www:www ${vhostdir}
@@ -575,18 +293,11 @@ Add_VHost()
             echo "  =>ZeroSSL"
         fi
     fi
-    if [ "${enable_ipv6}" == "y" ]; then
-        echo "IPv6 Support: Enabled"
-    else
-        echo "IPv6 Support: Disabled"
-    fi
     Echo_Green "================================================"
 }
 
 List_VHost()
 {
-    echo "Nginx Virtualhost list:"
-    ls /usr/local/nginx/conf/vhost/ | grep ".conf$" | sed 's/.conf//g'
     echo "Apache Virtualhost list:"
     ls /usr/local/apache/conf/vhost/ | grep ".conf$" | sed 's/.conf//g'
 }
@@ -607,22 +318,17 @@ Del_VHost()
             break
         fi
     done
-    if [ ! -f "/usr/local/nginx/conf/vhost/${domain}.conf" ] || [ ! -f "/usr/local/apache/conf/vhost/${domain}.conf" ]; then
+    if [ ! -f "/usr/local/apache/conf/vhost/${domain}.conf" ]; then
         echo "=========================================="
         echo "Domain: ${domain} was not exist!"
         echo "=========================================="
         exit 1
     else
-        rm -f /usr/local/nginx/conf/vhost/${domain}.conf
         rm -f /usr/local/apache/conf/vhost/${domain}.conf
-        echo "Reload Nginx..."
-        /usr/local/nginx/sbin/nginx -s reload
-        echo "Reload Apache..."
-        /etc/init.d/httpd reload
         echo "========================================================"
-        echo "✓ 虚拟主机 ${domain} 已删除"
-        echo "  网站文件未删除（安全起见），如需删除请手动执行："
-        echo "  rm -rf ${vhostdir}"
+        echo "Domain: ${domain} has been deleted."
+        echo "Website files will not be deleted for security reasons."
+        echo "You need to manually delete the website files."
         echo "========================================================"
     fi
 }
@@ -731,7 +437,7 @@ Del_Database()
 {
     List_Database
     Enter_Database_Name
-    if [[ "${database_name}" == "information_schema" || "${database_name}" == "mysql" || "${database_name}" == "performance_schema" ]]; then
+    if [[ "${database_name}" = "information_schema" || "${database_name}" = "mysql" || "${database_name}" = "performance_schema" ]]; then
         echo "MySQL System Database can't be delete!"
         exit 1
     fi
@@ -810,8 +516,8 @@ Del_Ftp()
     List_Ftp
     Enter_Ftp_Name
     echo "Your will delete ftp user ${ftp_account_name}"
-    echo "Sleep 3s,Press ctrl+c to cancel..."
-    Sleep_Sec 3
+    echo "Sleep 10s,Press ctrl+c to cancel..."
+    Sleep_Sec 10
     /usr/local/pureftpd/bin/pure-pw userdel ${ftp_account_name} -f /usr/local/pureftpd/etc/pureftpd.passwd -m
     [ $? -eq 0 ] && echo "FTP User: ${ftp_account_name} deleted Sucessfully." || echo "FTP User: ${ftp_account_name} not exists!"
 }
@@ -857,16 +563,6 @@ Add_SSL_Info_Menu()
         fi
         al="access_log  /home/wwwlogs/${al_name}.log;"
         echo "You access log filename: ${al_name}.log"
-    fi
-
-    Echo_Yellow "Enable IPv6? (y/n) "
-    read enable_ipv6
-    if [[ "${enable_ipv6}" == "n" || "${enable_ipv6}" == "" ]]; then
-        echo "Disabled IPv6 Support in current Virtualhost."
-        enable_ipv6="n"
-    else
-        echo "Enabled IPv6 Support in current Virtualhost."
-        enable_ipv6="y"
     fi
 
     email=""
@@ -938,6 +634,16 @@ Add_SSL_Menu()
                     break
                 fi
             done
+            while :;do
+                Echo_Yellow "Please enter full path to SSL Chain file: "
+                read ssl_chain
+                if [ "${ssl_chain}" == "" ]; then
+                    Echo_Yellow "SSL Chain file will not set."
+                    Conf_SSLChain="#SSLCertificateChainFile /path/to/your/chain.pem"
+                else
+                    break
+                fi
+            done
             break
         elif [[ "${ssl_choice}" =~ ^2|3|4$ ]]; then
             Check_Acme_EMail
@@ -963,7 +669,7 @@ Install_Check_Acme.sh()
         wget https://soft.lnmp.com/lib/acme.sh/latest.tar.gz -O latest.tar.gz --prefer-family=IPv4 --no-check-certificate ||         wget https://github.com/acmesh-official/acme.sh/archive/refs/heads/master.tar.gz -O latest.tar.gz --no-check-certificate
         tar zxf latest.tar.gz
         cd acme.sh-*
-        ./acme.sh --install ${acme_sh_sudo} --log --home /usr/local/acme.sh --certhome /usr/local/nginx/conf/ssl -m ${email_address}
+        ./acme.sh --install ${acme_sh_sudo} --log --home /usr/local/acme.sh --certhome /usr/local/apache/conf/ssl -m ${email_address}
         cd ..
         rm -f latest.tar.gz
         rm -rf acme.sh-*
@@ -1001,77 +707,58 @@ EOF
 
 Create_SSL_Config()
 {
-    if [ ! -s /usr/local/nginx/conf/ssl/dhparam.pem ]; then
-        echo "Create dhparam.pem..."
-        mkdir -p /usr/local/nginx/conf/ssl/
-        openssl dhparam -out /usr/local/nginx/conf/ssl/dhparam.pem 2048
+    if /usr/local/apache/bin/httpd -v|grep -Eqi "Apache/2.4.*"; then
+        Conf_H2='Protocols h2 h2c http/1.1'
+    else
+        Conf_H2=''
+    fi
+    if echo "${ssl_choice}" | grep -Eqi "^[2-4]$"; then
+        Conf_SSLChain="SSLCertificateChainFile /usr/local/apache/conf/ssl/${domain}/ca.cer"
     fi
 
-    cat >>"/usr/local/nginx/conf/vhost/${domain}.conf"<<EOF
+    sed -i 's@#Include conf/extra/httpd-ssl.conf@Include conf/extra/httpd-ssl.conf@g' /usr/local/apache/conf/httpd.conf
+    cat >>"/usr/local/apache/conf/vhost/${domain}.conf"<<EOF
 
-server
-    {
-        listen 443 ssl http2;
-        #listen [::]:443 ssl http2;
-        server_name ${domain} ${moredomain};
-        index index.html index.htm index.php default.html default.htm default.php;
-        root  ${vhostdir};
-
-        ssl_certificate ${ssl_certificate};
-        ssl_certificate_key ${ssl_certificate_key};
-        ssl_session_timeout 5m;
-        ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
-        ssl_prefer_server_ciphers on;
-        ssl_ciphers "TLS13-AES-256-GCM-SHA384:TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-128-GCM-SHA256:TLS13-AES-128-CCM-8-SHA256:TLS13-AES-128-CCM-SHA256:EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5";
-        ssl_session_cache builtin:1000 shared:SSL:10m;
-        # openssl dhparam -out /usr/local/nginx/conf/ssl/dhparam.pem 2048
-        ssl_dhparam /usr/local/nginx/conf/ssl/dhparam.pem;
-
-        #error_page   404   /404.html;
-
-        # Deny access to PHP files in specific directory
-        #location ~ /(wp-content|uploads|wp-includes|images)/.*\.php$ { deny all; }
-
-        include proxy-pass-php.conf;
-
-        location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
-        {
-            expires      30d;
-        }
-
-        location ~ .*\.(js|css)?$
-        {
-            expires      12h;
-        }
-
-        location ~ /.well-known {
-            allow all;
-        }
-
-        location ~ /\.
-        {
-            deny all;
-        }
-
-        ${al}
-    }
+<VirtualHost *:443>
+ServerAdmin ${email}
+php_admin_value open_basedir "${vhostdir}:/tmp/:/var/tmp/:/proc/"
+DocumentRoot ${vhostdir}
+ServerName ${domain}
+SSLEngine on
+SSLCertificateFile ${ssl_certificate}
+SSLCertificateKeyFile ${ssl_certificate_key}
+${Conf_SSLChain}
+${Conf_H2}
+ErrorLog "/home/wwwlogs/${al_name}-error_log"
+CustomLog "/home/wwwlogs/${al_name}-access_log" combined
+<Directory "${vhostdir}">
+    SetOutputFilter DEFLATE
+    Options FollowSymLinks
+    AllowOverride All
+    Order allow,deny
+    Allow from all
+    DirectoryIndex index.html index.php
+</Directory>
+</VirtualHost>
 EOF
 
-    if [ "${using_301}" == "y" ]; then
-        sed -i '0,/access_log/!b;//i\        location / {\n            return 301 https://$host$request_uri;\n        }\n' /usr/local/nginx/conf/vhost/${domain}.conf
-        sed -i '0,/include proxy-pass-php.conf;/s/include proxy-pass-php.conf;/#include proxy-pass-php.conf;/' /usr/local/nginx/conf/vhost/${domain}.conf
+    if [ "${access_log}" != 'y' ]; then
+        sed -i 's/^ErrorLog/#ErrorLog/g' /usr/local/apache/conf/vhost/${domain}.conf
+        sed -i 's/^CustomLog/#CustomLog/g' /usr/local/apache/conf/vhost/${domain}.conf
     fi
 
-    if [ "${enable_ipv6}" == "y" ]; then
-        sed -i 's/#listen \[::\]:443 ssl http2;/listen \[::\]:443 ssl http2;/g' /usr/local/nginx/conf/vhost/${domain}.conf
+    if [ "${using_301}" = "y" ]; then
+        sed -i '0,/^ServerName/!b;//a\RewriteEngine On\nRewriteCond %{HTTPS} off\nRewriteCond %{REQUEST_URI} !^\/\.well-known/.*$\nRewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]' /usr/local/apache/conf/vhost/${domain}.conf
     fi
 
-    echo "Test Nginx configure file......"
-    /usr/local/nginx/sbin/nginx -t
-    echo "Reload Nginx......"
-    /usr/local/nginx/sbin/nginx -s reload
-        echo "Reload Apache..."
-        /etc/init.d/httpd reload
+    if [ "${moredomain}" != "" ]; then
+        sed -i "/^SSLEngine on/i\ServerAlias ${moredomain}" /usr/local/apache/conf/vhost/${domain}.conf
+    fi
+
+    echo "Test Apache configure file..."
+    /etc/init.d/httpd configtest
+    echo "Restart Apache..."
+    /etc/init.d/httpd graceful
 }
 
 Add_SSL()
@@ -1088,7 +775,7 @@ Add_SSL()
         else
             letsdomain="-d ${domain}"
         fi
-        if [ ! -s "/usr/local/nginx/conf/vhost/${domain}.conf" ]; then
+        if [ ! -s "/usr/local/apache/conf/vhost/${domain}.conf" ]; then
             Add_VHost_Config
         fi
         if [ ! -d "${vhostdir}" ]; then
@@ -1106,25 +793,25 @@ Add_SSL()
 
         Install_Check_Acme.sh
 
-        if [ -s /usr/local/nginx/conf/ssl/${domain}/fullchain.cer ]; then
+        if [ -s /usr/local/apache/conf/ssl/${domain}/fullchain.cer ]; then
             echo "Removing exist domain certificate..."
-            rm -rf /usr/local/nginx/conf/ssl/${domain}
+            rm -rf /usr/local/apache/conf/ssl/${domain}
         fi
 
         if [ "${ssl_choice}" == "2" ]; then
             echo "Generate ssl certificate using Let's Encrypt..."
-            /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server letsencrypt --issue ${letsdomain} -w ${vhostdir} -k 2048 --reloadcmd "/etc/init.d/nginx reload"
+            /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server letsencrypt --issue ${letsdomain} -w ${vhostdir} -k 2048 --reloadcmd "/etc/init.d/httpd graceful"
         elif [ "${ssl_choice}" == "3" ]; then
             echo "Generate ssl certificate using BuyPass..."
-            /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server buypass --issue ${letsdomain} -w ${vhostdir} -k 2048 --days 170 --reloadcmd "/etc/init.d/nginx reload"
+            /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server buypass --issue ${letsdomain} -w ${vhostdir} -k 2048 --days 170 --reloadcmd "/etc/init.d/httpd graceful"
         elif [ "${ssl_choice}" == "4" ]; then
             echo "Generate ssl certificate using ZeroSSL..."
-            /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server zerossl --issue ${letsdomain} -w ${vhostdir} -k 2048 --reloadcmd "/etc/init.d/nginx reload"
+            /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server zerossl --issue ${letsdomain} -w ${vhostdir} -k 2048 --reloadcmd "/etc/init.d/httpd graceful"
         fi
         lets_status=$?
 
-        ssl_certificate="/usr/local/nginx/conf/ssl/${domain}/fullchain.cer"
-        ssl_certificate_key="/usr/local/nginx/conf/ssl/${domain}/${domain}.key"
+        ssl_certificate="/usr/local/apache/conf/ssl/${domain}/${domain}.cer"
+        ssl_certificate_key="/usr/local/apache/conf/ssl/${domain}/${domain}.key"
         if [ "${lets_status}" = 0 ]; then
             Create_SSL_Config
             Echo_Green " Generate SSL Certificate successfully."
@@ -1153,9 +840,9 @@ Add_Dns_SSL()
         exit 1
     fi
 
-    if [ -s /usr/local/nginx/conf/ssl/${domain}/fullchain.cer ]; then
+    if [ -s /usr/local/apache/conf/ssl/${domain}/fullchain.cer ]; then
         echo "Removing exist domain certificate..."
-        rm -rf /usr/local/nginx/conf/ssl/${domain}
+        rm -rf /usr/local/apache/conf/ssl/${domain}
     fi
 
     letsdomain=""
@@ -1181,7 +868,7 @@ Add_Dns_SSL()
 
     echo "Generate ssl certificate using ${ca_server}..."
     if [ "${provider}" != "" ]; then
-        /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server ${ca_server} --issue ${letsdomain} -k 2048 --dns ${dns_provider} --reloadcmd "/etc/init.d/nginx reload"
+        /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server ${ca_server} --issue ${letsdomain} -k 2048 --dns ${dns_provider} --reloadcmd "/etc/init.d/httpd graceful"
         lets_status=$?
     else
         /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server ${ca_server} --issue ${letsdomain} -k 2048 --dns --yes-I-know-dns-manual-mode-enough-go-ahead-please
@@ -1191,7 +878,7 @@ Add_Dns_SSL()
         /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --renew ${letsdomain} --yes-I-know-dns-manual-mode-enough-go-ahead-please
         lets_status=$?
     fi
-    if [ "${lets_status}" = 0 ] || [[ "${provider}" = "" && "${lets_status}" = 1 && -s "/usr/local/nginx/conf/ssl/${domain}/fullchain.cer" ]]; then
+    if [ "${lets_status}" = 0 ] || [[ "${provider}" = "" && "${lets_status}" = 1 && -s "/usr/local/apache/conf/ssl/${domain}/${domain}.cer" ]]; then
         if [ ! -d "${vhostdir}" ]; then
             echo "Create Virtul Host directory......"
             mkdir -p ${vhostdir}
@@ -1200,16 +887,16 @@ Add_Dns_SSL()
             chown -R www:www ${vhostdir}
         fi
 
-        if [ ! -s "/usr/local/nginx/conf/vhost/${domain}.conf" ]; then
+        if [ ! -s "/usr/local/apache/conf/vhost/${domain}.conf" ]; then
             Add_VHost_Config
         fi
-        ssl_certificate="/usr/local/nginx/conf/ssl/${domain}/fullchain.cer"
-        ssl_certificate_key="/usr/local/nginx/conf/ssl/${domain}/${domain}.key"
+        ssl_certificate="/usr/local/apache/conf/ssl/${domain}/${domain}.cer"
+        ssl_certificate_key="/usr/local/apache/conf/ssl/${domain}/${domain}.key"
         Create_SSL_Config
         Echo_Blue "------------------ SSL Certificate information as follows ------------------"
         Echo_Blue "| Domain: ${domain} ${moredomain}"
-        Echo_Blue "| SSL Certificate: /usr/local/nginx/conf/ssl/${domain}/fullchain.cer"
-        Echo_Blue "| SSL Certificate Key: /usr/local/nginx/conf/ssl/${domain}/${domain}.key"
+        Echo_Blue "| SSL Certificate: /usr/local/apache/conf/ssl/${domain}/fullchain.cer"
+        Echo_Blue "| SSL Certificate Key: /usr/local/apache/conf/ssl/${domain}/${domain}.key"
         Echo_Blue "------------------------------------ ---------------------------------------"
         Echo_Green " Generate SSL Certificate successfully."
     else
@@ -1234,9 +921,9 @@ Add_Dns_SSL_Only()
         exit 1
     fi
 
-    if [ -s /usr/local/nginx/conf/ssl/${domain}/fullchain.cer ]; then
+    if [ -s /usr/local/apache/conf/ssl/${domain}/fullchain.cer ]; then
         echo "Removing exist domain certificate..."
-        rm -rf /usr/local/nginx/conf/ssl/${domain}
+        rm -rf /usr/local/apache/conf/ssl/${domain}
     fi
 
     letsdomain=""
@@ -1262,7 +949,7 @@ Add_Dns_SSL_Only()
 
     echo "Starting create SSL Certificate use ${ca_server}..."
     if [ "${provider}" != "" ]; then
-        /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server ${ca_server} --issue ${letsdomain} -k 2048 --dns ${dns_provider} --reloadcmd "/etc/init.d/nginx reload"
+        /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server ${ca_server} --issue ${letsdomain} -k 2048 --dns ${dns_provider} --reloadcmd "/etc/init.d/httpd graceful"
         lets_status=$?
     else
         /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --server ${ca_server} --issue ${letsdomain} -k 2048 --dns --yes-I-know-dns-manual-mode-enough-go-ahead-please
@@ -1272,88 +959,14 @@ Add_Dns_SSL_Only()
         /usr/local/acme.sh/acme.sh ${acme_sh_sudo} --renew ${letsdomain} --yes-I-know-dns-manual-mode-enough-go-ahead-please
         lets_status=$?
     fi
-    if [ "${lets_status}" = 0 ] || [[ "${provider}" = "" && "${lets_status}" = 1 && -s "/usr/local/nginx/conf/ssl/${domain}/fullchain.cer" ]]; then
+    if [ "${lets_status}" = 0 ] || [[ "${provider}" = "" && "${lets_status}" = 1 && -s "/usr/local/apache/conf/ssl/${domain}/fullchain.cer" ]]; then
         Echo_Blue "------------------ SSL Certificate information as follows ------------------"
         Echo_Blue "| Domain: ${domain} ${moredomain}"
-        Echo_Blue "| SSL Certificate: /usr/local/nginx/conf/ssl/${domain}/fullchain.cer"
-        Echo_Blue "| SSL Certificate Key: /usr/local/nginx/conf/ssl/${domain}/${domain}.key"
+        Echo_Blue "| SSL Certificate: /usr/local/apache/conf/ssl/${domain}/fullchain.cer"
+        Echo_Blue "| SSL Certificate Key: /usr/local/apache/conf/ssl/${domain}/${domain}.key"
         Echo_Blue "------------------------------------ ---------------------------------------"
         Echo_Green " Generate SSL Certificate successfully."
     else
         Echo_Red " Generate SSL Certificate failed!"
     fi
 }
-
-
-
-Check_DB
-
-case "${arg1}" in
-    start)
-        lnmpa_start
-        ;;
-    stop)
-        lnmpa_stop
-        ;;
-    restart)
-        lnmpa_stop
-        lnmpa_start
-        ;;
-    reload)
-        lnmpa_reload
-        ;;
-    kill)
-        lnmpa_kill
-        ;;
-    status)
-        lnmpa_status
-        ;;
-    nginx)
-        /etc/init.d/nginx ${arg2}
-        ;;
-    mysql)
-        /etc/init.d/mysql ${arg2}
-        ;;
-    mariadb)
-        /etc/init.d/mariadb ${arg2}
-        ;;
-    pureftpd)
-        /etc/init.d/pureftpd ${arg2}
-        ;;
-    httpd)
-        /etc/init.d/httpd ${arg2}
-        ;;
-    vhost)
-        Function_Vhost ${arg2}
-        ;;
-    database)
-        Verify_DB_Password
-        Function_Database ${arg2}
-        TempMycnf_Clean
-        ;;
-    ftp)
-        Check_Pureftpd
-        Function_Ftp ${arg2}
-        ;;
-    ssl)
-        info="n"
-        Add_SSL_Menu
-        Add_SSL
-        ;;
-    dnsssl|dns)
-        Add_Dns_SSL ${arg2}
-        ;;
-    onlyssl)
-        Add_Dns_SSL_Only ${arg2}
-        ;;
-    *)
-        echo "Usage: nextlnmp {start|stop|reload|restart|kill|status}"
-        echo "Usage: nextlnmp {nginx|mysql|mariadb|pureftpd|httpd} {start|stop|reload|restart|kill|status}"
-        echo "Usage: nextlnmp vhost {add|list|del}"
-        echo "Usage: nextlnmp database {add|list|edit|del}"
-        echo "Usage: nextlnmp ftp {add|list|edit|del|show}"
-        echo "Usage: nextlnmp ssl add"
-        echo "Usage: nextlnmp {dnsssl|dns} {cx|ali|cf|dp|he|gd|aws}"
-        echo "Usage: nextlnmp onlyssl {cx|ali|cf|dp|he|gd|aws}"
-esac
-exit

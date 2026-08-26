@@ -1,0 +1,9 @@
+# CLI 等价性校验豁免清单（v2 重构期间的「有意变更」申报）
+# 格式：<文件>:<函数名>  或  <文件>:__toplevel__
+# 每条都必须写明理由。没写在这里的差异 = CI 红灯。
+
+# ---- 阶段 1（构建期拼装）：生成物顶层多出「由 build-cli.sh 生成，勿直接编辑」注释横幅 ----
+# 已逐行验证：150 个函数体全部逐字节不变，顶层差异仅为注释，零行为变化。
+conf/nextlnmp:__toplevel__
+conf/nextlnmpa:__toplevel__
+conf/nextlamp:__toplevel__
