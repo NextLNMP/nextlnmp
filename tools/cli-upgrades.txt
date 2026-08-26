@@ -74,3 +74,11 @@ lnmp:Add_Database_Menu
 lnmp:Add_DNS_SSL_Select_Menu
 lnmpa:Add_DNS_SSL_Select_Menu
 lamp:Add_DNS_SSL_Select_Menu
+
+# ---- 全栈：邮箱校验不再卡死现代顶级域 ----
+# 原正则 ^...\.[A-Za-z]{2,4}$ 把顶级域限死 2~4 个字母，.online / .email / .website
+# 这类邮箱一律判为"格式不正确"。而这段在 while :;do 里没有出口，用户不是被提示
+# 一下，是【彻底卡死】、只能 Ctrl+C，SSL 配置整条路走不通。改为 {2,}。
+lnmp:Check_Acme_EMail
+lnmpa:Check_Acme_EMail
+lamp:Check_Acme_EMail

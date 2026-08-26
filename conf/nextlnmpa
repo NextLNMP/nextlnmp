@@ -469,7 +469,7 @@ Check_Acme_EMail()
             email_address="${default_email}"
         fi
         while :;do
-            if [[ "${email_address}" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$ ]]; then
+            if [[ "${email_address}" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
                 echo "使用邮箱：${email_address}"
                 break
             else
