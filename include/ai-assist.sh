@@ -71,7 +71,7 @@ AI_Read()
 AI_B64() { base64 2>/dev/null | tr -d '\n'; }
 
 # JSON 字符串转义（只用于我们自己产生的短字段）
-AI_JStr() { printf '%s' "$1" | tr -d '' | tr '
+AI_JStr() { printf '%s' "$1" | tr -d '\015' | tr '
 	' '  ' | sed -e 's/[\]/\\/g' -e 's/"/\\"/g'; }
 
 AI_Post()
