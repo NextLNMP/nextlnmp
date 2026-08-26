@@ -29,7 +29,16 @@ Smart_Recommend()
     if [ -n "$(PHP_Bin_OSTag 2>/dev/null)" ]; then
         REC_BUILD_NOTE="预编译二进制包（免编译，省时间）"
     else
-        REC_BUILD_NOTE="数据库用预编译包；本系统没有 PHP 预编译包，PHP 需源码编译（单核小内存机通常 1 小时以上）"
+        REC_BUILD_NOTE="数据库用预编译包；本系统没有 PHP 预编译包，PHP 需源码编译"
+        if [ "${REC_MEM}" -le 768 ] && [ "${REC_CPU}" -le 1 ]; then
+            # 真机实测（Rocky 9 / 1 核 512M）：编到 Zend/zend_execute.c 那一步，
+            # cc1 的 RSS 会顶到 300~400MB，加上换页，SSH 会有几分钟到十几分钟
+            # 完全连不上。机器没死，但用户很容易以为装挂了去强行重启，
+            # 那才是真的会把安装搞坏。所以这句必须说在前面。
+            REC_BUILD_NOTE="${REC_BUILD_NOTE}；本机 1 核 ${REC_MEM}M，预计 1 小时以上，编译最重的一步时 SSH 可能暂时连不上（属正常，请勿重启）"
+        else
+            REC_BUILD_NOTE="${REC_BUILD_NOTE}（单核小内存机通常 1 小时以上）"
+        fi
     fi
 
     # 内存分配器按内存分级
