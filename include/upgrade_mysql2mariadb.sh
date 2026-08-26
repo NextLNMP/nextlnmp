@@ -269,7 +269,17 @@ EOF
 
     echo "Restore backup databases..."
     /usr/local/mariadb/bin/mysql --defaults-file=~/.my.cnf < /root/mysql_all_backup${Upgrade_Date}.sql
-    [ $? -eq 0 ] && echo "MariaDB databases import successfully." || echo "MariaDB databases import failed,Please import databases manually!"
+    # 原来只 echo 一句 import failed 就继续往下跑，最后照样按"文件在不在"
+    # 打印绿色 "upgrade MySQL to MariaDB completed"——用户看到的最后一行是成功。
+    # 数据没导进去必须当场停下，否则那句提示会被后续输出冲掉。
+    if [ $? -eq 0 ]; then
+        echo "MariaDB databases import successfully."
+    else
+        Echo_Red "恢复备份失败！数据尚未导入 MariaDB。"
+        Echo_Red "备份仍在，请勿删除：/root/mysql_all_backup${Upgrade_Date}.sql"
+        Echo_Red "可先修复问题后手工导入，或把 /usr/local/oldmysql${Upgrade_Date} 搬回去回滚。"
+        exit 1
+    fi
 
     echo "Repair databases..."
     /usr/local/mariadb/bin/mysql_upgrade -u root -p${DB_Root_Password}

@@ -266,7 +266,17 @@ EOF
     /etc/init.d/mariadb start
 
     echo "Restore backup databases..."
-    /usr/local/mariadb/bin/mysql --defaults-file=~/.my.cnf < /root/mariadb_all_backup${Upgrade_Date}.sql
+    # 这是整个升级里最关键的一步。原来返回值完全不判，而收尾只看三个文件在不在，
+    # 于是恢复失败也照样打印绿色 "upgrade completed"——用户以为升级成功，
+    # 实际数据一条都没回来，而且不会有人再去看那个备份文件。
+    /usr/local/mariadb/bin/mysql --defaults-file=~/.my.cnf < /root/mariadb_all_backup${Upgrade_Date}.sql || {
+        Echo_Red "恢复备份失败！数据尚未导入新库。"
+        Echo_Red "备份仍在，请勿删除："
+        Echo_Red "  SQL  ：/root/mariadb_all_backup${Upgrade_Date}.sql"
+        Echo_Red "  原目录：/usr/local/oldmariadb${Upgrade_Date}"
+        Echo_Red "可先修复问题后手工导入，或把原目录搬回去回滚。"
+        exit 1
+    }
     echo "Repair databases..."
     /usr/local/mariadb/bin/mysql_upgrade -u root -p${DB_Root_Password}
 

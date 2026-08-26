@@ -716,7 +716,17 @@ Restore_Start_MySQL()
     /etc/init.d/mysql start
 
     echo "Restore backup databases..."
-    /usr/local/mysql/bin/mysql --defaults-file=~/.my.cnf < /root/mysql_all_backup${Upgrade_Date}.sql
+    # 这是整个升级里最关键的一步。原来返回值完全不判，而收尾只看三个文件在不在，
+    # 于是恢复失败也照样打印绿色 "upgrade completed"——用户以为升级成功，
+    # 实际数据一条都没回来，而且不会有人再去看那个备份文件。
+    /usr/local/mysql/bin/mysql --defaults-file=~/.my.cnf < /root/mysql_all_backup${Upgrade_Date}.sql || {
+        Echo_Red "恢复备份失败！数据尚未导入新库。"
+        Echo_Red "备份仍在，请勿删除："
+        Echo_Red "  SQL  ：/root/mysql_all_backup${Upgrade_Date}.sql"
+        Echo_Red "  原目录：/usr/local/oldmysql${Upgrade_Date}"
+        Echo_Red "可先修复问题后手工导入，或把原目录搬回去回滚。"
+        exit 1
+    }
     echo "Repair databases..."
     MySQL_Ver_Com=$(${cur_dir}/include/version_compare 8.0.16 ${mysql_version})
     if [ "${MySQL_Ver_Com}" != "1" ]; then
@@ -884,6 +894,22 @@ Upgrade_MySQL()
     fi
     echo "============================check files=================================="
 
+    # 版本必须在【备份之前】拦下来。Backup_MySQL 是 mv 走 /usr/local/mysql、
+    # /etc/init.d/mysql、/etc/my.cnf 和数据目录；一旦跑过再发现没有对应的升级
+    # 分支，下面那串 if/elif 一个都不匹配、函数静默返回，用户手上就只剩一台被
+    # 拆干净的机器，屏幕上一个字的错都没有。
+    # 上面的下载步骤挡不住这种情况：8.1 / 8.2 / 9.x 是真实存在、能正常下到源码包
+    # 的版本，只是本脚本没有对应分支，正好走到这一步才出事。
+    case "${mysql_short_version}" in
+        5.1|5.5|5.6|5.7|8.0|8.4) ;;
+        *)
+            Echo_Red "不支持升级到 MySQL ${mysql_version}。"
+            Echo_Red "本脚本支持的大版本：5.1 / 5.5 / 5.6 / 5.7 / 8.0 / 8.4"
+            Echo_Red "已中止，现有数据库未做任何改动。"
+            exit 1
+            ;;
+    esac
+
     Backup_MySQL
     if [ "${mysql_short_version}" = "5.1" ]; then
         Upgrade_MySQL51
@@ -897,6 +923,14 @@ Upgrade_MySQL()
         Upgrade_MySQL80
     elif [ "${mysql_short_version}" = "8.4" ]; then
         Upgrade_MySQL84
+    else
+        # 上面的 case 已经拦过，理论上到不了这里。留着是防止将来加版本时
+        # 只改一处、另一处漏改——那样又会退回"备份完再静默落空"。
+        Echo_Red "内部错误：MySQL ${mysql_short_version} 没有对应的升级分支。"
+        Echo_Red "旧库已备份，请勿删除："
+        Echo_Red "  SQL  ：/root/mysql_all_backup${Upgrade_Date}.sql"
+        Echo_Red "  原目录：/usr/local/oldmysql${Upgrade_Date}"
+        exit 1
     fi
     Restore_Start_MySQL
 }
