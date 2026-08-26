@@ -104,16 +104,30 @@ Add_LAMP_Startup()
     fi
 }
 
+# 服务活性探测：装完不等于跑起来了。真机装测实测过 MariaDB 12.3 预编译包
+# 因 CPU 缺 AVX 而 SIGILL，服务起不来，但当时自检只查文件存在，照样报"安装成功"。
+Svc_Alive()
+{
+    local proc="$1" unit="$2"
+    pgrep -x "${proc}" >/dev/null 2>&1 && return 0
+    if [ -n "${unit}" ] && command -v systemctl >/dev/null 2>&1; then
+        systemctl is-active --quiet "${unit}" && return 0
+    fi
+    return 1
+}
+
 Check_Nginx_Files()
 {
     isNginx=""
     echo "============================== Check install =============================="
     echo "Checking ..."
-    if [[ -s /usr/local/nginx/conf/nginx.conf && -s /usr/local/nginx/sbin/nginx ]]; then
+    if [[ ! -s /usr/local/nginx/conf/nginx.conf || ! -s /usr/local/nginx/sbin/nginx ]]; then
+        Echo_Red "Error: Nginx install failed."
+    elif ! Svc_Alive nginx nginx; then
+        Echo_Red "Error: Nginx installed but not running."
+    else
         Echo_Green "Nginx: OK"
         isNginx="ok"
-    else
-        Echo_Red "Error: Nginx install failed."
     fi
 }
 
@@ -134,18 +148,22 @@ Check_DB_Files()
 {
     isDB=""
     if [[ "${DBSelect}" =~ ^(6|7|8|9|10|12|13)$ ]]; then
-        if [[ -s /usr/local/mariadb/bin/mysql && -s /usr/local/mariadb/bin/mysqld_safe && -s /etc/my.cnf ]]; then
+        if [[ ! -s /usr/local/mariadb/bin/mysql || ! -s /usr/local/mariadb/bin/mysqld_safe || ! -s /etc/my.cnf ]]; then
+            Echo_Red "Error: MariaDB install failed."
+        elif ! Svc_Alive mariadbd mariadb && ! Svc_Alive mysqld mariadb; then
+            Echo_Red "Error: MariaDB installed but not running."
+        else
             Echo_Green "MariaDB: OK"
             isDB="ok"
-        else
-            Echo_Red "Error: MariaDB install failed."
         fi
     elif [[ "${DBSelect}" =~ ^(1|2|3|4|5|11)$ ]]; then
-        if [[ -s /usr/local/mysql/bin/mysql && -s /usr/local/mysql/bin/mysqld_safe && -s /etc/my.cnf ]]; then
+        if [[ ! -s /usr/local/mysql/bin/mysql || ! -s /usr/local/mysql/bin/mysqld_safe || ! -s /etc/my.cnf ]]; then
+            Echo_Red "Error: MySQL install failed."
+        elif ! Svc_Alive mysqld mysql; then
+            Echo_Red "Error: MySQL installed but not running."
+        else
             Echo_Green "MySQL: OK"
             isDB="ok"
-        else
-            Echo_Red "Error: MySQL install failed."
         fi
     elif [ "${DBSelect}" = "0" ]; then
         Echo_Green "Do not install MySQL/MariaDB."
@@ -157,12 +175,14 @@ Check_PHP_Files()
 {
     isPHP=""
     if [ "${Stack}" = "nextlnmp" ]; then
-        if [[ -s /usr/local/php/sbin/php-fpm && -s /usr/local/php/etc/php.ini && -s /usr/local/php/bin/php ]]; then
+        if [[ ! -s /usr/local/php/sbin/php-fpm || ! -s /usr/local/php/etc/php.ini || ! -s /usr/local/php/bin/php ]]; then
+            Echo_Red "Error: PHP install failed."
+        elif ! Svc_Alive php-fpm php-fpm; then
+            Echo_Red "Error: PHP-FPM installed but not running."
+        else
             Echo_Green "PHP: OK"
             Echo_Green "PHP-FPM: OK"
             isPHP="ok"
-        else
-            Echo_Red "Error: PHP install failed."
         fi
     else
         if [[ -s /usr/local/php/bin/php && -s /usr/local/php/etc/php.ini ]]; then
@@ -178,25 +198,31 @@ Check_Apache_Files()
 {
     isApache=""
     if [[ "${PHPSelect}" =~ ^[6789]|10$ ]]; then
-        if [[ -s /usr/local/apache/bin/httpd && -s /usr/local/apache/modules/libphp7.so && -s /usr/local/apache/conf/httpd.conf ]]; then
+        if [[ ! -s /usr/local/apache/bin/httpd || ! -s /usr/local/apache/modules/libphp7.so || ! -s /usr/local/apache/conf/httpd.conf ]]; then
+            Echo_Red "Error: Apache install failed."
+        elif ! Svc_Alive httpd httpd; then
+            Echo_Red "Error: Apache installed but not running."
+        else
             Echo_Green "Apache: OK"
             isApache="ok"
-        else
-            Echo_Red "Error: Apache install failed."
         fi
     elif [[ "${PHPSelect}" =~ ^1[1-5]$ ]]; then
-        if [[ -s /usr/local/apache/bin/httpd && -s /usr/local/apache/modules/libphp.so && -s /usr/local/apache/conf/httpd.conf ]]; then
+        if [[ ! -s /usr/local/apache/bin/httpd || ! -s /usr/local/apache/modules/libphp.so || ! -s /usr/local/apache/conf/httpd.conf ]]; then
+            Echo_Red "Error: Apache install failed."
+        elif ! Svc_Alive httpd httpd; then
+            Echo_Red "Error: Apache installed but not running."
+        else
             Echo_Green "Apache: OK"
             isApache="ok"
-        else
-            Echo_Red "Error: Apache install failed."
         fi
     else
-        if [[ -s /usr/local/apache/bin/httpd && -s /usr/local/apache/modules/libphp5.so && -s /usr/local/apache/conf/httpd.conf ]]; then
+        if [[ ! -s /usr/local/apache/bin/httpd || ! -s /usr/local/apache/modules/libphp5.so || ! -s /usr/local/apache/conf/httpd.conf ]]; then
+            Echo_Red "Error: Apache install failed."
+        elif ! Svc_Alive httpd httpd; then
+            Echo_Red "Error: Apache installed but not running."
+        else
             Echo_Green "Apache: OK"
             isApache="ok"
-        else
-            Echo_Red "Error: Apache install failed."
         fi
     fi
 }
