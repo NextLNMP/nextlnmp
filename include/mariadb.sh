@@ -43,6 +43,8 @@ EOF
     /etc/init.d/mariadb restart
     sleep 2
 
+    MariaDB_Client_Usable || exit 1
+
     /usr/local/mariadb/bin/mysqladmin -u root password "${DB_Root_Password}"
 
     /etc/init.d/mariadb restart
@@ -89,6 +91,39 @@ EOF
     /etc/init.d/mariadb stop
 }
 
+MariaDB_Bin_Smoke_Test()
+{
+    # 服务端二进制的廉价预检：连 --version 都跑不起来说明包和本机 CPU 完全不兼容。
+    # 注意：客户端工具的不兼容【测不出来】——真机实测 mariadb --version 正常，
+    # 但真正连上服务端做协议交互时才 SIGILL。那条路由 MariaDB_Client_Usable 兜。
+    /usr/local/mariadb/bin/mariadbd --version >/dev/null 2>&1 && return 0
+    MariaDB_CPU_Hint "mariadbd"
+    return 1
+}
+
+MariaDB_CPU_Hint()
+{
+    Echo_Red "❌ ${Mariadb_Ver} 预编译包在本机 CPU 上无法运行（崩溃的程序：$1）"
+    Echo_Yellow "   本机 CPU：$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //')"
+    Echo_Yellow "   预编译包要求较新的指令集（如 AVX/AVX2），本机或虚拟化层未提供。"
+    Echo_Yellow "   解决办法（任选其一）："
+    Echo_Yellow "     1) 重跑安装，对「使用预编译二进制包」选 n，改用源码编译"
+    Echo_Yellow "     2) 换用较低版本 MariaDB（如 10.11 LTS）或改用 MySQL"
+}
+
+MariaDB_Client_Usable()
+{
+    # 客户端能否真干活，只有连上服务端才知道。被信号打死时退出码是 128+N，
+    # SIGILL=4 → 132。普通的"连不上"是 1，不会误判。
+    /usr/local/mariadb/bin/mysqladmin ping >/dev/null 2>&1
+    local rc=$?
+    if [ ${rc} -ge 128 ]; then
+        MariaDB_CPU_Hint "mysqladmin/mariadb-admin（信号 $((rc - 128))）"
+        return 1
+    fi
+    return 0
+}
+
 Check_MariaDB_Data_Dir()
 {
     if [ -d "${MariaDB_Data_Dir}" ] && [ -n "$(ls -A "${MariaDB_Data_Dir}" 2>/dev/null)" ]; then
@@ -113,6 +148,7 @@ Install_MariaDB_5()
         Tar_Cd ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz
         mkdir /usr/local/mariadb
         mv ${Mariadb_Ver}-linux-systemd-${DB_ARCH}/* /usr/local/mariadb/
+        MariaDB_Bin_Smoke_Test || exit 1
     else
         Echo_Blue "[+] Installing ${Mariadb_Ver} Using Source code..."
         Tar_Cd ${Mariadb_Ver}.tar.gz ${Mariadb_Ver}
@@ -217,6 +253,7 @@ Install_MariaDB_103()
         Tar_Cd ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz
         mkdir /usr/local/mariadb
         mv ${Mariadb_Ver}-linux-systemd-${DB_ARCH}/* /usr/local/mariadb/
+        MariaDB_Bin_Smoke_Test || exit 1
     else
         Echo_Blue "[+] Installing ${Mariadb_Ver} Using Source code..."
         Tar_Cd ${Mariadb_Ver}.tar.gz ${Mariadb_Ver}
@@ -320,6 +357,7 @@ Install_MariaDB_104()
         Tar_Cd ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz
         mkdir /usr/local/mariadb
         mv ${Mariadb_Ver}-linux-systemd-${DB_ARCH}/* /usr/local/mariadb/
+        MariaDB_Bin_Smoke_Test || exit 1
     else
         Echo_Blue "[+] Installing ${Mariadb_Ver} Using Source code..."
         Tar_Cd ${Mariadb_Ver}.tar.gz ${Mariadb_Ver}
@@ -424,6 +462,7 @@ Install_MariaDB_105()
         Tar_Cd ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz
         mkdir /usr/local/mariadb
         mv ${Mariadb_Ver}-linux-systemd-${DB_ARCH}/* /usr/local/mariadb/
+        MariaDB_Bin_Smoke_Test || exit 1
     else
         Echo_Blue "[+] Installing ${Mariadb_Ver} Using Source code..."
         rm -f /etc/my.cnf
@@ -528,6 +567,7 @@ Install_MariaDB_106()
         Tar_Cd ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz
         mkdir /usr/local/mariadb
         mv ${Mariadb_Ver}-linux-systemd-${DB_ARCH}/* /usr/local/mariadb/
+        MariaDB_Bin_Smoke_Test || exit 1
     else
         Echo_Blue "[+] Installing ${Mariadb_Ver} Using Source code..."
         rm -f /etc/my.cnf
@@ -632,6 +672,7 @@ Install_MariaDB_1011()
         Tar_Cd ${Mariadb_Ver}-linux-systemd-${DB_ARCH}.tar.gz
         mkdir /usr/local/mariadb
         mv ${Mariadb_Ver}-linux-systemd-${DB_ARCH}/* /usr/local/mariadb/
+        MariaDB_Bin_Smoke_Test || exit 1
     else
         Echo_Blue "[+] Installing ${Mariadb_Ver} Using Source code..."
         rm -f /etc/my.cnf
