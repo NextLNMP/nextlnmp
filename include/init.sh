@@ -345,6 +345,35 @@ CentOS6_Modify_Source()
     fi
 }
 
+CentOS7_Modify_Source()
+{
+    echo "${CentOS_Version}" | grep -Eqi "^7" || return 0
+
+    # CentOS 7 于 2024-06-30 EOL，mirror.centos.org / mirrorlist.centos.org 都已下线。
+    # 但【不能一上来就改源】：不少服务商（本轮实测的搬瓦工就是）已经在模板里把源
+    # 指向了自家可用的镜像，那种情况下 yum 好好的，我们去动它反而是帮倒忙。
+    # 所以先实测一句，真不可用才换 vault。
+    if yum -q makecache >/dev/null 2>&1; then
+        return 0
+    fi
+
+    Echo_Yellow "CentOS 7 已 EOL，当前 yum 源不可用，切换到官方归档源 vault.centos.org"
+    mkdir -p /etc/yum.repos.d/backup
+    # 只搬真正的 repo 文件；已有同名备份就不覆盖（重跑时别把好备份盖成坏的）
+    for f in /etc/yum.repos.d/*.repo; do
+        [ -e "${f}" ] || continue
+        [ -e "/etc/yum.repos.d/backup/$(basename "${f}")" ] || mv "${f}" /etc/yum.repos.d/backup/
+        rm -f "${f}"
+    done
+    \cp ${cur_dir}/conf/CentOS7-vault.repo /etc/yum.repos.d/CentOS7-vault.repo
+    yum clean all >/dev/null 2>&1
+    if yum -q makecache >/dev/null 2>&1; then
+        Echo_Green "已切换到归档源，yum 恢复可用"
+    else
+        Echo_Red "切换归档源后 yum 仍不可用，请检查网络或手工配置 /etc/yum.repos.d/"
+    fi
+}
+
 CentOS8_Modify_Source()
 {
     if echo "${CentOS_Version}" | grep -Eqi "^8" && [ "${isCentosStream}" != "y" ]; then
@@ -373,6 +402,7 @@ Modify_Source()
         Ubuntu_Modify_Source
     elif [ "${DISTRO}" = "CentOS" ]; then
         CentOS6_Modify_Source
+        CentOS7_Modify_Source
         CentOS8_Modify_Source
     fi
 }

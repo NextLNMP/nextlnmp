@@ -1,0 +1,28 @@
+# CentOS 7 已于 2024-06-30 EOL，mirror.centos.org / mirrorlist.centos.org 均已下线。
+# 官方把内容归档到 vault.centos.org，本文件指向归档地址。
+# 由 NextLNMP 在检测到系统源不可用时自动启用（原有 repo 会先备份到 /etc/yum.repos.d/backup/）。
+
+[base]
+name=CentOS-7 - Base - vault.centos.org
+baseurl=https://vault.centos.org/7.9.2009/os/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+[updates]
+name=CentOS-7 - Updates - vault.centos.org
+baseurl=https://vault.centos.org/7.9.2009/updates/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+[extras]
+name=CentOS-7 - Extras - vault.centos.org
+baseurl=https://vault.centos.org/7.9.2009/extras/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+[centosplus]
+name=CentOS-7 - Plus - vault.centos.org
+baseurl=https://vault.centos.org/7.9.2009/centosplus/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
