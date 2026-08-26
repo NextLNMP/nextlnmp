@@ -6,9 +6,16 @@ if [ $(id -u) != "0" ]; then
     exit 1
 fi
 
-cur_dir=$(pwd)
+# 按脚本自身所在目录定位，而不是 $(pwd)。用 pwd 的话，只要不是在项目目录里
+# 敲的命令（比如 bash /root/nextlnmp/uninstall.sh），source 就会失败：
+# 配置里的 MySQL_Data_Dir / MariaDB_Data_Dir 全是空的，备份块被 [ -n ] 守卫
+# 静默跳过，而后面的 rm -rf /usr/local/mysql 是无条件的——数据没备份就没了。
+cur_dir=$(cd "$(dirname "$0")" && pwd)
 . ${cur_dir}/nextlnmp.conf
 . ${cur_dir}/include/main.sh
+
+# 配置读不出来就不许往下走（nextlnmp.sh 一直有这道闸，这三个入口以前没有）
+Check_nextLNMPConf
 
 # 从 nextlnmp.sh 读取版本号
 NEXTLNMP_Ver=$(grep "^NEXTLNMP_Ver=" ${cur_dir}/nextlnmp.sh 2>/dev/null | cut -d"'" -f2)

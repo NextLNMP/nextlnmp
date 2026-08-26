@@ -7,12 +7,19 @@ if [ $(id -u) != "0" ]; then
     exit 1
 fi
 
-cur_dir=$(pwd)
+# 按脚本自身所在目录定位并切过去，而不是靠 $(pwd)。下面那一串 source 用的是
+# 相对路径，只要不是在项目目录里敲的命令（比如 bash /root/nextlnmp/upgrade.sh），
+# 配置和函数库就全都读不进来，脚本却会带着一堆空变量继续往下跑。
+cur_dir=$(cd "$(dirname "$0")" && pwd)
+cd "${cur_dir}" || exit 1
 action=$1
 action2=$2
 
 . nextlnmp.conf
 . include/main.sh
+
+# 配置读不出来就不许往下走（nextlnmp.sh 一直有这道闸，本入口以前没有）
+Check_nextLNMPConf
 . include/php-select.sh
 . include/init.sh
 . include/version.sh
