@@ -42,8 +42,27 @@ Install_Caddy()
     fi
 
     # WebServer=caddy 时 nginx.sh/apache.sh 都不执行，站点根目录在这里建（对齐 nginx.sh 行为）
-    mkdir -p ${Default_Website_Dir:-/home/wwwroot/default}
-    chown -R www:www ${Default_Website_Dir:-/home/wwwroot/default}
+    mkdir -p "${Default_Website_Dir:-/home/wwwroot/default}"
+    chown -R www:www "${Default_Website_Dir:-/home/wwwroot/default}"
+
+    # 这里以前只建了目录就算"对齐 nginx.sh"了，但 nginx.sh 真正做的隔离一件都没跟上：
+    # 它会给站点根写 .user.ini（open_basedir=站点目录:/tmp/:/proc/）、chmod 644 后
+    # chattr +i 锁死，还往 fastcgi.conf 追加 PHP_ADMIN_VALUE 作为第二道保险。
+    # Caddy 的 php_fastcgi 不会传 PHP_ADMIN_VALUE，而紧接着 Creat_PHP_Tools 又会把
+    # phpinfo.php、探针 p.php 和整套 phpMyAdmin 铺进同一个站点根 —— 于是 Caddy 用户
+    # 的 PHP 跑在完全没有 open_basedir 的状态下。这里补上 .user.ini 这一道。
+    if [ "${Stack}" = "nextlnmp" ]; then
+        local _wwwdir="${Default_Website_Dir:-/home/wwwroot/default}"
+        if [ -f "${_wwwdir}/.user.ini" ]; then
+            chattr -i "${_wwwdir}/.user.ini" 2>/dev/null
+            rm -f "${_wwwdir}/.user.ini"
+        fi
+        cat >"${_wwwdir}/.user.ini"<<EOF
+open_basedir=${_wwwdir}:/tmp/:/proc/
+EOF
+        chmod 644 "${_wwwdir}/.user.ini"
+        chattr +i "${_wwwdir}/.user.ini" 2>/dev/null
+    fi
 
     if [ ! -d /etc/caddy ]; then
         mkdir -p /etc/caddy
