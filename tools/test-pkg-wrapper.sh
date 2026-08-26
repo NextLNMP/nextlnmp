@@ -5,7 +5,7 @@ cur_dir=$(cd "$(dirname "$0")/.." && pwd)
 Echo_Red() { echo "[红] $*"; }
 Echo_Yellow() { echo "[黄] $*"; }
 
-eval "$(sed -n '/^Pkg_Missing=""/,/^}/p;/^Report_Missing_Pkg()/,/^}/p' "${cur_dir}/include/init.sh")"
+eval "$(sed -n '/^PKG_CRITICAL=/p;/^Pkg_Missing=""/,/^}/p;/^Report_Missing_Pkg()/,/^}/p' "${cur_dir}/include/init.sh")"
 
 if ! declare -f Try_Install_Pkg >/dev/null; then
     echo "✗ 没能从 include/init.sh 里取出 Try_Install_Pkg"
@@ -65,6 +65,28 @@ Report_Missing_Pkg >/dev/null
 [ -z "$(Report_Missing_Pkg)" ] && pass=$((pass + 1)) || { fail=$((fail + 1)); echo "  ✗ 空名单仍有输出"; }
 
 
+
+# ── 源整个坏了的场景（原修复在这里会假绿）─────────────────────────────
+# 软件源不可用时 apt/yum 会对【每一个】包都说 not found，包括 gcc/make。
+# 若照样静默收集，用户会看到一句「不影响安装」，二十分钟后才在 ./configure
+# 炸出 no acceptable C compiler。所以必需件必须当场报错、返回非 0。
+for crit in gcc make g++ cmake build-essential; do
+    Pkg_Missing=""
+    Try_Install_Pkg "${crit}" yum_notfound > "${tmp_out}" 2>&1; rc=$?
+    check "必需件 ${crit} 不得被吞" 1 "" "${rc}" "${Pkg_Missing# }"
+    grep -q "软件源" "${tmp_out}" || { fail=$((fail + 1)); echo "  ✗ ${crit} 没给出「源坏了」的提示"; }
+done
+
+# 反面：非必需件仍要静默收集，别把护栏做成一刀切
+Pkg_Missing=""
+Try_Install_Pkg "libpng10-devel" yum_notfound > "${tmp_out}" 2>&1; rc=$?
+check "非必需件仍静默收集" 0 "libpng10-devel" "${rc}" "${Pkg_Missing# }"
+
+# 必需件即便是「真失败」也一样要报（不能因为在名单里就走别的分支）
+Pkg_Missing=""
+Try_Install_Pkg "gcc" pm_repofail > "${tmp_out}" 2>&1; rc=$?
+check "必需件真失败也要报" 1 "" "${rc}" "${Pkg_Missing# }"
+
 # ── 静态断言：用到 Try_Install_Pkg 的文件，其入口必须先 source include/init.sh ──
 # 否则运行到那一行才会 "command not found"，而依赖安装往往在安装流程深处。
 users=$(grep -rl "Try_Install_Pkg" "${cur_dir}/include" 2>/dev/null | grep -v "init.sh$" | xargs -r -n1 basename)
@@ -88,7 +110,7 @@ for u in ${users}; do
 done
 
 if [ ${fail} -eq 0 ]; then
-    echo "✓ 依赖安装容错外壳测试全部通过（查无此包 4 / 成功 1 / 真失败 2 / 汇总 2 / source 顺序 ${pass} 项断言）"
+    echo "✓ 依赖安装容错外壳测试全部通过（查无此包 4 / 成功 1 / 真失败 2 / 汇总 2 / 必需件不吞 7 / source 顺序若干，共 ${pass} 项）"
     exit 0
 fi
 echo "✗ 失败 ${fail} 项，通过 ${pass} 项"

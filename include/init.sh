@@ -375,6 +375,13 @@ Check_Codeready()
 # 其他失败（源坏了、网断了、依赖冲突）必须原样吐出来，绝不能吞。
 Pkg_Missing=""
 
+# 这几个是编译整套 LNMP 的必需件，任何发行版都有。它们要是「找不到」，那不是
+# 包名过时，是软件源整个坏了（apt-get update 失败、仓库 404、GPG 过期），
+# 此时 apt/yum 会对【每一个】包都说 not found。绝不能把它们当可选件吞掉——
+# 吞了就会打印一句「不影响安装」的绿灯，然后在二十分钟后的 ./configure
+# 才炸出 "no acceptable C compiler"，根因早被冲到几百行之外。
+PKG_CRITICAL=" make gcc gcc-c++ g++ cmake build-essential kernel-headers libc6-dev glibc-headers "
+
 Try_Install_Pkg()
 {
     local pkg="$1" out rc
@@ -385,12 +392,45 @@ Try_Install_Pkg()
         return 0
     fi
     if echo "${out}" | grep -Eqi "Unable to find a match|No package .* available|Unable to locate package|has no installation candidate"; then
+        case "${PKG_CRITICAL}" in
+            *" ${pkg} "*)
+                echo "${out}"
+                Echo_Red "必需的编译工具 ${pkg} 在软件源里找不到——这通常是源坏了，不是包名过时。"
+                return 1
+                ;;
+        esac
         Pkg_Missing="${Pkg_Missing} ${pkg}"
         return 0
     fi
     echo "${out}"
     Echo_Red "依赖包 ${pkg} 安装失败（以上为原始输出）"
     return 1
+}
+
+# 装完依赖后校验工具链是否真的到位。不看包管理器怎么说，直接看命令在不在——
+# 这是唯一能挡住「源坏了但一路绿灯」的地方。
+Assert_Toolchain()
+{
+    local missing="" c
+    for c in gcc make; do
+        command -v "${c}" >/dev/null 2>&1 || missing="${missing} ${c}"
+    done
+    command -v g++ >/dev/null 2>&1 || command -v c++ >/dev/null 2>&1 || missing="${missing} g++"
+    [ -z "${missing}" ] && return 0
+
+    Echo_Red "════════════════════════════════════════════════════"
+    Echo_Red " 基础编译工具没装上：${missing}"
+    Echo_Red ""
+    Echo_Red " 这几个包每个发行版都有，装不上基本只有一个原因：软件源不可用。"
+    Echo_Red " 常见情形："
+    Echo_Red "   · apt-get update / yum makecache 失败（网络、DNS、镜像挂了）"
+    Echo_Red "   · 系统已 EOL，官方源下架（Debian 10、CentOS 7 等需改用 archive/vault）"
+    Echo_Red "   · 第三方源的 GPG 密钥过期"
+    Echo_Red ""
+    Echo_Red " 请先修好软件源（能正常 apt-get install gcc 或 yum install gcc）再重跑安装。"
+    Echo_Red " 现在继续下去只会在二十分钟后的编译环节报 'no acceptable C compiler'。"
+    Echo_Red "════════════════════════════════════════════════════"
+    exit 1
 }
 
 Report_Missing_Pkg()
@@ -412,6 +452,7 @@ CentOS_Dependent()
     for packages in make cmake gcc gcc-c++ gcc-g77 kernel-headers glibc-headers flex bison file libtool libtool-libs autoconf patch wget crontabs libjpeg libjpeg-devel libjpeg-turbo-devel libpng libpng-devel libpng10 libpng10-devel gd gd-devel libxml2 libxml2-devel zlib zlib-devel glib2 glib2-devel unzip tar bzip2 bzip2-devel libzip-devel libevent libevent-devel ncurses ncurses-devel curl curl-devel libcurl libcurl-devel e2fsprogs e2fsprogs-devel krb5 krb5-devel libidn libidn-devel openssl openssl-devel pcre-devel gettext gettext-devel ncurses-devel gmp-devel pspell-devel unzip libcap diffutils ca-certificates net-tools libc-client-devel psmisc libXpm-devel git-core c-ares-devel libicu-devel libxslt libxslt-devel xz expat-devel libaio-devel rpcgen libtirpc-devel perl cyrus-sasl-devel sqlite-devel oniguruma-devel lsof re2c pkg-config libarchive hostname ncurses-libs numactl-devel libxcrypt libwebp-devel gnutls-devel initscripts iproute libxcrypt-compat;
     do Try_Install_Pkg "$packages" yum -y install; done
     Report_Missing_Pkg
+    Assert_Toolchain
 
     yum -y update nss
 
@@ -515,6 +556,7 @@ Deb_Dependent()
     for packages in debian-keyring debian-archive-keyring build-essential gcc g++ make cmake autoconf automake re2c wget cron bzip2 libzip-dev libc6-dev bison file rcconf flex bison m4 gawk less cpp binutils diffutils unzip tar bzip2 libbz2-dev libncurses5 libncurses5-dev libtool libevent-dev openssl libssl-dev zlibc libsasl2-dev libltdl3-dev libltdl-dev zlib1g zlib1g-dev libbz2-1.0 libbz2-dev libglib2.0-0 libglib2.0-dev libpng3 libjpeg-dev libpng-dev libpng12-0 libpng12-dev libkrb5-dev curl libcurl3-gnutls libcurl4-gnutls-dev libcurl4-openssl-dev libpcre3-dev libpq-dev libpq5 gettext libpng12-dev libxml2-dev libcap-dev ca-certificates libc-client2007e-dev psmisc patch git libc-ares-dev libicu-dev e2fsprogs libxslt1.1 libxslt1-dev libc-client-dev xz-utils libexpat1-dev libaio-dev libtirpc-dev libsqlite3-dev libonig-dev lsof pkg-config libtinfo-dev libnuma-dev libwebp-dev gnutls-dev iproute2 xz-utils gzip;
     do Try_Install_Pkg "$packages" apt-get --no-install-recommends install -y; done
     Report_Missing_Pkg
+    Assert_Toolchain
 }
 
 Check_Download()
