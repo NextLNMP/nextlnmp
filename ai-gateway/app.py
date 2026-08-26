@@ -96,14 +96,34 @@ DIAG_OK = [
 
 # 灾难命令：即使用户按了 y 也不该执行（客户端 tools/test-ai-assist.sh 有同款硬闸，双重保险）。
 # 只拦"整个系统目录"，rm -rf /usr/local/php 这类合法修复必须放行。
+# 归一化后再判：去掉引号、把连续空白压成一个。否则 rm -rf "/" 这种
+# 只要插一个引号，字符串匹配就整个错过。客户端 AI_Cmd_Catastrophic 同款处理。
+_NORM_QUOTES = re.compile('[' + chr(34) + chr(39) + ']')
+_NORM_SPACE = re.compile(r'\s+')
+
 DANGER = re.compile(
     r'(^|[;&|]\s*)(reboot|shutdown|halt|poweroff|init\s+[06])\b'
     r'|mkfs(\.\w+)?\b'
-    r'|\bdd\s+[^\n]*of=/dev/'
+    r'|\bdd\s+[^\r\n]*of=/dev/'
     r'|>\s*/dev/(sd|nvme|vd)'
-    r'|\brm\s+(-[a-zA-Z]+\s+)*(/|/\*|/(etc|usr|var|home|boot|bin|sbin|lib|lib64|opt|root|srv|dev|proc|sys)(/\*)?)\s*($|[;&|])'
+    # rm 带任意标志（含 --no-preserve-root 这种长选项），参数里出现裸 / 或裸系统
+    # 目录即拦 —— 不要求它在行尾，否则 `rm -rf /etc /usr` 这种多目标写法会漏掉。
+    r'|(^|[\s;&|])rm(\s+-[-a-zA-Z]+)*\s+([^\s]+\s+)*'
+    r'(/|/etc|/usr|/var|/home|/boot|/bin|/sbin|/lib|/lib64|/opt|/root|/srv|/dev|/proc|/sys)'
+    r'(/\*)?(\s|$|[;&|])'
     r'|chmod\s+(-R\s+)?777\s+/\s*($|[;&|])'
+    r'|:\(\)\s*\{.*\};\s*:'
 )
+
+
+def is_dangerous(cmd):
+    """判危险命令。先归一化，避免靠引号或多余空格绕过。"""
+    if not cmd:
+        return False
+    raw = str(cmd)
+    norm = _NORM_SPACE.sub(' ', _NORM_QUOTES.sub('', raw))
+    return bool(DANGER.search(norm)) or bool(DANGER.search(raw))
+
 
 SYSTEM_PROMPT = """你是 NextLNMP 一键安装包（Linux 下 Nginx/MySQL/MariaDB/PHP 环境安装脚本）的安装故障排查专家，正在与一位可能是新手的中文用户对话。
 只输出严格 JSON：{"say":"对用户说的中文，一段话，说人话","diag":["需要用户机器执行的只读诊断命令"],"fix":["建议用户执行的修复命令"],"heal":{"file":"","dir":"","upstream":""},"done":false,"need_human":false}
@@ -190,7 +210,29 @@ def _scrub(text):
         out = out.replace(ADMIN_KEY, '<ADMIN_KEY>')
     if DS_KEY:
         out = out.replace(DS_KEY, '<DS_KEY>')
-    out = re.sub(r'(Bearer|Authorization:?)\s*\S+', r' <redacted>', out, flags=re.I)
+    out = re.sub(r'(Bearer|Authorization:?)\s*\S+', r'\1 <redacted>', out, flags=re.I)
+    return out
+
+# 用户日志里的密码：客户端上传前已经抹过一遍，但不能只指望客户端——
+# 老版本客户端、或者有人直接打 /chat，都会绕过那一层。
+# 服务端在【送模型之前】和【落库之前】各过一遍，作为兜底。
+_SECRET_PATTERNS = [
+    (re.compile(r'(密码[：:]\s*)\S{4,}'), r'\1***'),
+    (re.compile(r'([Pp]assword\s*[:=]\s*)\S{4,}'), r'\1***'),
+    (re.compile(r"(IDENTIFIED BY\s*')[^']*(')"), r'\1***\2'),
+    (re.compile(r'(-p)[A-Za-z0-9!@#$%^&*_+=-]{6,}'), r'\1***'),
+    (re.compile(r'([Tt]oken\s*[:=]\s*)[A-Za-z0-9_-]{12,}'), r'\1***'),
+    (re.compile(r'(gh[pousr]_)[A-Za-z0-9]{20,}'), r'\1***'),
+    (re.compile(r'(sk-)[A-Za-z0-9]{16,}'), r'\1***'),
+]
+
+
+def scrub_user_text(text):
+    if not text:
+        return text
+    out = str(text)
+    for pat, rep in _SECRET_PATTERNS:
+        out = pat.sub(rep, out)
     return out
 
 def signature(step, os_info, log_tail):
@@ -258,7 +300,7 @@ def _ask_llm_inner(messages, max_tokens=2000):
     # 闸：服务端过滤非白名单诊断命令
     parsed['diag'] = [d for d in parsed['diag'] if isinstance(d, str)
                       and any(p.match(d.strip()) for p in DIAG_OK)][:4]
-    parsed['fix'] = [f for f in parsed['fix'] if isinstance(f, str) and not DANGER.search(f)][:4]
+    parsed['fix'] = [f for f in parsed['fix'] if isinstance(f, str) and not is_dangerous(f)][:4]
     return parsed
 
 
@@ -505,9 +547,20 @@ def load_session(sid):
 
 def save_session(sid, turns, msgs):
     c = db()
+    # 落库前再脱敏一次：会话表存 24 小时，里面是用户机器的安装日志与诊断输出，
+    # 不该留下明文密码。
+    safe = []
+    for msg in msgs[-16:]:
+        if isinstance(msg, dict):
+            m2 = dict(msg)
+            if isinstance(m2.get('content'), str):
+                m2['content'] = scrub_user_text(m2['content'])
+            safe.append(m2)
+        else:
+            safe.append(msg)
     c.execute('INSERT INTO sessions(sid, created, turns, msgs) VALUES(?,?,?,?) '
               'ON CONFLICT(sid) DO UPDATE SET turns=excluded.turns, msgs=excluded.msgs',
-              (sid, int(time.time()), turns, json.dumps(msgs[-16:], ensure_ascii=False)))
+              (sid, int(time.time()), turns, json.dumps(safe, ensure_ascii=False)))
     c.execute('DELETE FROM sessions WHERE created < ?', (int(time.time()) - SESSION_TTL,))
     c.commit(); c.close()
 
@@ -547,8 +600,22 @@ def render_text(sid, p, healed):
 class H(BaseHTTPRequestHandler):
     server_version = 'nextlnmp-ai/2.0'
 
+    def _client_ip(self):
+        # X-Real-IP 是客户端可以自己填的头。只有当请求确实来自本机 nginx
+        # （127.0.0.1 / ::1）时才采信它，否则一律用真实对端地址——
+        # 不然攻击者每个请求换一个 X-Real-IP，限流形同虚设。
+        peer = self.client_address[0]
+        if peer in ('127.0.0.1', '::1', '::ffff:127.0.0.1'):
+            return self.headers.get('X-Real-IP') or peer
+        return peer
+
     def log_message(self, fmt, *a):
-        print('%s %s' % (self.client_address[0], fmt % a), flush=True)
+        # 请求行会原样进日志，而 /admin 的密钥走 query string —— 运维每用一次，
+        # 明文密钥就在 stdout/journald 里留一份，nginx access log 里还有一份。
+        # 这里把 query 里的 key 抹掉，再过一遍通用脱敏。
+        line = fmt % a
+        line = re.sub(r'([?&]key=)[^&\s]+', r'\1<redacted>', line)
+        print('%s %s' % (self.client_address[0], _scrub(line)), flush=True)
 
     def _send(self, code, obj, text=False):
         data = (obj if text else json.dumps(obj, ensure_ascii=False)).encode('utf-8')
@@ -580,8 +647,17 @@ class H(BaseHTTPRequestHandler):
                              'today': dict(zip(k, r)) if r else {},
                              'yuan_today': round(spent_yuan(), 4), 'yuan_cap': DAILY_YUAN_CAP})
         elif path == '/admin':
+            # do_POST 一开始就过 rate_ok，而 do_GET 原来一路裸奔——/admin 的密钥
+            # 可以被全速枚举，猜错的成本几乎为零（403 在开库之前就返回了）。
+            # 这里补上同一套限流，并对失败额外加一点延迟拖慢爆破。
+            ip = self._client_ip()
+            if not rate_ok(ip):
+                return self._send(429, {'error': 'too many requests'})
             q = dict(re.findall(r'(\w+)=([^&]*)', self.path.split('?', 1)[-1]))
-            if not ADMIN_KEY or q.get('key') != ADMIN_KEY:
+            supplied = q.get('key') or ''
+            # 用 compare_digest：普通 != 是按字节短路比较，理论上能被计时区分
+            if not ADMIN_KEY or not secrets.compare_digest(supplied, ADMIN_KEY):
+                time.sleep(0.5)
                 return self._send(403, {'error': 'forbidden'})
             c = db()
             rows = c.execute('SELECT ts, file, dir, upstream, status, detail FROM heals ORDER BY id DESC LIMIT 50').fetchall()
@@ -593,14 +669,7 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         path = self.path.split('?')[0].rstrip('/')
         want_text = 'fmt=text' in self.path
-        # X-Real-IP 是客户端可以自己填的头。只有当请求确实来自本机 nginx
-        # （127.0.0.1 / ::1）时才采信它，否则一律用真实对端地址——
-        # 不然攻击者每个请求换一个 X-Real-IP，30 次/分的限流形同虚设。
-        peer = self.client_address[0]
-        if peer in ('127.0.0.1', '::1', '::ffff:127.0.0.1'):
-            ip = self.headers.get('X-Real-IP') or peer
-        else:
-            ip = peer
+        ip = self._client_ip()
         if not rate_ok(ip):
             return self._send(429, 'SAY: 请求过于频繁，请稍后再试\nDONE\n' if want_text else {'error': 'rate limited'}, want_text)
         try:
@@ -620,7 +689,7 @@ class H(BaseHTTPRequestHandler):
                 return base64.b64decode(p['log_b64']).decode('utf-8', 'replace')[-MAX_LOG:]
             except Exception:
                 return ''
-        return str(p.get('log_tail', ''))[-MAX_LOG:]
+        return scrub_user_text(str(p.get('log_tail', '')))[-MAX_LOG:]
 
     def _diagnose(self, p):
         try:
