@@ -36,9 +36,21 @@ Deb_InstallNTP()
     if [ "${CheckMirror}" != "n" ]; then
         apt-get update -y
         [[ $? -ne 0 ]] && apt-get update --allow-releaseinfo-change -y
-        Echo_Blue "[+] Installing ntp..."
-        apt-get install -y ntpdate
-        ntpdate -u pool.ntp.org
+        Echo_Blue "[+] 校时..."
+        # ntpdate 在 Debian 13 / Ubuntu 24.04+ 已从仓库移除（本轮真机实测：
+        # 装不上，然后脚本照样调用它，日志里留一条 ntpdate: command not found）。
+        # 按可用性依次尝试，都没有就跳过——校时不成功不该影响安装。
+        if command -v timedatectl >/dev/null 2>&1 && timedatectl show 2>/dev/null | grep -q 'NTP=yes'; then
+            echo "系统已启用 systemd 时间同步，跳过"
+        elif apt-get install -y ntpdate >/dev/null 2>&1 && command -v ntpdate >/dev/null 2>&1; then
+            ntpdate -u pool.ntp.org
+        elif apt-get install -y ntpsec-ntpdate >/dev/null 2>&1 && command -v ntpdate >/dev/null 2>&1; then
+            ntpdate -u pool.ntp.org
+        elif apt-get install -y systemd-timesyncd >/dev/null 2>&1; then
+            timedatectl set-ntp true 2>/dev/null && echo "已启用 systemd-timesyncd"
+        else
+            Echo_Yellow "本系统没有可用的校时工具，跳过（不影响安装）"
+        fi
     fi
     date
     start_time=$(date +%s)
@@ -72,8 +84,16 @@ Deb_RemoveAMP()
     Echo_Blue "[-] apt-get remove packages..."
     apt-get update -y
     [[ $? -ne 0 ]] && apt-get update --allow-releaseinfo-change -y
+    # 这串是 Debian 7/Ubuntu 14 时代的包名，apache2.2-* 和 php5-* 在现代发行版里
+    # 早就不存在了，逐个 purge 会刷出一片 "E: Unable to locate package"，
+    # 看着像装挂了，也会把读日志尾的 AI 救援带偏。
+    # 先问一句这个包在不在，不在就跳过——本来也没什么可卸的。
     for removepackages in apache2 apache2-doc apache2-utils apache2.2-common apache2.2-bin apache2-mpm-prefork apache2-doc apache2-mpm-worker php5 php5-common php5-cgi php5-cli php5-mysql php5-curl php5-gd;
-    do apt-get purge -y $removepackages; done
+    do
+        if dpkg -l "${removepackages}" 2>/dev/null | grep -q "^[hi][iufWt]"; then
+            apt-get purge -y "${removepackages}"
+        fi
+    done
     if [[ "${DBSelect}" != "0" ]]; then
         if echo "${Ubuntu_Version}" | grep -Eqi "^2[0-7]\."; then
             dpkg -l |grep mysql
