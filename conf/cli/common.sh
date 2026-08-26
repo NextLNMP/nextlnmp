@@ -494,22 +494,29 @@ Verify_DB_Password()
 
 Add_Database_Menu()
 {
+    # 由域名派生库名；nextlnmp database add 独立调用时没有 ${domain}，退回随机名，
+    # 否则提示里承诺的"自动生成"会是空串，用户回车反被拒绝（真机装测实测）
     auto_db_name=$(echo "${domain}" | sed 's/\.//g' | sed 's/-//g' | cut -c1-16)
+    if [ -z "${auto_db_name}" ]; then
+        auto_db_name="db$(< /dev/urandom tr -dc 'a-z0-9' | head -c8)"
+    fi
     echo ""
     echo "请输入数据库名（直接回车使用自动生成的：${auto_db_name}）："
-    read -e database_name
+    read -e database_name || database_name=""
     if [ "${database_name}" == "" ]; then
         database_name="${auto_db_name}"
     fi
     while [ "${database_name}" == "" ]; do
         Echo_Red "数据库名不能为空，请重新输入："
-        read -e database_name
+        # read 失败=标准输入已关闭（管道/脚本调用），此时必须退出循环，
+        # 否则空转烧 CPU（真机实测 35% CPU 停不下来）
+        read -e database_name || { database_name="${auto_db_name}"; break; }
     done
     echo "数据库名：${database_name}"
     auto_password=$(< /dev/urandom tr -dc 'A-Za-z0-9' | head -c16)
     echo ""
     echo "请输入数据库密码（直接回车自动生成随机密码）："
-    read -e mysql_password
+    read -e mysql_password || mysql_password=""
     if [ "${mysql_password}" == "" ]; then
         mysql_password="${auto_password}"
     fi

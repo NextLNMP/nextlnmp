@@ -58,3 +58,10 @@ lamp:Add_SSL
 lamp:Add_Dns_SSL
 lamp:Add_Dns_SSL_Only
 lamp:Install_Check_Acme.sh
+
+# ---- 真机装测（2026-08-26）修复：Add_Database_Menu 两处缺陷 ----
+# ① nextlnmp database add 独立调用时 ${domain} 未赋值 → 提示里"自动生成的："是空串，
+#    用户按提示回车反被拒绝；现无域名时退回随机库名 dbXXXXXXXX。
+# ② while read 无 EOF 守卫 → 管道/脚本调用时空转烧 CPU（真机实测 35% 停不下来）；
+#    现 read 失败即退出循环。三个栈共用此函数，故三栈渲染均与基线不同。
+lnmp:Add_Database_Menu
