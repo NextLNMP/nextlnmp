@@ -39,3 +39,15 @@ conf/nextlnmpa:Add_SSL_Info_Menu
 conf/nextlamp:Add_VHost
 conf/nextlamp:Del_VHost
 conf/nextlamp:Add_SSL_Info_Menu
+
+# ---- lnmp / lnmpa：HTTP→HTTPS 的 301 改为 ^~ 前缀，并加幂等守卫 ----
+# ① 原来插的是 location / { return 301 ... }，但 :80 段里 include 了
+#    enable-php.conf，那是正则 location（location ~ \.php）。nginx 的正则 location
+#    优先于前缀 location，所以 .php 请求根本轮不到这个 301 —— PHP 站点的绝大多数
+#    页面从不跳 HTTPS。改用 ^~ 前缀，命中后 nginx 跳过正则匹配。
+# ② 原来无条件插入，同一域名第二次配 SSL 会插出第二个 location /，
+#    nginx duplicate location 是致命错误、reload 静默失败，下次重启才全站崩。
+#    现在先 grep 再插。
+# acme-challenge 用更长的 ^~ 前缀单独放行，证书续期仍可走明文 HTTP。
+conf/nextlnmp:Create_SSL_Config
+conf/nextlnmpa:Create_SSL_Config

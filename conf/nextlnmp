@@ -1511,7 +1511,19 @@ server
 EOF
 
     if [ "${using_301}" == "y" ]; then
-        sed -i '0,/access_log/!b;//i\        location / {\n            return 301 https://$host$request_uri;\n        }\n' /usr/local/nginx/conf/vhost/${domain}.conf
+        # 这里有两个坑，都是真机审计翻出来的：
+        #  ① 原来插的是 location / { return 301 ... }。可 :80 段里有
+        #     include enable-php.conf，那是【正则】location（location ~ \.php），
+        #     而 nginx 的正则 location 优先于前缀 location —— 于是所有 .php 请求
+        #     压根轮不到这个 301，PHP 站点的绝大多数页面从不跳 HTTPS。
+        #     改用 ^~ 前缀：命中后 nginx 直接跳过正则匹配，对 .php 也生效。
+        #  ② 原来无条件插入。对同一域名第二次配 SSL 就会插出第二个 location /，
+        #     nginx 报 duplicate location 直接是致命错误，reload 静默失败，
+        #     等到下次重启才发现全站起不来。所以先查再插。
+        # acme-challenge 用更长的 ^~ 前缀单独放行，保证证书续期仍能走明文 HTTP。
+        if ! grep -q "return 301 https://\$host\$request_uri;" /usr/local/nginx/conf/vhost/${domain}.conf; then
+            sed -i '0,/access_log/!b;//i\        location ^~ /.well-known/acme-challenge/ {\n            allow all;\n        }\n        location ^~ / {\n            return 301 https://$host$request_uri;\n        }\n' /usr/local/nginx/conf/vhost/${domain}.conf
+        fi
         sed -i "0,/include rewrite\/${rewrite}.conf;/s//#include rewrite\/${rewrite}.conf;/" /usr/local/nginx/conf/vhost/${domain}.conf
     fi
 
