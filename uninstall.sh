@@ -134,6 +134,11 @@ case "$action" in
 
     echo "删除所有文件..."
     rm -rf /usr/local/nginx /usr/local/apache /usr/local/php /usr/local/php[0-9].[0-9]* /usr/local/mysql /usr/local/mariadb /usr/local/zend
+    # 安装时给 .user.ini 加了 chattr +i，不先解锁 rm -rf 会静默失败、目录残留，
+    # 而脚本仍宣称"已恢复至初始状态"（真机装测实测）
+    if command -v chattr >/dev/null 2>&1; then
+        chattr -R -i /home/wwwroot 2>/dev/null
+    fi
     rm -rf /home/wwwroot
     rm -f /etc/my.cnf /etc/init.d/nginx /etc/init.d/mysql /etc/init.d/mysqld /etc/init.d/mariadb /etc/init.d/httpd
     for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[578].[0-9]; do
