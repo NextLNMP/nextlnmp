@@ -18,8 +18,20 @@ Install_Caddy()
             ;;
     esac
 
-    Download_Files https://github.com/caddyserver/caddy/releases/download/v${Caddy_Num}/caddy_${Caddy_Num}_linux_${Caddy_Arch}.tar.gz caddy_${Caddy_Num}_linux_${Caddy_Arch}.tar.gz
-    tar -zxf caddy_${Caddy_Num}_linux_${Caddy_Arch}.tar.gz caddy
+    # 原来只从 GitHub 单点下载，而 caddy 又不在 sha256sums.txt 里 ——
+    # Try_Download 在默认的 NEXTLNMP_VERIFY=warn 下只对"清单里没有此条目"打一句
+    # 黄字警告就放行，同时 wget 带着 --no-check-certificate（老系统 CA 过期的历史
+    # 包袱）。两条合起来：这个要 chmod +x 后当 web 服务器跑的二进制，
+    # 既没有 TLS 认证也没有哈希校验。
+    # 现在与其它组件一致走三级链路，原件已上架镜像、由 CI 扫描收进清单，
+    # 因此每次下载都会逐包 SHA256 校验；GitHub 退居最后兜底。
+    Caddy_Pkg="caddy_${Caddy_Num}_linux_${Caddy_Arch}.tar.gz"
+    if ! Try_Download ${Download_Mirror}/web/caddy/${Caddy_Pkg} ${Caddy_Pkg}; then
+        if ! Try_Download ${Download_Mirror_Backup}/web/caddy/${Caddy_Pkg} ${Caddy_Pkg}; then
+            Download_Files https://github.com/caddyserver/caddy/releases/download/v${Caddy_Num}/${Caddy_Pkg} ${Caddy_Pkg}
+        fi
+    fi
+    tar -zxf ${Caddy_Pkg} caddy
     mv caddy /usr/local/bin/
     chmod +x /usr/local/bin/caddy
 
