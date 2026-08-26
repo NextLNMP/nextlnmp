@@ -55,6 +55,46 @@ TempMycnf_Clean()
     fi
 }
 
+# 网站根目录是用户手输的，之前既不校验也不加引号，直接拿去
+# chmod -R / chown -R。两种翻车方式：
+#  ① 填成父目录（提示里默认值是 /home/wwwroot/域名，很容易顺手删成
+#     /home/wwwroot），于是机器上【其它所有站点】的文件被递归改成 www:www 755
+#     ——原本 600 的 wp-config.php、.env、备份 sql 全变成同机其它站点可读，
+#     没有确认步骤，也没法撤销。
+#  ② 路径含空格，未加引号导致分词，mkdir 建出两个目录、chown 作用在错误的树上、
+#     `cat >${vhostdir}/.user.ini` 直接 ambiguous redirect ——
+#     结果是 open_basedir 隔离静默缺席，而用户以为建好了。
+Check_VHost_Dir()
+{
+    local d="$1"
+    case "${d}" in
+        ''|*[![:print:]]*)
+            Echo_Red "网站目录无效。"; return 1 ;;
+        /*) ;;
+        *)  Echo_Red "网站目录必须是绝对路径（以 / 开头），当前输入：${d}"; return 1 ;;
+    esac
+    # 去掉结尾多余的 /，便于和黑名单比对
+    while [ "${d}" != "/" ] && [ "${d%/}" != "${d}" ]; do d="${d%/}"; done
+    case "${d}" in
+        /|/bin|/boot|/dev|/etc|/home|/lib|/lib64|/opt|/proc|/root|/run|/sbin|/srv|/sys|/tmp|/usr|/var)
+            Echo_Red "拒绝把 ${d} 当作网站根目录——接下来会对它执行 chmod -R / chown -R，"
+            Echo_Red "那会递归改掉这个目录下所有文件的权限和属主。"
+            return 1 ;;
+    esac
+    if [ "${d}" = "${Default_Website_Dir%/}" ] || [ "${d}" = "/home/wwwroot" ]; then
+        Echo_Red "拒绝把站点根目录设成 ${d}——那是所有站点的父目录，"
+        Echo_Red "chmod -R / chown -R 会波及这台机器上的每一个站点。"
+        Echo_Red "请用它下面的子目录，例如 ${d}/${domain}"
+        return 1 ;
+    fi
+    case "${d}" in
+        *[[:space:]]*)
+            Echo_Red "网站目录不要包含空格：${d}"
+            return 1 ;;
+    esac
+    return 0
+}
+
 Enter_Database_Name()
 {
     while :;do

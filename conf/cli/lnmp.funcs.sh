@@ -168,7 +168,11 @@ Add_VHost()
     echo ""
     echo "请输入网站根目录（直接回车使用默认）："
     echo "默认目录：${vhostdir}"
-    read -e input_vhostdir
+    read -e input_vhostdir || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
+    while [ "${input_vhostdir}" != "" ] && ! Check_VHost_Dir "${input_vhostdir}"; do
+        echo "请重新输入网站根目录（直接回车使用默认 /home/wwwroot/${domain}）："
+        read -e input_vhostdir || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
+    done
     if [ "${input_vhostdir}" != "" ]; then
         vhostdir="${input_vhostdir}"
     fi
@@ -284,7 +288,7 @@ Add_VHost()
     stty ${OLDCONFIG}
 
     echo "创建网站目录..."
-    mkdir -p ${vhostdir}
+    mkdir -p "${vhostdir}"
     if [ "${access_log}" == "y" ]; then
         touch /home/wwwlogs/${al_name}.log
     fi
@@ -294,15 +298,15 @@ Add_VHost()
         rm -f "${vhostdir}/.user.ini"
     fi
     echo "设置目录权限..."
-    chmod -R 755 ${vhostdir}
-    chown -R www:www ${vhostdir}
+    chmod -R 755 "${vhostdir}"
+    chown -R www:www "${vhostdir}"
     Add_VHost_Config
 
-    cat >${vhostdir}/.user.ini<<EOF
+    cat >"${vhostdir}/.user.ini"<<EOF
 open_basedir=${vhostdir}:/tmp/:/proc/
 EOF
-    chmod 644 ${vhostdir}/.user.ini
-    chattr +i ${vhostdir}/.user.ini
+    chmod 644 "${vhostdir}/.user.ini"
+    chattr +i "${vhostdir}/.user.ini"
 
     # 兼容 Binary 安装的多版本 php-fpm
     for phpfpm in /etc/init.d/php-fpm /etc/init.d/php-fpm[578].[0-9]; do
