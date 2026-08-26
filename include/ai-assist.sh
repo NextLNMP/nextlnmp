@@ -99,6 +99,55 @@ AI_Post()
          -H 'Content-Type: application/json' --data-binary @- 2>/dev/null
 }
 
+# 上传前把日志里的密码抹掉。安装日志里明摆着有这些：
+#   数据库 root 密码已自动生成：
+#     密码：vXkaSHbIJoIIQ3G8
+# 只要它落在最后 12KB 里就会跟着传出去。
+AI_Scrub_Log()
+{
+    local sed_args=()
+    # 已知的具体密码值优先精确替换（最可靠，不依赖措辞）
+    local v esc
+    for v in "${DB_Root_Password}" "${mysql_password}" "${ftp_account_password}"; do
+        if [ -n "${v}" ] && [ "${#v}" -ge 6 ]; then
+            esc=$(printf '%s' "${v}" | sed 's/[]\/$*.^[]/\\&/g')
+            sed_args+=(-e "s|${esc}|***已屏蔽***|g")
+        fi
+    done
+    # 再按措辞兜一遍。注意：不能把全角冒号塞进方括号——sed 按字节处理，
+    # 多字节字符进方括号会乱匹配，把标签本身也吃掉，AI 反而少了诊断线索。
+    # 所以全角/半角各写一条，标签原样保留，只换值。
+    sed "${sed_args[@]}" \
+        -e 's/密码：[^[:space:]]\{4,\}/密码：***已屏蔽***/g' \
+        -e 's/密码:[[:space:]]*[^[:space:]]\{4,\}/密码: ***已屏蔽***/g' \
+        -e 's/\([Pp]assword[[:space:]]*[:=][[:space:]]*\)[^[:space:]]\{4,\}/\1***已屏蔽***/g' \
+        -e "s/\(IDENTIFIED BY[[:space:]]*'\)[^']*\('\)/\1***已屏蔽***\2/g" \
+        -e 's/\(-p\)[A-Za-z0-9!@#$%^&*_+=-]\{6,\}/\1***已屏蔽***/g' \
+        -e 's/\([Tt]oken[[:space:]]*[:=][[:space:]]*\)[A-Za-z0-9_-]\{12,\}/\1***已屏蔽***/g'
+}
+
+# 上传前征求同意。原来是"失败即自动上传、不问"，改为问一句——
+# 日志尾部可能带着数据库密码等信息，发出去之前该让用户知道并点头。
+AI_Consent()
+{
+    echo ""
+    Echo_Yellow "────────────────────────────────────────────────"
+    Echo_Yellow " 安装失败了。可以让 AI 帮你分析原因（免费，无需配置）"
+    echo ""
+    echo "  需要上传：安装日志的最后 12KB（用于定位问题）"
+    echo "  已自动屏蔽其中的密码字段"
+    echo "  日志仅用于本次分析，网关侧 24 小时后清除"
+    echo ""
+    Echo_Yellow " 不需要就按 n；永久关闭本功能：NEXTLNMP_AI=n"
+    Echo_Yellow "────────────────────────────────────────────────"
+    local __ok=''
+    AI_Read __ok "  要现在分析吗？[Y/n] "
+    case "${__ok}" in
+        [nN]|[nN][oO]) return 1 ;;
+    esac
+    return 0
+}
+
 # 安装失败时调用：AI_Rescue "<失败步骤描述>"
 AI_Rescue()
 {
@@ -111,14 +160,13 @@ AI_Rescue()
     local arch="$(uname -m)"
     local ver="$(AI_JStr "${NEXTLNMP_Ver:-unknown}")"
     local log_b64=''
-    [ -s "${AI_LOG}" ] && log_b64="$(tail -c 12000 "${AI_LOG}" | AI_B64)"
-    [ -z "${log_b64}" ] && return 0     # 没有日志可交，不打扰用户
+    [ -s "${AI_LOG}" ] || return 0      # 没有日志可交，不打扰用户
 
-    echo ""
-    Echo_Yellow "────────────────────────────────────────────────"
-    Echo_Yellow " 安装失败，正在请 AI 分析原因（免费，无需配置）"
-    Echo_Yellow " 不需要请按 Ctrl+C；关闭本功能：NEXTLNMP_AI=n"
-    Echo_Yellow "────────────────────────────────────────────────"
+    AI_Consent || { echo "  已跳过 AI 分析。"; return 0; }
+
+    # 脱敏之后再编码上传
+    log_b64="$(tail -c 12000 "${AI_LOG}" | AI_Scrub_Log | AI_B64)"
+    [ -z "${log_b64}" ] && return 0
 
     local payload resp sess round=0 diag_json reply
     payload="$(printf '{"ver":"%s","step":"%s","os":"%s","arch":"%s","log_b64":"%s"}' \
@@ -191,6 +239,8 @@ AI_Rescue()
         reply=''
     done
     echo ""
+    Echo_Yellow " 排查完成后建议改一次数据库密码：日志已上传做分析，虽然已屏蔽密码字段，"
+    Echo_Yellow " 但换一次更稳妥。命令：nextlnmp password"
     Echo_Yellow " 如需人工协助：带上 ${AI_LOG} 加 QQ 群 615298"
     echo ""
     return 0
