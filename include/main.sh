@@ -1312,12 +1312,27 @@ EOF
 Verify_DB_Password()
 {
     Check_DB
+    if [ "${MySQL_Bin}" = "None" ]; then
+        Echo_Red "没有检测到已安装的 MySQL/MariaDB，无法验证密码。"
+        exit 1
+    fi
     status=1
     while [ $status -eq 1 ]; do
-        read -s -p "请输入当前数据库 root 密码（不会显示）： " DB_Root_Password
+        # 同 CLI 版：EOF 要有出口，且「连不上」不能报成「密码错」无限重问
+        read -s -p "请输入当前数据库 root 密码（不会显示）： " DB_Root_Password             || { echo ""; Echo_Red "读到输入结束（EOF）：本步骤需要交互输入。"; exit 1; }
+        echo ""
         Make_TempMycnf "${DB_Root_Password}"
-        Do_Query ""
+        db_err=$(Do_Query "" 2>&1 >/dev/null)
         status=$?
+        if [ $status -ne 0 ]; then
+            if echo "${db_err}" | grep -Eqi "Can.t connect|Cannot connect|connect to (local )?server|(2002|2003)|No such file or directory"; then
+                Echo_Red "连不上数据库服务，这不是密码问题："
+                Echo_Red "  ${db_err}"
+                Echo_Red "请先确认数据库已启动再重试。"
+                exit 1
+            fi
+            Echo_Red "密码错误，请重新输入。"
+        fi
     done
     echo "✓ 数据库密码验证通过"
 }

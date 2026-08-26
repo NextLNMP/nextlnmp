@@ -482,9 +482,22 @@ Return_301_Menu()
     fi
 }
 
+# 「连不上数据库」和「密码错了」是两回事。原来一律报「密码错误，请重新输入！」
+# 并无限重问：数据库没启动的用户输什么都不对，也不会被告知该去启动服务；
+# 加上 read 不判 EOF，非交互场景下就是 100% CPU 的死循环。
+DB_Conn_Failed()
+{
+    # 用 . 代替撇号，避开 shell 引号地狱（Can't / Cannot 都能覆盖）
+    echo "$1" | grep -Eqi "Can.t connect|Cannot connect|connect to (local )?server|\b(2002|2003)\b|No such file or directory"
+}
+
 Verify_DB_Password()
 {
     Check_DB
+    if [ "${MySQL_Bin}" = "None" ]; then
+        Echo_Red "没有检测到已安装的 MySQL/MariaDB，无法验证密码。"
+        exit 1
+    fi
     if [ -f /root/.nextlnmp_db_password ]; then
         DB_Root_Password=$(cat /root/.nextlnmp_db_password)
         Make_TempMycnf "${DB_Root_Password}"
@@ -497,11 +510,17 @@ Verify_DB_Password()
     status=1
     while [ $status -eq 1 ]; do
         Echo_Yellow "请输入数据库 root 密码："
-        read -e DB_Root_Password
+        read -e DB_Root_Password || { Echo_Red "读到输入结束（EOF）：本命令需要交互输入，请在终端下运行。"; exit 1; }
         Make_TempMycnf "${DB_Root_Password}"
-        Do_Query "" >/dev/null 2>&1
+        db_err=$(Do_Query "" 2>&1 >/dev/null)
         status=$?
         if [ $status -ne 0 ]; then
+            if DB_Conn_Failed "${db_err}"; then
+                Echo_Red "连不上数据库服务，这不是密码问题："
+                Echo_Red "  ${db_err}"
+                Echo_Red "请先确认数据库已启动（nextlnmp restart，或 /etc/init.d/mysql start），再重试。"
+                exit 1
+            fi
             Echo_Red "密码错误，请重新输入！"
         fi
     done

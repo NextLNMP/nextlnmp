@@ -118,3 +118,12 @@ lnmpa:TempMycnf_Clean
 lamp:TempMycnf_Clean
 lnmp:Add_Database
 lnmp:Del_Database
+
+# ---- 全栈：数据库密码验证不再把「连不上」报成「密码错」并无限重问 ----
+# 原逻辑：Do_Query 非零一律 Echo_Red "密码错误，请重新输入！" 然后继续循环。
+# 但非零还可能是数据库没启动（2002/2003）、甚至压根没装（MySQL_Bin=None）。
+# 数据库没起来的用户会被无限追问密码，输什么都不对，也不会被告知该去启动服务；
+# 而 read -e 不判 EOF，非交互场景下就是 100% CPU 的死循环。
+# 现在：先判 MySQL_Bin=None 直接退出；连接类错误明确指出「不是密码问题」并给
+# 出启动命令后退出；只有真的认证失败才重问；read 补 EOF 出口。
+lnmp:Verify_DB_Password
