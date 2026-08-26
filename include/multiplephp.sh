@@ -17,95 +17,30 @@ Install_Multiplephp()
     echo "==========================="
 
     PHPSelect=""
-    Echo_Yellow "You have 15 options for your PHP install."
-    echo "1: Install ${PHP_Info[0]}"
-    echo "2: Install ${PHP_Info[1]}"
-    echo "3: Install ${PHP_Info[2]}"
-    echo "4: Install ${PHP_Info[3]}"
-    echo "5: Install ${PHP_Info[4]}"
-    echo "6: Install ${PHP_Info[5]}"
-    echo "7: Install ${PHP_Info[6]}"
-    echo "8: Install ${PHP_Info[7]}"
-    echo "9: Install ${PHP_Info[8]}"
-    echo "10: Install ${PHP_Info[9]}"
-    echo "11: Install ${PHP_Info[10]}"
-    echo "12: Install ${PHP_Info[11]}"
-    echo "13: Install ${PHP_Info[12]}"
-    echo "14: Install ${PHP_Info[13]}"
-    echo "15: Install ${PHP_Info[14]}"
-    read -p "Enter your choice (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 or 15): " PHPSelect
+    #@ 菜单/路径/分发全部由 MPHP_VERSIONS 驱动（conf/cli/php-select.sh 单一事实源）
+    #@ 新增 PHP 版本 = 版本表加一项 + 写一个 Install_MPHP<版本> 函数，此处无需改动
+    MPHP_LIST=(${MPHP_VERSIONS})
+    Echo_Yellow "You have ${#MPHP_LIST[@]} options for your PHP install."
+    for i in "${!MPHP_LIST[@]}"; do
+        echo "$((i + 1)): Install ${PHP_Info[$i]}"
+    done
+    read -p "Enter your choice (1-${#MPHP_LIST[@]}): " PHPSelect
 
-    case "${PHPSelect}" in
-    1)
-        echo "You will install ${PHP_Info[0]}"
-        MPHP_Path='/usr/local/php5.2'
+    if ! [ "${PHPSelect}" -ge 1 ] 2>/dev/null || [ "${PHPSelect}" -gt "${#MPHP_LIST[@]}" ] 2>/dev/null; then
+        echo "No enter,You Must enter one option."
+        exit 1
+    fi
+    MPHP_Ver="${MPHP_LIST[$((PHPSelect - 1))]}"
+    MPHP_Path="/usr/local/php${MPHP_Ver}"
+    echo "You will install ${PHP_Info[$((PHPSelect - 1))]}"
+    if [ "${MPHP_Ver}" = "5.2" ]; then
+        #@ PHP 5.2 的 mysql 扩展需要现成的数据库头文件，装之前先确认数据库在
         Check_DB
         if [ "${DB_Name}" == "None" ];then
             Echo_Red "MySQL or MariaDB not found,can't install PHP 5.2!"
             exit 1
         fi
-        ;;
-    2)
-        echo "You will install ${PHP_Info[1]}"
-        MPHP_Path='/usr/local/php5.3'
-        ;;
-    3)
-        echo "You will Install ${PHP_Info[2]}"
-        MPHP_Path='/usr/local/php5.4'
-        ;;
-    4)
-        echo "You will install ${PHP_Info[3]}"
-        MPHP_Path='/usr/local/php5.5'
-        ;;
-    5)
-        echo "You will install ${PHP_Info[4]}"
-        MPHP_Path='/usr/local/php5.6'
-        ;;
-    6)
-        echo "You will install ${PHP_Info[5]}"
-        MPHP_Path='/usr/local/php7.0'
-        ;;
-    7)
-        echo "You will install ${PHP_Info[6]}"
-        MPHP_Path='/usr/local/php7.1'
-        ;;
-    8)
-        echo "You will install ${PHP_Info[7]}"
-        MPHP_Path='/usr/local/php7.2'
-        ;;
-    9)
-        echo "You will install ${PHP_Info[8]}"
-        MPHP_Path='/usr/local/php7.3'
-        ;;
-    10)
-        echo "You will install ${PHP_Info[9]}"
-        MPHP_Path='/usr/local/php7.4'
-        ;;
-    11)
-        echo "You will install ${PHP_Info[10]}"
-        MPHP_Path='/usr/local/php8.0'
-        ;;
-    12)
-        echo "You will install ${PHP_Info[11]}"
-        MPHP_Path='/usr/local/php8.1'
-        ;;
-    13)
-        echo "You will install ${PHP_Info[12]}"
-        MPHP_Path='/usr/local/php8.2'
-        ;;
-    14)
-        echo "You will install ${PHP_Info[13]}"
-        MPHP_Path='/usr/local/php8.3'
-        ;;
-    15)
-        echo "You will install ${PHP_Info[14]}"
-        MPHP_Path='/usr/local/php8.4'
-        ;;
-    *)
-        echo "No enter,You Must enter one option."
-        exit 1
-        ;;
-    esac
+    fi
 
     Press_Install
     if [ -d "${MPHP_Path}" ]; then
@@ -118,37 +53,8 @@ Install_Multiplephp()
     Install_PHP_Dependent
     Check_Openssl
 
-    if [ "${PHPSelect}" = "1" ]; then
-        Install_MPHP5.2 2>&1 | tee /root/install-mphp5.2.log
-    elif [ "${PHPSelect}" = "2" ]; then
-        Install_MPHP5.3 2>&1 | tee /root/install-mphp5.3.log
-    elif [ "${PHPSelect}" = "3" ]; then
-        Install_MPHP5.4 2>&1 | tee /root/install-mphp5.4.log
-    elif [ "${PHPSelect}" = "4" ]; then
-        Install_MPHP5.5 2>&1 | tee /root/install-mphp5.5.log
-    elif [ "${PHPSelect}" = "5" ]; then
-        Install_MPHP5.6 2>&1 | tee /root/install-mphp5.6.log
-    elif [ "${PHPSelect}" = "6" ]; then
-        Install_MPHP7.0 2>&1 | tee /root/install-mphp7.0.log
-    elif [ "${PHPSelect}" = "7" ]; then
-        Install_MPHP7.1 2>&1 | tee /root/install-mphp7.1.log
-    elif [ "${PHPSelect}" = "8" ]; then
-        Install_MPHP7.2 2>&1 | tee /root/install-mphp7.2.log
-    elif [ "${PHPSelect}" = "9" ]; then
-        Install_MPHP7.3 2>&1 | tee /root/install-mphp7.3.log
-    elif [ "${PHPSelect}" = "10" ]; then
-        Install_MPHP7.4 2>&1 | tee /root/install-mphp7.4.log
-    elif [ "${PHPSelect}" = "11" ]; then
-        Install_MPHP8.0 2>&1 | tee /root/install-mphp8.0.log
-    elif [ "${PHPSelect}" = "12" ]; then
-        Install_MPHP8.1 2>&1 | tee /root/install-mphp8.1.log
-    elif [ "${PHPSelect}" = "13" ]; then
-        Install_MPHP8.2 2>&1 | tee /root/install-mphp8.2.log
-    elif [ "${PHPSelect}" = "14" ]; then
-        Install_MPHP8.3 2>&1 | tee /root/install-mphp8.3.log
-    elif [ "${PHPSelect}" = "15" ]; then
-        Install_MPHP8.4 2>&1 | tee /root/install-mphp8.4.log
-    fi
+    #@ 函数名与日志名同样由版本推导，杜绝「加了版本忘了加分发分支」
+    "Install_MPHP${MPHP_Ver}" 2>&1 | tee "/root/install-mphp${MPHP_Ver}.log"
 }
 
 Install_MPHP5.2()

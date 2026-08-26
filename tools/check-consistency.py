@@ -70,9 +70,17 @@ for fn in sorted(set(re.findall(r'^\s+(Install_(?:PHP|MySQL|MariaDB)_\w+)\s*$', 
 
 # ---- 4. 多版本 PHP：单一事实源覆盖安装脚本能装的版本 ----
 mphp_versions = set(re.findall(r"MPHP_VERSIONS='([^']+)'", frag)[0].split()) if re.search(r"MPHP_VERSIONS='", frag) else set()
-mphp_paths = set(re.findall(r"MPHP_Path='/usr/local/php([\d.]+)'", mphp_sh))
-for v in sorted(mphp_paths):
-    need(v in mphp_versions, 'multiplephp.sh 能安装 PHP %s，但 conf/cli/php-select.sh 的 MPHP_VERSIONS 里没有它（装了也选不到）' % v)
+# 表驱动之后的不变式：版本表 ↔ 安装函数 必须一一对应
+mphp_funcs = set(re.findall(r'^Install_MPHP([0-9.]+)\(\)', mphp_sh, re.M))
+mphp_paths = mphp_funcs
+for v in sorted(mphp_versions):
+    need(v in mphp_funcs, 'MPHP_VERSIONS 里有 PHP %s，但 multiplephp.sh 没有 Install_MPHP%s 函数（菜单选得到、装不了）' % (v, v))
+for v in sorted(mphp_funcs):
+    need(v in mphp_versions, 'multiplephp.sh 有 Install_MPHP%s，但 MPHP_VERSIONS 里没有 PHP %s（装了也选不到）' % (v, v))
+# PHP_Info 展示名数量必须与版本表对齐，否则菜单会串行
+info_n = len(re.findall(r"'PHP [0-9][^']*'", re.findall(r'PHP_Info=\(([^)]*)\)', main_sh)[0])) if re.search(r'PHP_Info=\(', main_sh) else 0
+need(info_n == len(mphp_versions),
+     'PHP_Info 有 %d 项、MPHP_VERSIONS 有 %d 项，多版本 PHP 菜单会错位' % (info_n, len(mphp_versions)))
 
 # ---- 5. 公共函数不得在栈文件重定义 ----
 common = set(re.findall(r'^([A-Za-z_][A-Za-z0-9_.]*)\(\)', read('conf/cli/common.sh'), re.M))
