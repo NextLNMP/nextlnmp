@@ -435,7 +435,11 @@ Pkg_Missing=""
 # 此时 apt/yum 会对【每一个】包都说 not found。绝不能把它们当可选件吞掉——
 # 吞了就会打印一句「不影响安装」的绿灯，然后在二十分钟后的 ./configure
 # 才炸出 "no acceptable C compiler"，根因早被冲到几百行之外。
-PKG_CRITICAL=" make gcc gcc-c++ g++ cmake build-essential kernel-headers libc6-dev glibc-headers "
+# 只列【真正没有就一定编译不了】的。EL7 实测教训：
+#   · gcc-g77 是 Fortran 编译器，EL7 仓库里早就没有了，跟编译 LNMP 毫无关系；
+#   · kernel-headers / glibc-headers 在 EL7 是默认已装的，yum 会回 "Nothing to do"。
+# 把它们算成必需件，只会在完全正常的机器上刷红字吓人。
+PKG_CRITICAL=" make gcc gcc-c++ g++ cmake build-essential "
 
 Try_Install_Pkg()
 {
@@ -449,7 +453,11 @@ Try_Install_Pkg()
         echo "${out}"
         return 0
     fi
-    if echo "${out}" | grep -Eqi "Unable to find a match|No package .* available|Unable to locate package|has no installation candidate"; then
+    # yum/apt 说"没这个包"或"没事可做"的几种措辞。EL7 实测补了后两种：
+    #   No package gcc-g77 available.        ← 仓库里没有
+    #   Error: Nothing to do                 ← 已经装着，或没什么可做
+    # 漏掉它们的后果是：完全正常的机器上刷一片红字，说依赖包安装失败。
+    if echo "${out}" | grep -Eqi "Unable to find a match|No package .* available|Unable to locate package|has no installation candidate|Nothing to do|already installed and latest version"; then
         case "${PKG_CRITICAL}" in
             *" ${pkg} "*)
                 echo "${out}"

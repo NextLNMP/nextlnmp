@@ -87,6 +87,34 @@ Pkg_Missing=""
 Try_Install_Pkg "gcc" pm_repofail > "${tmp_out}" 2>&1; rc=$?
 check "必需件真失败也要报" 1 "" "${rc}" "${Pkg_Missing# }"
 
+
+# ---- EL7 实测补的两种措辞（第 6 轮 CentOS 7 抓到）----
+# yum 对"仓库里没有"和"已经装着"分别说这两句，漏掉会在正常机器上刷红字。
+yum_nopkg2()   { echo "No package $1 available."; echo "Error: Nothing to do"; return 1; }
+yum_nothing()  { echo "Package $1 is already installed and latest version"; echo "Nothing to do"; return 1; }
+for f in yum_nopkg2 yum_nothing; do
+    Pkg_Missing=""
+    Try_Install_Pkg "kernel-headers" ${f} > "${tmp_out}" 2>&1; rc=$?
+    check "${f} 应静默收集" 0 "kernel-headers" "${rc}" "${Pkg_Missing# }"
+done
+
+# gcc-g77 不该被当成必需件（EL7 里根本没这个包，跟编译 LNMP 无关）
+case "${PKG_CRITICAL}" in
+    *" gcc-g77 "*) fail=$((fail + 1)); echo "  ✗ gcc-g77 不该出现在 PKG_CRITICAL 里" ;;
+    *) pass=$((pass + 1)) ;;
+esac
+case "${PKG_CRITICAL}" in
+    *" kernel-headers "*|*" glibc-headers "*) fail=$((fail + 1)); echo "  ✗ *-headers 不该出现在 PKG_CRITICAL 里（EL7 默认已装）" ;;
+    *) pass=$((pass + 1)) ;;
+esac
+# 但真正的必需件必须还在
+for must in gcc make cmake; do
+    case "${PKG_CRITICAL}" in
+        *" ${must} "*) pass=$((pass + 1)) ;;
+        *) fail=$((fail + 1)); echo "  ✗ ${must} 应当在 PKG_CRITICAL 里" ;;
+    esac
+done
+
 # ── 静态断言：用到 Try_Install_Pkg 的文件，其入口必须先 source include/init.sh ──
 # 否则运行到那一行才会 "command not found"，而依赖安装往往在安装流程深处。
 users=$(grep -rl "Try_Install_Pkg" "${cur_dir}/include" 2>/dev/null | grep -v "init.sh$" | xargs -r -n1 basename)
