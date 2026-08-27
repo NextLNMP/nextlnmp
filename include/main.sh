@@ -26,8 +26,14 @@ Smart_Recommend()
     # ubuntu22/24 和 debian12/13，RHEL 系一律返回空 → PHP 必定源码编译。
     # 面板过去不分系统都写「免编译，省时间」，用户在 Rocky/CentOS 上照着推荐装，
     # 等来的是一两个小时的编译（Rocky 9 单核 512M 实测 PHP 8.3 编了一个多小时）。
-    if [ -n "$(PHP_Bin_OSTag 2>/dev/null)" ]; then
+    # 两个条件都要满足才谈得上"免编译"：
+    #   ① 本系统有 PHP 预编译包（PHP_Bin_OSTag 只认 ubuntu22/24、debian12/13）
+    #   ② 装的是 LNMP 栈 —— 预编译包里只有 FPM，LAMP/LNMPA 要 mod_php，
+    #      必须源码编译（php.sh 里三处都写着这个条件，只有面板不知道）。
+    if [ -n "$(PHP_Bin_OSTag 2>/dev/null)" ] && [ "${Stack}" = "nextlnmp" ]; then
         REC_BUILD_NOTE="预编译二进制包（免编译，省时间）"
+    elif [ -n "$(PHP_Bin_OSTag 2>/dev/null)" ]; then
+        REC_BUILD_NOTE="数据库用预编译包；${Stack} 栈要 mod_php，PHP 必须源码编译"
     else
         REC_BUILD_NOTE="数据库用预编译包；本系统没有 PHP 预编译包，PHP 需源码编译"
         if [ "${REC_MEM}" -le 768 ] && [ "${REC_CPU}" -le 1 ]; then
