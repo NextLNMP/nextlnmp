@@ -341,7 +341,8 @@ EOF
         Echo_Red "备份仍在，请勿删除："
         Echo_Red "  SQL  ：/root/mariadb_all_backup${Upgrade_Date}.sql"
         Echo_Red "  原目录：/usr/local/oldmariadb${Upgrade_Date}"
-        Echo_Red "可先修复问题后手工导入，或把原目录搬回去回滚。"
+        Echo_Red "现在自动回滚到原版本。"
+        Rollback_MariaDB
         exit 1
     }
     echo "Repair databases..."

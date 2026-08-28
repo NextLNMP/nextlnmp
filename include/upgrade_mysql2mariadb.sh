@@ -314,7 +314,8 @@ EOF
     else
         Echo_Red "恢复备份失败！数据尚未导入 MariaDB。"
         Echo_Red "备份仍在，请勿删除：/root/mysql_all_backup${Upgrade_Date}.sql"
-        Echo_Red "可先修复问题后手工导入，或把 /usr/local/oldmysql${Upgrade_Date} 搬回去回滚。"
+        Echo_Red "现在自动回滚到原 MySQL（备份在 /usr/local/mysql2mariadb${Upgrade_Date}，此前提示写成 oldmysql 是错的）。"
+        Rollback_MySQL2
         exit 1
     fi
 

@@ -730,6 +730,53 @@ EOF
     ln -sf /usr/local/mysql/include/mysql /usr/include/mysql
 }
 
+MySQL_Inplace_Upgrade_80()
+{
+    # 13 轮真机实锤：5.7 的 --all-databases 备份里带着 mysql 系统库，8.0 禁写
+    # 系统表（ERROR 3554 innodb_index_stats），dump 导入必炸在用户库之前。
+    # 官方支持的路是【在位升级】：老数据目录原样交给新版 mysqld --upgrade=FORCE，
+    # 启动过程完成数据字典与系统表升级，用户、授权、数据全保留。
+    # dump 备份仍然照做、照留——它是保险，不再是搬运工。
+    echo "使用官方在位升级（老数据目录直接交给新版 mysqld --upgrade=FORCE）..."
+    local old_datadir _i
+    if [ "${MySQL_Data_Dir}" != "/usr/local/mysql/var" ]; then
+        old_datadir="${MySQL_Data_Dir}${Upgrade_Date}"
+    else
+        old_datadir="/usr/local/oldmysql${Upgrade_Date}/var"
+    fi
+    if [ ! -d "${old_datadir}" ]; then
+        Echo_Red "找不到原数据目录 ${old_datadir}"
+        return 1
+    fi
+    rm -rf "${MySQL_Data_Dir:?}"
+    # cp -a 而不是 mv：原目录原样留在备份里当回滚资产
+    cp -a "${old_datadir}" "${MySQL_Data_Dir}" || return 1
+    chown -R mysql:mysql "${MySQL_Data_Dir}"
+    /usr/local/mysql/bin/mysqld --user=mysql --upgrade=FORCE >/dev/null 2>&1 &
+    # --upgrade=FORCE 在开始对外服务【之前】完成升级，所以 socket 一出现就是升完了
+    for _i in $(seq 1 600); do
+        [ -S /tmp/mysql.sock ] && break
+        sleep 1
+    done
+    if [ ! -S /tmp/mysql.sock ]; then
+        Echo_Red "在位升级：新版 mysqld 600 秒内未就绪，查 ${MySQL_Data_Dir} 下的错误日志"
+        pkill -x mysqld 2>/dev/null
+        return 1
+    fi
+    if ! /usr/local/mysql/bin/mysql --defaults-file=~/.my.cnf -e "SELECT 1" >/dev/null 2>&1; then
+        Echo_Red "在位升级后无法用原 root 密码连接"
+        /usr/local/mysql/bin/mysqladmin --defaults-file=~/.my.cnf shutdown >/dev/null 2>&1
+        pkill -x mysqld 2>/dev/null
+        return 1
+    fi
+    /usr/local/mysql/bin/mysqladmin --defaults-file=~/.my.cnf shutdown
+    for _i in $(seq 1 60); do
+        pgrep -x mysqld >/dev/null 2>&1 || break
+        sleep 1
+    done
+    /etc/init.d/mysql start
+}
+
 Restore_Start_MySQL()
 {
     chgrp -R mysql /usr/local/mysql/.
@@ -737,6 +784,16 @@ Restore_Start_MySQL()
     chmod 755 /etc/init.d/mysql
 
     ldconfig
+
+    # 目标 8.0+ 且源 5.7+：走在位升级（见 MySQL_Inplace_Upgrade_80 注释），
+    # 不跑 Sec_Setting——老数据目录里 root 密码本来就在。
+    if [[ "${mysql_short_version}" =~ ^8\. ]] && echo "${cur_mysql_version}" | grep -Eq '^(5\.7|8\.)'; then
+        if ! MySQL_Inplace_Upgrade_80; then
+            Rollback_MySQL; exit 1
+        fi
+        Finish_MySQL_Upgrade
+        return
+    fi
 
     MySQL_Sec_Setting
     /etc/init.d/mysql start
@@ -750,7 +807,8 @@ Restore_Start_MySQL()
         Echo_Red "备份仍在，请勿删除："
         Echo_Red "  SQL  ：/root/mysql_all_backup${Upgrade_Date}.sql"
         Echo_Red "  原目录：/usr/local/oldmysql${Upgrade_Date}"
-        Echo_Red "可先修复问题后手工导入，或把原目录搬回去回滚。"
+        Echo_Red "现在自动回滚到原版本。"
+        Rollback_MySQL
         exit 1
     }
     echo "Repair databases..."
@@ -772,6 +830,11 @@ Restore_Start_MySQL()
     fi
 
     /etc/init.d/mysql stop
+    Finish_MySQL_Upgrade
+}
+
+Finish_MySQL_Upgrade()
+{
     TempMycnf_Clean
     cd ${cur_dir} && rm -rf ${cur_dir}/src/mysql-${mysql_version}
 
@@ -940,6 +1003,12 @@ Upgrade_MySQL()
             exit 1
             ;;
     esac
+
+    if [[ "${mysql_short_version}" =~ ^8\. ]] && ! echo "${cur_mysql_version}" | grep -Eq '^(5\.7|8\.)'; then
+        Echo_Red "MySQL ${cur_mysql_version} 不能直接升到 ${mysql_version}：官方只支持 5.7 → 8.0 → 8.4 逐级升。"
+        Echo_Red "请先升到 5.7.44，确认业务正常后再升 8.x。现有数据库未做任何改动。"
+        exit 1
+    fi
 
     if [ "${Bin}" = "y" ]; then
         Upgrade_Disk_Preflight "${mysql_src}" "${MySQL_Data_Dir}" 512
