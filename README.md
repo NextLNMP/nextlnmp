@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.11.1-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![System](https://img.shields.io/badge/system-CentOS%20|%20Ubuntu%20|%20Debian-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-5.6~8.4-purple.svg)
@@ -95,13 +95,13 @@ bash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/main/install
 **方式二：从镜像站下载安装（国内快）**
 
 ```bash
-wget https://mirror.nextlnmp.cn/nextlnmp-1.11.1.tar.gz && tar zxf nextlnmp-1.11.1.tar.gz && cd nextlnmp-1.11.1 && bash install.sh
+wget https://mirror.nextlnmp.cn/nextlnmp-2.0.0.tar.gz && tar zxf nextlnmp-2.0.0.tar.gz && cd nextlnmp-2.0.0 && bash install.sh
 ```
 
 **方式三：从 GitHub 下载安装**
 
 ```bash
-wget https://github.com/NextLNMP/nextlnmp/releases/download/v1.11.1/nextlnmp-1.11.1.tar.gz && tar zxf nextlnmp-1.11.1.tar.gz && cd nextlnmp-1.11.1 && bash install.sh
+wget https://github.com/NextLNMP/nextlnmp/releases/download/v2.0.0/nextlnmp-2.0.0.tar.gz && tar zxf nextlnmp-2.0.0.tar.gz && cd nextlnmp-2.0.0 && bash install.sh
 ```
 
 三种方式装出来的东西完全一样，选哪个都行。
@@ -291,7 +291,7 @@ NextLNMP 的安全不是一句口号，是一条闭合的信任链：
 ## 📂 目录结构
 
 ```
-nextlnmp-1.11.1/
+nextlnmp-2.0.0/
 ├── install.sh          # 安装入口
 ├── nextlnmp.conf       # 配置文件（镜像源地址等）
 ├── upgrade.sh          # 升级脚本
@@ -371,6 +371,143 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 </details>
 
 ## 🔄 更新日志
+
+### v2.0.0 (2026-08-28)
+# NextLNMP v2.0
+
+## 一、AI 装机救援（本版主线）
+
+安装失败时不再只留一句"请把日志发到 QQ 群"，而是当场进入对话：AI 读日志、
+要证据、给修复建议，用户逐条决定是否执行。
+
+- **客户端 `include/ai-assist.sh`**：失败自动进入对话，无需用户主动求助。
+  上传日志前征得同意且先抹掉密码；只读诊断命令走整行白名单（客户端与
+  服务端各校验一次），修复命令一律 y/N 确认，灾难命令即使按了 y 也拦下；
+  命令含控制字符直接拒绝（防"屏幕显示的和实际执行的不是一回事"）。
+- **网关**（源码在 `ai-gateway/`，可审计，密钥全走环境变量）：
+  DeepSeek v4-flash + 两级缓存（L1 错误签名归一化零 token、L2 前缀缓存）、
+  日费用上限、并发闸。
+- **镜像缺件处理**：AI 判定缺件后不直接动镜像，而是先 HEAD 主镜像核实
+  真缺、再 HEAD 官方上游核实文件真实存在，查重限流后开 GitHub issue，
+  补货由仓库侧机器人/CI 完成——幻觉和提示词注入最坏只产生一条噪音通知。
+- **关闭方式**：`NEXTLNMP_AI=n`。
+
+## 二、CLI 重构（消除漂移债）
+
+三个 CLI（lnmp / lnmpa / lamp）此前是三份近似复制，改一处忘两处是常态。
+
+- 改为构建期组装：公共函数抽出 38 个，单一事实源。
+- 多版本 PHP 选择、数据库/PHP 菜单改为表驱动，菜单↔版本表↔安装函数三方对齐。
+- **六道 CI 闸**（CLI Guard）防止重构回归：漂移、指纹等价、渲染保真、
+  一致性断言、php-select 单测、`bash -n`。本版又加了第 7、8 道
+  （ai-assist 安全闸门、依赖安装容错外壳）。
+
+## 三、安全相关（真机实测坐实）
+
+- **`/home/wwwlogs` 是 777 且没有 sticky 位**（`25dea83`）——日志由 nginx/httpd 的
+  master（root）打开，www 根本不需要写权限。而非 sticky 的 777 目录不受
+  `fs.protected_symlinks` 保护。真机三组对照：www 预先建符号链接，root 追加日志
+  时原样跟随过去 —— 这是一条 www → root 的任意文件写入。改 755。
+- **带明文密码的临时 SQL 放在 `/tmp` 固定文件名下**（`472ccfd`）——内容是
+  `CREATE USER ... IDENTIFIED BY '<明文密码>'`，权限 0644，真机实测 www 用户
+  直接 cat 得到；而每个站点的 `open_basedir` 恰好放行 `/tmp/`。迁到
+  `/root/.nextlnmp-tmp`(700)。
+- **数据库 root 密码进了 `ps` 和 0644 的安装日志**（`b758095`）——
+  `mysql_upgrade -p${密码}` 让同机任何用户 `ps aux` 就能看到；
+  `| tee` 建的安装日志是 0644，而成功面板会把自动生成的密码打进去。
+- **Caddy 二进制既无 TLS 认证也无哈希校验**（`c7caade`）——不在 sha256sums 清单里，
+  而 `Try_Download` 默认只对"清单查无此条目"打黄字警告，wget 又带
+  `--no-check-certificate`。已上架镜像并入清单，走三级链路逐包校验。
+- **Caddy 栈的 PHP 完全没有 open_basedir 隔离**（`bb8b9cd`）——注释写着"对齐
+  nginx.sh"，实际只建了目录，`.user.ini` 那道隔离整套缺席。
+- **网站根目录不校验就 `chmod -R` / `chown -R`**（`2ffc6bc`）——填成父目录
+  `/home/wwwroot` 会把这台机器上所有站点的文件递归改成 www:www 755。
+
+## 四、会静默毁数据 / 报假成功的地方
+
+- **收尾自检把"装了"当成"跑起来了"**（`4fe5152`）——数据库启动失败 4 次仍打印
+  完整成功横幅，AI 救援也因此从不触发。
+- **装挂了整条一键安装命令仍返回 0**（`f64b175`）——三个栈跑在 `| tee` 左侧，
+  所有 `exit 1` 只杀子 shell，脚本结尾一句裸 `exit` 交出 tee 的 0。
+  CI 与自动化调用方全被骗过。
+- **换个目录运行就跳过数据库备份、然后照样 `rm -rf`**（`f896379`）——
+  `uninstall.sh` / `upgrade.sh` / `addons.sh` 靠 `$(pwd)` 定位，配置读不出来时
+  备份被 `[ -n ]` 守卫静默跳过，而删除是无条件的。
+- **数据库升级：版本分发落空时旧库已被搬走**（`d653f3d`）——`Backup_MySQL` 是
+  `mv` 走整个 MySQL，而分发只认 6 个大版本、没有 else；输入 8.1/9.x 这类真实
+  存在但不支持的版本，用户手上只剩一台被拆干净的机器且没有任何报错。
+  同一提交还修了三处"恢复备份失败仍打印绿色 completed"。
+- **建站面板按用户当初的 y/n 打印凭据**（`9bcd15f`）——库没建成也照样吐出
+  数据库名/用户/密码，用户拿去装 WordPress 才发现连不上。
+- **重跑一次就把用户配置的备份盖成已改坏的版本**（`e571599`）——
+  `/etc/yum.conf` 的 `exclude=kernel*`、`sources.list` 的自定义源就此永久丢失。
+
+## 五、会卡死用户 / 撑爆磁盘
+
+- **`.online` / `.email` 这类邮箱被判非法，且循环没有出口**（`44cd3be`）——
+  只能 Ctrl+C，SSL 配置整条路走不通。
+- **23 处交互循环的 `read` 不判 EOF**（`1bbdbaa` `95fc974` `1f842cb`）——
+  非交互调用（脚本/cron/`</dev/null`）下无限空转刷屏，实测 3 秒刷 22~29 万行。
+- **"连不上数据库"被报成"密码错误"并无限追问**（`a91ae8f`）——数据库没启动的
+  用户输一百遍正确密码也过不去，屏幕上始终说密码错。
+
+## 六、其它
+
+- **301 跳转对 `.php` 页面从来没生效过**（`20cfc97`）——插的是 `location /`，
+  而 `enable-php.conf` 是正则 location、优先级更高。对 PHP 站点来说等于绝大多数
+  页面始终走明文 HTTP。同一处还修了重复配置导致的 `duplicate location` 致命错误。
+- **`fs.file-max=65535` 是降级不是优化**（`ccefc23`）——内核默认值是
+  9223372036854775807；且只写文件不 `sysctl -p`，重启后才发作。
+  同一提交修了 `Kill_PM` 用整条命令行做子串匹配、会 `kill -9` 掉
+  `vim /etc/apt/sources.list` 这类无关进程。
+- **`addons.sh uninstall` 被改写成 install**（`d7d99ae`）；单装 nginx 后
+  `/bin/nextlnmp` 因漏 `chmod +x` 不可执行。
+- **依赖清单里的上古包名刷一屏 Error**（`9515a80` `ffe32cc`）——会让用户以为装挂了，
+  也会把 AI 救援带偏。⚠ 这条修复的第一版被自己的审计抓到造了个"假成功"
+  （源整个坏了时 gcc/make 也会被当可选件吞掉），已在 `e8daace` 补上必需件名单
+  与工具链硬断言。
+- 菜单输入校验的交替式缺括号、`www` 用户组非幂等、ARM64 悬空软链接、
+  推荐面板在 RHEL 系谎称"免编译"等若干项。
+
+## 七、数据库升级路径加固（真机实锤后重做）
+
+在 8.4G 小盘真机上把升级流程打穿了三次，三处结构性缺陷全部修复：
+
+- **磁盘零预检**：下载、校验、备份全成功，老库搬走后解压新版把盘写满，
+  机器从此没有任何可用数据库。现在 `Upgrade_Disk_Preflight` 读包内真实
+  解压大小（gzip -l / xz --robot），在备份之前拦截——此刻还什么都没动，
+  中止是零损失的。
+- **CPU 兼容性零检测**：新版预编译包的客户端在无 AVX2 的机器上 SIGILL
+  （服务端能跑，init 脚本的 ping 每秒崩一次，systemd 90 秒超时把健康的
+  服务杀掉）。现在升级前绕开 init/systemd 直接拉起新服务端实连测客户端，
+  不兼容自动回滚，全程约 2 分钟，网站不掉线。
+- **5.7 备份导不进 8.0**（ERROR 3554：8.0 禁写 mysql 系统表，dump/restore
+  对 8.x 目标结构性走不通）：目标 8.x 且源 ≥5.7 改走官方在位升级
+  （`mysqld --upgrade=FORCE`），用户、授权、数据全保留，dump 照做但降级
+  为保险；5.6 及以下直跳 8.x 在备份前拦死（官方升级路线：5.7 → 8.0 → 8.4）。
+- 三条升级路（MySQL / MariaDB / MySQL→MariaDB）的"恢复失败"从扔给用户
+  一台空库机器，改为自动回滚到原版本并把整栈拉回。
+
+实测：MariaDB 10.4.33 → 10.11.18、MySQL 5.7.44 → 8.0.46 均全绿，
+数据无损穿越；盘满与 CPU 不兼容两种失败均以"原库原样、网站在线"收场。
+
+## 八、供应链
+
+- 镜像补货至 126/126，覆盖体检全绿。
+- 魔搭（ModelScope）副镜像，三级容灾：主镜像 → 副镜像 → 官方上游，
+  任一级失败自动降级并逐包 SHA256 校验。
+- CI 每日自动发版（需 CI 全绿方可放行）。
+
+## 验证状态（13 轮真机，全部收口）
+
+| 覆盖面 | 结果 |
+|------|------|
+| Ubuntu 22.04 / Rocky 9.7 / CentOS 7 / Debian 12 / Debian 13 | ✅ 全绿（含 OOM→AI 救援全链路、CentOS 7 EOL 归档源、Debian 13 t64 过渡） |
+| LNMP / LAMP / Caddy 三种栈 | ✅ 全绿（Caddy 含 open_basedir 隔离与 CLI 起停实测） |
+| 数据库升级：MariaDB 10.4→10.11、MySQL 5.7→8.0 | ✅ 成功路径与两类失败路径（盘满、CPU 不兼容）三态全验 |
+| AI 救援 + 缺件上报 | ✅ 真实故障多轮诊断定位正确；issue 上报含核实/查重/限流实证 |
+
+未覆盖：LNMPA 栈与 ARM64 未上真机（ARM64 待有硬件）。
 
 ### v1.11.1 (2026-08-24)
 ### v1.11.1 —— imap 扩展 EL9 补链（2026-08-24）
