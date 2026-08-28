@@ -974,20 +974,70 @@ Tar_Cd()
     local FileName=$1
     local DirName=$2
     local extension=${FileName##*.}
+    local _rc=0
     cd ${cur_dir}/src
     [[ -d "${DirName}" ]] && rm -rf ${DirName}
     echo "正在解压 ${FileName}..."
     if [ "$extension" == "gz" ] || [ "$extension" == "tgz" ]; then
-        tar zxf "${FileName}"
+        tar zxf "${FileName}"; _rc=$?
     elif [ "$extension" == "bz2" ]; then
-        tar jxf "${FileName}"
+        tar jxf "${FileName}"; _rc=$?
     elif [ "$extension" == "xz" ]; then
-        tar Jxf "${FileName}"
+        tar Jxf "${FileName}"; _rc=$?
+    fi
+    # 原版这里不看 tar 的结果；磁盘满解压半截，后面 mkdir/mv/写配置照样往下跑，
+    # 12 轮真机实测把一台机器折腾到"老库搬走了、新库半具尸体"。现在如实上报。
+    # （无 DirName 时原版最后一条命令是 [ -n "" ]，恒返回 1——谁也没法用它判成败）
+    if [ ${_rc} -ne 0 ]; then
+        Echo_Red "解压 ${FileName} 失败（磁盘满？包损坏？）"
+        return ${_rc}
     fi
     if [ -n "${DirName}" ]; then
         echo "进入 ${DirName}..."
         cd ${DirName}
     fi
+}
+
+
+# 升级类操作的磁盘预检。用法：Upgrade_Disk_Preflight <已下载的包> <数据目录> <余量MB>
+# 需求 = 包解压后真实大小 + 2×数据目录（mysqldump 一份 + 重建数据目录一份）+ 余量。
+# 必须在 Backup_* 之前调用：此刻还什么都没动，中止是零损失的。
+# 12 轮真机实测的事故形态：8.4G 小盘机，下载和备份都成功，老库 mv 走之后
+# 解压新版把盘写满——机器上从此没有任何能跑的数据库。这道闸就是挡它的。
+Upgrade_Disk_Preflight()
+{
+    local pkg=$1 datadir=$2 margin_mb=${3:-512}
+    local unpacked_kb="" data_kb=0 avail_kb=0 need_kb=0
+    cd ${cur_dir}/src
+    case "${pkg}" in
+        *.tar.gz|*.tgz)
+            # gzip -l 第二行第 2 列就是 tar 流的真实字节数
+            unpacked_kb=$(gzip -l "${pkg}" 2>/dev/null | awk 'NR==2{printf "%d", $2/1024}')
+            ;;
+        *.tar.xz)
+            unpacked_kb=$(xz --robot --list "${pkg}" 2>/dev/null | awk '$1=="totals"{printf "%d", $5/1024}')
+            ;;
+        *.tar.bz2)
+            : # bzip2 头里没有原始大小，走下面的兜底估算
+            ;;
+    esac
+    if [ -z "${unpacked_kb}" ] || ! [ "${unpacked_kb}" -gt 0 ] 2>/dev/null; then
+        unpacked_kb=$(( $(du -k "${pkg}" 2>/dev/null | cut -f1) * 4 ))
+    fi
+    [ -d "${datadir}" ] && data_kb=$(du -sk "${datadir}" 2>/dev/null | cut -f1)
+    avail_kb=$(df -Pk /usr/local | awk 'NR==2{print $4}')
+    need_kb=$(( unpacked_kb + ${data_kb:-0} * 2 + margin_mb * 1024 ))
+    if [ -z "${avail_kb}" ]; then
+        return 0   # df 都读不出来就不拦，别把正常升级误杀
+    fi
+    if [ "${avail_kb}" -lt "${need_kb}" ]; then
+        Echo_Red "磁盘空间不够，升级中止（现有数据库未做任何改动）。"
+        Echo_Red "  需要约 $(( need_kb / 1024 )) MB = 新版解压 $(( unpacked_kb / 1024 )) MB + 数据 2×$(( ${data_kb:-0} / 1024 )) MB + 余量 ${margin_mb} MB"
+        Echo_Red "  /usr/local 所在分区现在只剩 $(( avail_kb / 1024 )) MB"
+        Echo_Red "可先清理空间（旧安装包、日志、安装目录 src/ 里用不到的包），再重新运行升级。"
+        exit 1
+    fi
+    echo "磁盘预检通过：可用 $(( avail_kb / 1024 )) MB ≥ 需要约 $(( need_kb / 1024 )) MB"
 }
 
 Check_nextLNMPConf()

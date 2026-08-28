@@ -25,6 +25,29 @@ Backup_MySQL2()
     fi
 }
 
+Rollback_MySQL2()
+{
+    # MySQL 换 MariaDB 中途失败时调用：把 Backup_MySQL2 搬走的 MySQL 原样搬回去。
+    Echo_Red "开始回滚到原 MySQL..."
+    cd /
+    rm -rf /usr/local/mariadb
+    mv /usr/local/mysql2mariadb${Upgrade_Date} /usr/local/mysql
+    mv /usr/local/mysql/init.dmysql2mariadb.bak.${Upgrade_Date} /etc/init.d/mysql
+    mv /usr/local/mysql/my.cnf.mysql2mariadbbak.${Upgrade_Date} /etc/my.cnf
+    if [ "${MariaDB_Data_Dir}" != "/usr/local/mariadb/var" ] && [ -d "${MariaDB_Data_Dir}${Upgrade_Date}" ]; then
+        rm -rf ${MariaDB_Data_Dir}
+        mv ${MariaDB_Data_Dir}${Upgrade_Date} ${MariaDB_Data_Dir}
+    fi
+    StartUp mysql
+    /etc/init.d/mysql start
+    if /usr/local/mysql/bin/mysql --defaults-file=~/.my.cnf -e "SELECT 1" >/dev/null 2>&1; then
+        Echo_Green "回滚完成：原 MySQL 已恢复运行，数据未受影响。"
+    else
+        Echo_Red "回滚后数据库未能启动，请手工检查："
+        Echo_Red "  备份 SQL：/root/mysql_all_backup${Upgrade_Date}.sql"
+    fi
+}
+
 Upgrade_MySQL2MariaDB()
 {
     Check_DB
@@ -151,16 +174,22 @@ Upgrade_MySQL2MariaDB()
     fi
     echo "============================check files=================================="
 
+    if [ "${Bin}" = "y" ]; then
+        Upgrade_Disk_Preflight "${MariaDB_FileName}.tar.gz" "${MariaDB_Data_Dir}" 512
+    else
+        Upgrade_Disk_Preflight "${MariaDB_FileName}.tar.gz" "${MariaDB_Data_Dir}" 3072
+    fi
+
     Backup_MySQL2
 
     if [ "${Bin}" = "y" ]; then
         Echo_Blue "[+] Starting upgrade mariadb-${Mariadb_Ver} Using Generic Binaries..."
-        Tar_Cd ${MariaDB_FileName}.tar.gz
+        Tar_Cd ${MariaDB_FileName}.tar.gz || { Rollback_MySQL2; exit 1; }
         mkdir /usr/local/mariadb
         mv ${MariaDB_FileName}/* /usr/local/mariadb/
     else
         Echo_Blue "[+] Starting upgrade ${Mariadb_Ver} Using Source code..."
-        Tar_Cd mariadb-${mariadb_version}.tar.gz mariadb-${mariadb_version}
+        Tar_Cd mariadb-${mariadb_version}.tar.gz mariadb-${mariadb_version} || { Rollback_MySQL2; exit 1; }
         MariaDB_WITHSSL
         if echo "${mariadb_version}" | grep -Eq '^(10\.([5-9]|1[0-9])\.|1[1-9]\.)';then
             cmake -DCMAKE_INSTALL_PREFIX=/usr/local/mariadb -DMYSQL_UNIX_ADDR=/tmp/mysql.sock -DEXTRA_CHARSETS=all -DDEFAULT_CHARSET=utf8mb4 -DDEFAULT_COLLATION=utf8mb4_general_ci -DWITH_READLINE=1 -DWITH_EMBEDDED_SERVER=1 -DENABLED_LOCAL_INFILE=1 -DWITHOUT_TOKUDB=1

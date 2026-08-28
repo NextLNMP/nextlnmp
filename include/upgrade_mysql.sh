@@ -23,9 +23,31 @@ Backup_MySQL()
     fi
 }
 
+Rollback_MySQL()
+{
+    # 解压/安装新版失败时调用：把 Backup_MySQL 搬走的东西原样搬回去。
+    Echo_Red "开始回滚到原 MySQL..."
+    cd /
+    rm -rf /usr/local/mysql
+    mv /usr/local/oldmysql${Upgrade_Date} /usr/local/mysql
+    mv /usr/local/mysql/init.d.mysql.bak.${Upgrade_Date} /etc/init.d/mysql
+    mv /usr/local/mysql/my.cnf.bak.${Upgrade_Date} /etc/my.cnf
+    if [ "${MySQL_Data_Dir}" != "/usr/local/mysql/var" ] && [ -d "${MySQL_Data_Dir}${Upgrade_Date}" ]; then
+        rm -rf ${MySQL_Data_Dir}
+        mv ${MySQL_Data_Dir}${Upgrade_Date} ${MySQL_Data_Dir}
+    fi
+    /etc/init.d/mysql start
+    if /usr/local/mysql/bin/mysql --defaults-file=~/.my.cnf -e "SELECT 1" >/dev/null 2>&1; then
+        Echo_Green "回滚完成：原库已恢复运行，数据未受影响。"
+    else
+        Echo_Red "回滚后数据库未能启动，请手工检查："
+        Echo_Red "  备份 SQL：/root/mysql_all_backup${Upgrade_Date}.sql"
+    fi
+}
+
 Upgrade_MySQL51()
 {
-    Tar_Cd mysql-${mysql_version}.tar.gz mysql-${mysql_version}
+    Tar_Cd mysql-${mysql_version}.tar.gz mysql-${mysql_version} || { Rollback_MySQL; exit 1; }
     MySQL_Gcc7_Patch
     if [ $InstallInnodb = "y" ]; then
         ./configure --prefix=/usr/local/mysql --with-extra-charsets=complex --enable-thread-safe-client --enable-assembler --with-mysqld-ldflags=-all-static --with-charset=utf8 --enable-thread-safe-client --with-big-tables --with-readline --with-ssl --with-embedded-server --enable-local-infile --with-plugins=innobase ${MySQL51MAOpt}
@@ -126,7 +148,7 @@ Upgrade_MySQL55()
 {
     if [ "${Bin}" = "y" ]; then
         Echo_Blue "Starting upgrade MySQL ${mysql_version} Using Generic Binaries..."
-        Tar_Cd ${mysql_src}
+        Tar_Cd ${mysql_src} || { Rollback_MySQL; exit 1; }
         mkdir /usr/local/mysql
         mv mysql-${mysql_version}-linux-glibc2.12-${DB_ARCH}/* /usr/local/mysql/
     else
@@ -136,7 +158,7 @@ Upgrade_MySQL55()
         else
             MySQL_WITH_SSL=''
         fi
-        Tar_Cd mysql-${mysql_version}.tar.gz mysql-${mysql_version}
+        Tar_Cd mysql-${mysql_version}.tar.gz mysql-${mysql_version} || { Rollback_MySQL; exit 1; }
         MySQL_ARM_Patch
         if  g++ -dM -E -x c++ /dev/null | grep -F __cplusplus | cut -d' ' -f3 | grep -Eqi "^2017|202[0-9]"; then
             sed -i '1s/^/set(CMAKE_CXX_STANDARD 11)\n/' CMakeLists.txt
@@ -241,7 +263,7 @@ Upgrade_MySQL56()
 {
     if [ "${Bin}" = "y" ]; then
         Echo_Blue "Starting upgrade MySQL ${mysql_version} Using Generic Binaries..."
-        Tar_Cd ${mysql_src}
+        Tar_Cd ${mysql_src} || { Rollback_MySQL; exit 1; }
         mkdir /usr/local/mysql
         mv mysql-${mysql_version}-linux-glibc2.12-${DB_ARCH}/* /usr/local/mysql/
     else
@@ -252,7 +274,7 @@ Upgrade_MySQL56()
         else
             MySQL_WITH_SSL=''
         fi
-        Tar_Cd mysql-${mysql_version}.tar.gz mysql-${mysql_version}
+        Tar_Cd mysql-${mysql_version}.tar.gz mysql-${mysql_version} || { Rollback_MySQL; exit 1; }
         if  g++ -dM -E -x c++ /dev/null | grep -F __cplusplus | cut -d' ' -f3 | grep -Eqi "^2017|202[0-9]"; then
             sed -i '1s/^/set(CMAKE_CXX_STANDARD 11)\n/' CMakeLists.txt
         fi
@@ -388,7 +410,7 @@ Upgrade_MySQL57()
 {
     if [ "${Bin}" = "y" ]; then
         Echo_Blue "Starting upgrade MySQL ${mysql_version} Using Generic Binaries..."
-        Tar_Cd ${mysql_src}
+        Tar_Cd ${mysql_src} || { Rollback_MySQL; exit 1; }
         mkdir /usr/local/mysql
         mv mysql-${mysql_version}-linux-glibc2.12-${DB_ARCH}/* /usr/local/mysql/
     else
@@ -399,7 +421,7 @@ Upgrade_MySQL57()
         else
             MySQL_WITH_SSL=''
         fi
-        Tar_Cd ${mysql_src} mysql-${mysql_version}
+        Tar_Cd ${mysql_src} mysql-${mysql_version} || { Rollback_MySQL; exit 1; }
         Install_Boost
         if echo "${Rocky_Version}" | grep -Eqi "^9"; then
             sed -i 's@^INCLUDE(cmake/abi_check.cmake)@#INCLUDE(cmake/abi_check.cmake)@' CMakeLists.txt
@@ -500,12 +522,12 @@ Upgrade_MySQL80()
 {
     if [ "${Bin}" = "y" ]; then
         Echo_Blue "Starting upgrade MySQL ${mysql_version} Using Generic Binaries..."
-        Tar_Cd ${mysql_src}
+        Tar_Cd ${mysql_src} || { Rollback_MySQL; exit 1; }
         mkdir /usr/local/mysql
         mv mysql-${mysql_version}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}/* /usr/local/mysql/
     else
         Echo_Blue "Starting upgrade MySQL ${mysql_version} Using Source code..."
-        Tar_Cd ${mysql_src} mysql-${mysql_version}
+        Tar_Cd ${mysql_src} mysql-${mysql_version} || { Rollback_MySQL; exit 1; }
         Install_Boost
         mkdir build && cd build
         cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DSYSCONFDIR=/etc -DWITH_MYISAM_STORAGE_ENGINE=1 -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_PARTITION_STORAGE_ENGINE=1 -DWITH_FEDERATED_STORAGE_ENGINE=1 -DEXTRA_CHARSETS=all -DDEFAULT_CHARSET=utf8mb4 -DDEFAULT_COLLATION=utf8mb4_general_ci -DWITH_EMBEDDED_SERVER=1 -DENABLED_LOCAL_INFILE=1 ${MySQL_WITH_BOOST}
@@ -604,12 +626,12 @@ Upgrade_MySQL84()
 {
     if [ "${Bin}" = "y" ]; then
         Echo_Blue "Starting upgrade MySQL ${mysql_version} Using Generic Binaries..."
-        Tar_Cd ${mysql_src}
+        Tar_Cd ${mysql_src} || { Rollback_MySQL; exit 1; }
         mkdir /usr/local/mysql
         mv ${mysql_src%.tar.xz}/* /usr/local/mysql/
     else
         Echo_Blue "Starting upgrade MySQL ${mysql_version} Using Source code..."
-        Tar_Cd ${mysql_src} mysql-${mysql_version}
+        Tar_Cd ${mysql_src} mysql-${mysql_version} || { Rollback_MySQL; exit 1; }
         Install_Boost
         mkdir build && cd build
         cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DSYSCONFDIR=/etc -DWITH_MYISAM_STORAGE_ENGINE=1 -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_PARTITION_STORAGE_ENGINE=1 -DWITH_FEDERATED_STORAGE_ENGINE=1 -DEXTRA_CHARSETS=all -DDEFAULT_CHARSET=utf8mb4 -DDEFAULT_COLLATION=utf8mb4_general_ci -DWITH_EMBEDDED_SERVER=1 -DENABLED_LOCAL_INFILE=1 ${MySQL_WITH_BOOST}
@@ -914,6 +936,12 @@ Upgrade_MySQL()
             exit 1
             ;;
     esac
+
+    if [ "${Bin}" = "y" ]; then
+        Upgrade_Disk_Preflight "${mysql_src}" "${MySQL_Data_Dir}" 512
+    else
+        Upgrade_Disk_Preflight "${mysql_src}" "${MySQL_Data_Dir}" 3072
+    fi
 
     Backup_MySQL
     if [ "${mysql_short_version}" = "5.1" ]; then

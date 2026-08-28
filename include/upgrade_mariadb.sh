@@ -24,6 +24,30 @@ Backup_MariaDB()
     fi
 }
 
+Rollback_MariaDB()
+{
+    # 解压/安装新版失败时调用：把 Backup_MariaDB 搬走的东西原样搬回去。
+    # 此刻备份 SQL 和旧目录都完好，动作是确定性的。
+    Echo_Red "开始回滚到原 MariaDB..."
+    cd /
+    rm -rf /usr/local/mariadb
+    mv /usr/local/oldmariadb${Upgrade_Date} /usr/local/mariadb
+    mv /usr/local/mariadb/init.d.mariadb.bak.${Upgrade_Date} /etc/init.d/mariadb
+    mv /usr/local/mariadb/my.cnf.mariadb.bak.${Upgrade_Date} /etc/my.cnf
+    if [ "${MariaDB_Data_Dir}" != "/usr/local/mariadb/var" ] && [ -d "${MariaDB_Data_Dir}${Upgrade_Date}" ]; then
+        rm -rf ${MariaDB_Data_Dir}
+        mv ${MariaDB_Data_Dir}${Upgrade_Date} ${MariaDB_Data_Dir}
+    fi
+    /etc/init.d/mariadb start
+    if /usr/local/mariadb/bin/mysql --defaults-file=~/.my.cnf -e "SELECT 1" >/dev/null 2>&1; then
+        Echo_Green "回滚完成：原库已恢复运行，数据未受影响。"
+    else
+        Echo_Red "回滚后数据库未能启动，请手工检查："
+        Echo_Red "  备份 SQL：/root/mariadb_all_backup${Upgrade_Date}.sql"
+        Echo_Red "  错误日志：${MariaDB_Data_Dir}/mariadb.err"
+    fi
+}
+
 Upgrade_MariaDB()
 {
     Check_DB
@@ -151,16 +175,26 @@ Upgrade_MariaDB()
     fi
     echo "============================check files=================================="
 
+    if [ "${Bin}" = "y" ]; then
+        Upgrade_Disk_Preflight "${MariaDB_FileName}.tar.gz" "${MariaDB_Data_Dir}" 512
+    else
+        Upgrade_Disk_Preflight "${MariaDB_FileName}.tar.gz" "${MariaDB_Data_Dir}" 3072
+    fi
+
     Backup_MariaDB
 
     if [ "${Bin}" = "y" ]; then
-        Echo_Blue "[+] Starting upgrade mariadb-${Mariadb_Ver} Using Generic Binaries..."
-        Tar_Cd ${MariaDB_FileName}.tar.gz
+        Echo_Blue "[+] Starting upgrade mariadb-${mariadb_version} Using Generic Binaries..."
+        Tar_Cd ${MariaDB_FileName}.tar.gz || { Rollback_MariaDB; exit 1; }
         mkdir /usr/local/mariadb
         mv ${MariaDB_FileName}/* /usr/local/mariadb/
+        if [ ! -x /usr/local/mariadb/bin/mariadbd ] && [ ! -x /usr/local/mariadb/bin/mysqld ]; then
+            Echo_Red "新版文件不完整（没有服务端二进制）"
+            Rollback_MariaDB; exit 1
+        fi
     else
-        Echo_Blue "[+] Starting upgrade ${Mariadb_Ver} Using Source code..."
-        Tar_Cd mariadb-${mariadb_version}.tar.gz mariadb-${mariadb_version}
+        Echo_Blue "[+] Starting upgrade mariadb-${mariadb_version} Using Source code..."
+        Tar_Cd mariadb-${mariadb_version}.tar.gz mariadb-${mariadb_version} || { Rollback_MariaDB; exit 1; }
         MariaDB_WITHSSL
         if echo "${mariadb_version}" | grep -Eq '^(10\.([5-9]|1[0-9])\.|1[1-9]\.)';then
             cmake -DCMAKE_INSTALL_PREFIX=/usr/local/mariadb -DMYSQL_UNIX_ADDR=/tmp/mysql.sock -DEXTRA_CHARSETS=all -DDEFAULT_CHARSET=utf8mb4 -DDEFAULT_COLLATION=utf8mb4_general_ci -DWITH_READLINE=1 -DWITH_EMBEDDED_SERVER=1 -DENABLED_LOCAL_INFILE=1 -DWITHOUT_TOKUDB=1
