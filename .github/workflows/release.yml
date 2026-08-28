@@ -115,6 +115,7 @@ jobs:
           script: |
             cd /data/mirror
             wget -q -O nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz https://github.com/NextLNMP/nextlnmp/releases/download/v${{ steps.version.outputs.VERSION }}/nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz
-            echo "Mirror synced: nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz"
+            wget -q -O install.sh.new https://raw.githubusercontent.com/NextLNMP/nextlnmp/main/install.sh && grep -q "NEXTLNMP_VER=\"${{ steps.version.outputs.VERSION }}\"" install.sh.new && mv install.sh.new install.sh && chmod 644 install.sh || rm -f install.sh.new
+            echo "Mirror synced: nextlnmp-${{ steps.version.outputs.VERSION }}.tar.gz + install.sh"
 
 
