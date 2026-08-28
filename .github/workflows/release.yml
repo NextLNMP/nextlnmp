@@ -58,7 +58,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add install.sh nextlnmp.sh README.md CHANGELOG_DRAFT.md
-          git diff --cached --quiet || git commit -m "chore: release v${{ steps.version.outputs.VERSION }} (version, SHA256, README)"
+          git diff --cached --quiet || git commit -m "chore: release v${{ steps.version.outputs.VERSION }} (version, SHA256, README) [skip release]"
           git push origin main
 
       - name: Generate release body
