@@ -32,6 +32,9 @@ jobs:
       - name: AI 救援客户端安全闸门测试
         run: bash tools/test-ai-assist.sh
 
+      - name: 依赖安装容错外壳测试（必需件绝不能被静默吞掉）
+        run: bash tools/test-pkg-wrapper.sh
+
       - name: 全仓 shell 语法矩阵
         run: |
           fail=0
