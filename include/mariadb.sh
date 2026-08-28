@@ -117,7 +117,7 @@ MariaDB_Bin_Smoke_Test()
 
 MariaDB_CPU_Hint()
 {
-    Echo_Red "❌ ${Mariadb_Ver} 预编译包在本机 CPU 上无法运行（崩溃的程序：$1）"
+    Echo_Red "❌ ${Mariadb_Ver:-MariaDB ${mariadb_version}} 预编译包在本机 CPU 上无法运行（崩溃的程序：$1）"
     Echo_Yellow "   本机 CPU：$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //')"
     Echo_Yellow "   预编译包要求较新的指令集（如 AVX/AVX2），本机或虚拟化层未提供。"
     Echo_Yellow "   解决办法（任选其一）："

@@ -39,7 +39,11 @@ Rollback_MySQL2()
         mv ${MariaDB_Data_Dir}${Upgrade_Date} ${MariaDB_Data_Dir}
     fi
     StartUp mysql
-    /etc/init.d/mysql start
+    if [ -x /bin/nextlnmp ]; then
+        /bin/nextlnmp start
+    else
+        /etc/init.d/mysql start
+    fi
     if /usr/local/mysql/bin/mysql --defaults-file=~/.my.cnf -e "SELECT 1" >/dev/null 2>&1; then
         Echo_Green "回滚完成：原 MySQL 已恢复运行，数据未受影响。"
     else
@@ -292,6 +296,10 @@ EOF
     \cp /usr/local/mariadb/support-files/mysql.server /etc/init.d/mariadb
     \cp ${cur_dir}/init.d/mariadb.service /etc/systemd/system/mariadb.service
     chmod 755 /etc/init.d/mariadb
+
+    if ! MariaDB_Upgrade_CPU_Probe; then
+        Rollback_MySQL2; exit 1
+    fi
 
     Mariadb_Sec_Setting
     /etc/init.d/mariadb start

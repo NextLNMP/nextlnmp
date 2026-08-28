@@ -36,7 +36,11 @@ Rollback_MySQL()
         rm -rf ${MySQL_Data_Dir}
         mv ${MySQL_Data_Dir}${Upgrade_Date} ${MySQL_Data_Dir}
     fi
-    /etc/init.d/mysql start
+    if [ -x /bin/nextlnmp ]; then
+        /bin/nextlnmp start
+    else
+        /etc/init.d/mysql start
+    fi
     if /usr/local/mysql/bin/mysql --defaults-file=~/.my.cnf -e "SELECT 1" >/dev/null 2>&1; then
         Echo_Green "回滚完成：原库已恢复运行，数据未受影响。"
     else

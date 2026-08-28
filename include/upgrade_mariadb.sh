@@ -24,6 +24,31 @@ Backup_MariaDB()
     fi
 }
 
+# —— CPU 兼容性实测（12c 轮真机实锤后补）——
+# 11.8.8 通用包的客户端在老 CPU 上 SIGILL：服务端能跑、init 脚本的
+# mysqladmin ping 每秒崩一次、systemd 90 秒超时把健康的服务杀掉、恢复
+# 步骤连不上库。装机流程早有 MariaDB_Bin_Smoke_Test / MariaDB_Client_Usable
+# 两道检测（按信号判定 128+N），升级流程一直没接。客户端那刀必须连上
+# 活服务端才测得出，所以绕开 init/systemd 直接拉起 mariadbd 试一把。
+MariaDB_Upgrade_CPU_Probe()
+{
+    MariaDB_Bin_Smoke_Test || return 1
+    /usr/local/mariadb/bin/mysqld_safe --defaults-file=/etc/my.cnf >/dev/null 2>&1 &
+    local _i _ok=n _pidf
+    for _i in $(seq 1 30); do
+        [ -S /tmp/mysql.sock ] && break
+        sleep 1
+    done
+    if MariaDB_Client_Usable; then _ok=y; fi
+    _pidf=$(ls ${MariaDB_Data_Dir}/*.pid 2>/dev/null | head -1)
+    [ -n "${_pidf}" ] && kill "$(cat ${_pidf})" 2>/dev/null
+    for _i in $(seq 1 30); do
+        pgrep -x mariadbd >/dev/null 2>&1 || pgrep -x mysqld >/dev/null 2>&1 || break
+        sleep 1
+    done
+    [ "${_ok}" = "y" ]
+}
+
 Rollback_MariaDB()
 {
     # 解压/安装新版失败时调用：把 Backup_MariaDB 搬走的东西原样搬回去。
@@ -38,7 +63,11 @@ Rollback_MariaDB()
         rm -rf ${MariaDB_Data_Dir}
         mv ${MariaDB_Data_Dir}${Upgrade_Date} ${MariaDB_Data_Dir}
     fi
-    /etc/init.d/mariadb start
+    if [ -x /bin/nextlnmp ]; then
+        /bin/nextlnmp start
+    else
+        /etc/init.d/mariadb start
+    fi
     if /usr/local/mariadb/bin/mysql --defaults-file=~/.my.cnf -e "SELECT 1" >/dev/null 2>&1; then
         Echo_Green "回滚完成：原库已恢复运行，数据未受影响。"
     else
@@ -295,6 +324,10 @@ EOF
     chown -R mariadb:mariadb ${MariaDB_Data_Dir}
     \cp /usr/local/mariadb/support-files/mysql.server /etc/init.d/mariadb
     chmod 755 /etc/init.d/mariadb
+
+    if ! MariaDB_Upgrade_CPU_Probe; then
+        Rollback_MariaDB; exit 1
+    fi
 
     Mariadb_Sec_Setting
     /etc/init.d/mariadb start
