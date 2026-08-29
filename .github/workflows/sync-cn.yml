@@ -1,0 +1,41 @@
+name: Sync CN Mirrors
+
+# 手动把 main + 指定 tag 推平到国内两个镜像仓（cnb.cool / gitee）。
+# 平时不用跑——release.yml 发版时自动同步；这个入口给"镜像落后了要立刻拉齐"用。
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要一并推过去的 tag（留空只推 main）'
+        default: ''
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync gitee
+        continue-on-error: true
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          [ -z "${GITEE_TOKEN}" ] && { echo "无 GITEE_TOKEN，跳过"; exit 0; }
+          git remote add gitee "https://oauth2:${GITEE_TOKEN}@gitee.com/palmmedia/nextlnmp.git"
+          git push gitee HEAD:main 2>/dev/null || {
+            git remote set-url gitee "https://palmmedia:${GITEE_TOKEN}@gitee.com/palmmedia/nextlnmp.git"
+            git push gitee HEAD:main
+          }
+          [ -n "${{ inputs.tag }}" ] && git push gitee "${{ inputs.tag }}" || true
+
+      - name: Sync cnb.cool
+        continue-on-error: true
+        env:
+          CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+        run: |
+          [ -z "${CNB_TOKEN}" ] && { echo "无 CNB_TOKEN，跳过"; exit 0; }
+          git remote add cnb "https://oauth2:${CNB_TOKEN}@cnb.cool/NextLNMP/NextLNMP.git"
+          git push cnb HEAD:main
+          [ -n "${{ inputs.tag }}" ] && git push cnb "${{ inputs.tag }}" || true

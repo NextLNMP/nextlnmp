@@ -106,6 +106,24 @@ jobs:
           git push cnb "v${{ steps.version.outputs.VERSION }}"
           echo "✓ 已同步到 cnb.cool"
 
+      - name: Sync to CN repo (gitee)
+        # 老流水线就有 gitee 同步，v2 重写时丢了（GITEE_TOKEN secret 一直在）。
+        # gitee 私人令牌两种用户名格式都有人用，第一种不行自动换第二种。
+        continue-on-error: true
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          if [ -z "${GITEE_TOKEN}" ]; then
+            echo "未配置 GITEE_TOKEN，跳过 gitee 同步"; exit 0
+          fi
+          git remote add gitee "https://oauth2:${GITEE_TOKEN}@gitee.com/palmmedia/nextlnmp.git" 2>/dev/null || true
+          git push gitee HEAD:main 2>/dev/null || {
+            git remote set-url gitee "https://palmmedia:${GITEE_TOKEN}@gitee.com/palmmedia/nextlnmp.git"
+            git push gitee HEAD:main
+          }
+          git push gitee "v${{ steps.version.outputs.VERSION }}" || true
+          echo "✓ 已同步到 gitee"
+
       - name: Sync to mirror server
         uses: appleboy/ssh-action@v1.0.3
         with:
