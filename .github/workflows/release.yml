@@ -124,22 +124,6 @@ jobs:
           git push gitee "v${{ steps.version.outputs.VERSION }}" || true
           echo "✓ 已同步到 gitee"
 
-      - name: Sync to CN repo (gitcode)
-        # gitcode.com/palmmedia/nextlnmp 也是老镜像（停在 v1.5.9）。
-        # GitCode 文档：HTTPS 推送用户名+私人令牌当密码。缺 secret 跳过不阻断。
-        continue-on-error: true
-        env:
-          GITCODE_USER: ${{ secrets.GITCODE_USER }}
-          GITCODE_TOKEN: ${{ secrets.GITCODE_TOKEN }}
-        run: |
-          if [ -z "${GITCODE_TOKEN}" ] || [ -z "${GITCODE_USER}" ]; then
-            echo "未配置 GITCODE_USER/GITCODE_TOKEN，跳过 gitcode 同步"; exit 0
-          fi
-          git remote add gitcode "https://${GITCODE_USER}:${GITCODE_TOKEN}@gitcode.com/palmmedia/nextlnmp.git" 2>/dev/null || true
-          git push gitcode HEAD:main
-          git push gitcode "v${{ steps.version.outputs.VERSION }}" || true
-          echo "✓ 已同步到 gitcode"
-
       - name: Sync to mirror server
         uses: appleboy/ssh-action@v1.0.3
         with:

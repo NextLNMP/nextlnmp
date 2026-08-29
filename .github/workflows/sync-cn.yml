@@ -32,18 +32,6 @@ jobs:
           git push ${FLAG} gitee HEAD:main
           [ -n "${{ inputs.tag }}" ] && git push ${FLAG} gitee "${{ inputs.tag }}" || true
 
-      - name: Sync gitcode
-        continue-on-error: true
-        env:
-          GITCODE_USER: ${{ secrets.GITCODE_USER }}
-          GITCODE_TOKEN: ${{ secrets.GITCODE_TOKEN }}
-        run: |
-          { [ -z "${GITCODE_TOKEN}" ] || [ -z "${GITCODE_USER}" ]; } && { echo "无 GITCODE 凭据，跳过"; exit 0; }
-          FLAG=""; [ "${{ inputs.force }}" = "true" ] && FLAG="--force"
-          git remote add gitcode "https://${GITCODE_USER}:${GITCODE_TOKEN}@gitcode.com/palmmedia/nextlnmp.git"
-          git push ${FLAG} gitcode HEAD:main
-          [ -n "${{ inputs.tag }}" ] && git push ${FLAG} gitcode "${{ inputs.tag }}" || true
-
       - name: Sync cnb.cool
         continue-on-error: true
         env:
