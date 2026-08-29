@@ -8,6 +8,10 @@ on:
       tag:
         description: '要一并推过去的 tag（留空只推 main）'
         default: ''
+      force:
+        description: '强推（镜像历史被重写后对齐用）'
+        type: boolean
+        default: false''
 
 jobs:
   sync:
@@ -23,12 +27,10 @@ jobs:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
         run: |
           [ -z "${GITEE_TOKEN}" ] && { echo "无 GITEE_TOKEN，跳过"; exit 0; }
+          FLAG=""; [ "${{ inputs.force }}" = "true" ] && FLAG="--force"
           git remote add gitee "https://monetize:${GITEE_TOKEN}@gitee.com/palmmedia/nextlnmp.git"
-          git push gitee HEAD:main 2>/dev/null || {
-            git remote set-url gitee "https://monetize:${GITEE_TOKEN}@gitee.com/palmmedia/nextlnmp.git"
-            git push gitee HEAD:main
-          }
-          [ -n "${{ inputs.tag }}" ] && git push gitee "${{ inputs.tag }}" || true
+          git push ${FLAG} gitee HEAD:main
+          [ -n "${{ inputs.tag }}" ] && git push ${FLAG} gitee "${{ inputs.tag }}" || true
 
       - name: Sync cnb.cool
         continue-on-error: true
@@ -36,6 +38,7 @@ jobs:
           CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
         run: |
           [ -z "${CNB_TOKEN}" ] && { echo "无 CNB_TOKEN，跳过"; exit 0; }
+          FLAG=""; [ "${{ inputs.force }}" = "true" ] && FLAG="--force"
           git remote add cnb "https://oauth2:${CNB_TOKEN}@cnb.cool/NextLNMP/NextLNMP.git"
-          git push cnb HEAD:main
+          git push ${FLAG} cnb HEAD:main
           [ -n "${{ inputs.tag }}" ] && git push cnb "${{ inputs.tag }}" || true
