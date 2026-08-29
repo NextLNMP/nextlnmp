@@ -23,9 +23,9 @@ jobs:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
         run: |
           [ -z "${GITEE_TOKEN}" ] && { echo "无 GITEE_TOKEN，跳过"; exit 0; }
-          git remote add gitee "https://oauth2:${GITEE_TOKEN}@gitee.com/palmmedia/nextlnmp.git"
+          git remote add gitee "https://monetize:${GITEE_TOKEN}@gitee.com/palmmedia/nextlnmp.git"
           git push gitee HEAD:main 2>/dev/null || {
-            git remote set-url gitee "https://palmmedia:${GITEE_TOKEN}@gitee.com/palmmedia/nextlnmp.git"
+            git remote set-url gitee "https://monetize:${GITEE_TOKEN}@gitee.com/palmmedia/nextlnmp.git"
             git push gitee HEAD:main
           }
           [ -n "${{ inputs.tag }}" ] && git push gitee "${{ inputs.tag }}" || true
