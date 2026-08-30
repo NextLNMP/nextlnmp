@@ -15,7 +15,7 @@ else
     Stack=$1
 fi
 
-NEXTLNMP_Ver='2.0.0'
+NEXTLNMP_Ver='2.0.1'
 . nextlnmp.conf
 . include/main.sh
 . include/ai-assist.sh
