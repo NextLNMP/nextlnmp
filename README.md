@@ -57,7 +57,7 @@
 - 🚀 **急速安装**：Ubuntu 22/24、Debian 12/13 全覆盖，清单驱动的 PHP Binary 预编译包（8.2 / 8.3 / 8.4）直接解压，全程约 **5 分钟**完成 LNMP 环境部署
 - 🤖 **AI 装机救援**：安装失败当场进入对话，AI 读日志、要证据、给修复建议。只读诊断命令走白名单自动执行，修复命令逐条 y/N 确认；上传日志前征得同意且先抹掉密码。不需要就 `NEXTLNMP_AI=n`
 - 🧯 **可靠升级**：`upgrade.sh` 升级前做磁盘预检与 CPU 兼容实测，解压或恢复失败自动回滚到原版本，数据与网站不受影响
-- 🛡️ **安全可信**：所有源码包 SHA256 逐包校验，自建 HTTPS 镜像站，校验清单公开可审计
+- 🛡️ **安全可信**：所有源码包 SHA256 逐包校验，自建 HTTPS 镜像源，校验清单公开可审计
 - 🧠 **智能推荐**：自动检测硬件配置，推荐最佳 PHP / MySQL / 内存分配器组合
 - ⚙️ **自动优化**：安装后根据内存自动调整 MySQL my.cnf，开箱即用
 - 🌐 **BBR 加速**：自动检测内核版本，一键启用 BBR 拥塞控制，提升网络吞吐
@@ -94,7 +94,7 @@ GitHub 源备用：
 bash <(curl -sL https://raw.githubusercontent.com/NextLNMP/nextlnmp/main/install.sh)
 ```
 
-**方式二：从镜像站下载安装（国内快）**
+**方式二：从镜像源下载安装（国内快）**
 
 ```bash
 wget https://mirror.nextlnmp.cn/nextlnmp-2.0.0.tar.gz && tar zxf nextlnmp-2.0.0.tar.gz && cd nextlnmp-2.0.0 && bash install.sh
@@ -116,11 +116,11 @@ wget https://github.com/NextLNMP/nextlnmp/releases/download/v2.0.0/nextlnmp-2.0.
 
 | 对比项 | 某流行同类工具 | NextLNMP |
 |--------|---------------|----------|
-| **源码来源** | ❌ 私有镜像站，已易主，来源不透明 | ✅ 官方上游（php.net / nginx.org / cdn.mysql.com） |
+| **源码来源** | ❌ 私有镜像源，已易主，来源不透明 | ✅ 官方上游（php.net / nginx.org / cdn.mysql.com） |
 | **下载校验** | ❌ 零校验，下什么装什么 | ✅ SHA256 逐包校验，篡改立即终止 |
 | **校验清单** | ❌ 无 | ✅ 公开可审计 |
 | **代码透明** | ❌ 下载站闭源 | ✅ 完整开源，GPL-3.0 协议 |
-| **镜像站** | ❌ 域名归属不明 | ✅ 自建镜像站，HTTPS 加密 |
+| **镜像源** | ❌ 域名归属不明 | ✅ 自建镜像源，HTTPS 加密 |
 | **维护状态** | ❌ 原作者已离场 | ✅ 持续维护更新 |
 
 ### 版本够新
@@ -234,13 +234,13 @@ NextLNMP 的安全不是一句口号，是一条闭合的信任链：
 
 设计要点：
 
-- **锚点分离**：引导脚本与主包走不同渠道。脚本在 GitHub/CNB，包在镜像站。镜像站即使被完全攻陷，也伪造不出能通过脚本内嵌锚点的主包
-- **清单随包**：组件校验清单不从镜像站下载（那会形成"自证清白"），而是打进主包分发，可信度等同主包本身
-- **全程可审计**：清单就是仓库里的 `sha256sums.txt`，由 CI 从镜像站全量生成，每次更新都是一次公开的 git 提交
+- **锚点分离**：引导脚本与主包走不同渠道。脚本在 GitHub/CNB，包在镜像源。镜像源即使被完全攻陷，也伪造不出能通过脚本内嵌锚点的主包
+- **清单随包**：组件校验清单不从镜像源下载（那会形成"自证清白"），而是打进主包分发，可信度等同主包本身
+- **全程可审计**：清单就是仓库里的 `sha256sums.txt`，由 CI 从镜像源全量生成，每次更新都是一次公开的 git 提交
 - **严格模式**：`NEXTLNMP_VERIFY=strict bash install.sh` 让任何未列入清单的包直接终止安装
 - **二进制可溯源**：PHP Binary 预编译包由公开的 GitHub Actions 产线从 php.net 官方源码构建，构建日志与产物哈希任何人可查
 
-**镜像站：** `https://mirror.nextlnmp.cn`
+**镜像源：** `https://mirror.nextlnmp.cn`
 
 - 部署于阿里云国内节点，全程 HTTPS 加密传输
 - 仅提供源码包格式（.tar.gz / .tar.bz2 / .tar.xz / .tgz），禁止目录遍历
@@ -371,9 +371,9 @@ nextlnmp-2.0.0/
 </details>
 
 <details>
-<summary><b>Q4: 镜像站在哪里？可靠吗？</b></summary>
+<summary><b>Q4: 镜像源在哪里？可靠吗？</b></summary>
 
-镜像站 `mirror.nextlnmp.cn` 部署于阿里云国内节点，全程 HTTPS 加密传输。
+镜像源 `mirror.nextlnmp.cn` 部署于阿里云国内节点，全程 HTTPS 加密传输。
 
 所有文件均从官方上游获取后存放，SHA256 校验清单公开可查。你也可以自行从官方下载同版本源码包，对比哈希值独立验证。
 </details>
@@ -562,7 +562,7 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 ### v1.10.1 —— 上游域名跟进（2026-08-24）
 
 - lnmp 官方镜像域名 `soft.vpser.net` 已停止解析（NXDOMAIN），全部引用切换到现行官方域名 `soft.lnmp.com`（acme.sh 引导 ×3 CLI、PHP 5.2 fpm 补丁兜底、上游声明清单）
-- 镜像站补齐 Zend loader 全套（PHP 5.2–5.6）与 php-5.2.17-fpm 补丁共 6 件，校验清单同步收编——老版本 PHP 安装链路完整闭环
+- 镜像源补齐 Zend loader 全套（PHP 5.2–5.6）与 php-5.2.17-fpm 补丁共 6 件，校验清单同步收编——老版本 PHP 安装链路完整闭环
 - 说明：v1.10.0 用户不受影响（acme.sh 有 GitHub 兜底、Zend loader 为软失败可跳过），本版为体验修正
 
 <details><summary>v1.10.0 完整更新内容（全量审计修复版）</summary>
@@ -585,7 +585,7 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 - `Download_Files` 失败即退出导致所有官方源兜底（cdn.mysql.com、pureftpd.org、php.net 等）成为死代码——新增 `Try_Download` 并重写全部兜底链，镜像缺件从"必死"降级为"自动切换官方源"
 - 镜像补货 61 项（PHP 8.2.28 源码、MySQL 8.x 源码、Lua 全家、fancyindex、pure-ftpd、fail2ban、libzip、libmemcached、老版扩展等），`tools/upstream-sources.txt` 全部 URL 经实测
 - MySQL aarch64 通用包按官方实际命名走 glibc2.28（此前拼 glibc2.17 必 404，"ARM fast lane" 数据库从未可用）
-- SHA256 清单查找改为精确匹配，兼容带路径前缀的旧格式清单；sync-checksums 现在会把新清单同步回镜像站
+- SHA256 清单查找改为精确匹配，兼容带路径前缀的旧格式清单；sync-checksums 现在会把新清单同步回镜像源
 - 新增每周镜像覆盖体检 CI（`tools/check-mirror-coverage.sh`），防"升版本号忘传包"复发
 
 **🗄 数据库**
@@ -628,7 +628,7 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 ### v1.8.0 (2026-07-07)
 - 组件：Nginx 升级至 1.30.3 稳定版；MariaDB 新增 11.8 LTS 与 12.3 LTS 选项，10.11 更新至 10.11.18；MySQL 8.4 更新至 8.4.9，8.0 定格终版 8.0.46 并标注 EOL，10.6 同标 EOL；phpMyAdmin 更新至 5.2.2
 - 组件：MySQL 8.0 二进制统一 glibc2.17 线（2.12 已停发），8.4 上游回退源改为 Downloads
-- 基建：新增 sync-upstream 工作流与 tools/upstream-sources.txt 声明式清单，官方源到镜像站一键同步并自动刷新校验清单
+- 基建：新增 sync-upstream 工作流与 tools/upstream-sources.txt 声明式清单，官方源到镜像源一键同步并自动刷新校验清单
 
 ### v1.7.0 (2026-07-07)
 - 功能：PHP 急速安装升级为清单驱动，支持任意版本 × Ubuntu 22/24、Debian 12/13，修复旧版在 Ubuntu22/Debian12 上无视所选版本强制下载 8.2.28 的问题
@@ -637,18 +637,18 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 - 清理：移除 eAccelerator 与 XCache 遗留组件（PHP 5 时代产物）
 
 ### v1.6.0 (2026-07-07)
-- 安全：组件校验清单改为随主包分发，信任链闭合到仓库，不再依赖镜像站自证；新增 NEXTLNMP_VERIFY=strict 严格模式
+- 安全：组件校验清单改为随主包分发，信任链闭合到仓库，不再依赖镜像源自证；新增 NEXTLNMP_VERIFY=strict 严格模式
 - 安全：引导脚本校验占位符由静默跳过改为硬失败，杜绝零校验版本流出（开发调试用 NEXTLNMP_DEV=1）
-- 基建：新增 sync-checksums 工作流，从镜像站一键生成全量校验清单并自动提交
-- 调整：安装入口统一为 CNB 与 GitHub，移除已停更的 Gitee 渠道；主包下载源改为镜像站与 GitHub 双源
+- 基建：新增 sync-checksums 工作流，从镜像源一键生成全量校验清单并自动提交
+- 调整：安装入口统一为 CNB 与 GitHub，移除已停更的 Gitee 渠道；主包下载源改为镜像源与 GitHub 双源
 - 文档：安全机制章节按新信任链重写，镜像域名统一为 mirror.nextlnmp.cn
 
 ### v1.5.9 (2026-04-20)
-**镜像站迁移 + 下载架构升级**
+**镜像源迁移 + 下载架构升级**
 
-- 镜像站从 mirror.zhangmei.com 迁移至 nextlnmp.cn（国内BGP加速）
-- install.sh 下载优先级调整为：Gitee > 镜像站 > GitHub
-- 镜像站检测失败不再中断安装，改为警告并尝试备用下载源
+- 镜像源从 mirror.zhangmei.com 迁移至 nextlnmp.cn（国内BGP加速）
+- install.sh 下载优先级调整为：Gitee > 镜像源 > GitHub
+- 镜像源检测失败不再中断安装，改为警告并尝试备用下载源
 - 修复 DNS 检测 bug：兼容 Oracle Cloud 等最小化镜像（ping 未安装 / 多种 DNS 错误格式）
 - 清除全部 mirror.zhangmei.com 硬编码引用（共4处）
 
@@ -678,14 +678,14 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 ### Bug 修复
 - 修复 vhost del 删除站点后未 reload nginx 的问题
 - 修复 Binary 安装缺少 init.d/php-fpm 启动脚本
-- 修复 Binary 安装从 GitHub 下载 php.ini 国内不可达，改为镜像站 + 内置兜底
+- 修复 Binary 安装从 GitHub 下载 php.ini 国内不可达，改为镜像源 + 内置兜底
 
 ### CI 改进
 - 修复 release.yml YAML 语法错误
 - Release 说明改用 body_path，自动包含更新内容
 - 修复 GitHub URL 指向旧账号的问题
 
-- 修复 Binary 安装从 GitHub 下载 php.ini 国内不可达，改为镜像站 + 内置兜底
+- 修复 Binary 安装从 GitHub 下载 php.ini 国内不可达，改为镜像源 + 内置兜底
 
 ### v1.5.5 (2026-02-25)
 - 🐛 修复 `nextlnmp info` / `nextlnmp password` 命令无效（case 分支在 `*` 通配符之后，永远执行不到）
@@ -718,7 +718,7 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 - ✨ 数据库密码自动随机生成，明文显示，无需用户记忆
 - 🔧 自动读取已保存的 root 密码，无需重复输入
 - ✨ SSL 证书默认邮箱改为 letsencrypt@nextlnmp.cn
-- 🐛 修复 acme.sh 下载源，改为 NextLNMP 镜像站
+- 🐛 修复 acme.sh 下载源，改为 NextLNMP 镜像源
 - 🐛 修复重建站点时 .user.ini 权限报错问题
 - 🐛 修复 php-fpm reload 兼容多版本路径
 - 🐛 修复数据库名/密码提示显示混乱问题
@@ -738,7 +738,7 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 - 📝 README 更新日志自动化，打 tag 即同步更新
 
 ### v1.4.6 (2026-02-24)
-- ✅ CI 全自动化发版完成：打包 → SHA256 → GitHub Release → 镜像站同步 → Gitee Release + 附件上传，一个 tag 触发全流程
+- ✅ CI 全自动化发版完成：打包 → SHA256 → GitHub Release → 镜像源同步 → Gitee Release + 附件上传，一个 tag 触发全流程
 - 🔧 修复 Gitee Release API 缺少 `target_commitish` 字段导致创建失败的问题
 
 ### v1.4.2 (2026-02-24)
@@ -768,8 +768,8 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 
 ### v1.3.2 (2026-02-23)
 - 🐛 修复一路回车安装走源码编译的问题（DBSelect 回退时未同步设置 Bin=y）
-- 🚀 数据库 Binary 包下载改为镜像站优先，官方源回退
-- 📦 镜像站新增全套数据库 Binary 包（MySQL 5个 + MariaDB 4个，共 5GB+）
+- 🚀 数据库 Binary 包下载改为镜像源优先，官方源回退
+- 📦 镜像源新增全套数据库 Binary 包（MySQL 5个 + MariaDB 4个，共 5GB+）
 
 ### v1.3.1 (2026-02-23)
 - 🐛 修复预编译二进制包选项默认值（回车空输入走了源码编译）
@@ -792,7 +792,7 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 
 ### v1.1.0 (2026-02-22)
 - 🚀 新增一行 `curl` 安装命令，复制粘贴即装
-- 🔄 三源容灾下载（镜像站 → Gitee → GitHub），自动切换最快源
+- 🔄 三源容灾下载（镜像源 → Gitee → GitHub），自动切换最快源
 - 🔒 安装包 SHA256 完整性校验，防篡改
 - 🖥️ 系统环境预检（内存 / 磁盘 / 端口），只警告不阻断
 - 📦 包管理器自动识别（yum / apt-get），基础依赖自动安装
@@ -800,7 +800,7 @@ NextLNMP 采用 GPL-3.0 + 商业双授权模式：
 ### v1.0.0 (2026-02-22)
 - 🎉 首次发布
 - ✅ 全部源码包从官方上游获取，SHA256 逐包校验
-- ✅ 自建 HTTPS 镜像站，60 个源码包全覆盖
+- ✅ 自建 HTTPS 镜像源，60 个源码包全覆盖
 - ✅ 新增 PHP 8.4.18 支持
 - ✅ 全新品牌，GPL-3.0 + 商业双授权
 
