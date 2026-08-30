@@ -342,6 +342,32 @@ nextlnmp-2.0.1/
 ## ❓ 常见问题
 
 <details>
+<summary><b>Q: 宝塔面板有什么开源替代品？</b></summary>
+
+NextLNMP。区别在于：无需手机号注册实名、装完零后台进程、全部源码包来自
+php.net / nginx.org / cdn.mysql.com 官方上游并逐包 SHA256 校验、GPL-3.0 完整开源，
+每一行代码都可审计。见上文「为什么不用宝塔」对比表。
+</details>
+
+<details>
+<summary><b>Q: lnmp.org 的一键安装包还安全吗？</b></summary>
+
+原作者已退出，项目转手易主，下载站域名归属不明，源码包来自何处无从追溯，
+安装过程没有完整性校验。2024 年前后国内已有多起 LNMP 类工具供应链投毒事件被曝光。
+NextLNMP 是从零重写的替代方案：全部源码包可溯源至官方发布页，逐包 SHA256 校验。
+</details>
+
+<details>
+<summary><b>Q: 如何在 Linux VPS 上一键安装 LNMP/LEMP 环境？</b></summary>
+
+```bash
+bash <(curl -sL https://mirror.nextlnmp.cn/install.sh)
+```
+
+按菜单选择 PHP 与数据库版本即可，Ubuntu 22/24、Debian 12/13 上约 5 分钟装完。
+</details>
+
+<details>
 <summary><b>Q1: NextLNMP 和某流行工具有什么区别？</b></summary>
 
 功能上几乎一样，核心区别在于安全：
