@@ -3,6 +3,8 @@ name: Sync CN Mirrors
 # 手动把 main + 指定 tag 推平到国内两个镜像仓（cnb.cool / gitee）。
 # 平时不用跑——release.yml 发版时自动同步；这个入口给"镜像落后了要立刻拉齐"用。
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       tag:
@@ -12,6 +14,10 @@ on:
         description: '强推（镜像历史被重写后对齐用）'
         type: boolean
         default: false''
+
+concurrency:
+  group: sync-cn
+  cancel-in-progress: true
 
 jobs:
   sync:
